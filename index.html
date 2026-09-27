@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>enter the badgerbox</title>
+<meta name="viewport" content="width=1440">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000000;color:#FFFFFF;font-family:Cousine,"DejaVu Sans Mono",Menlo,Consolas,monospace}
+a{color:#FFFFFF}
+::selection{background:#FFFFFF;color:#000000}
+@keyframes bb-flicker{0%,100%{opacity:1}7%{opacity:1}8%{opacity:0.5}9%{opacity:1}23%{opacity:1}24%{opacity:0.75}25%{opacity:1}26%{opacity:0.6}27%{opacity:1}51%{opacity:1}52%{opacity:0.4}53%{opacity:1}54%{opacity:0.85}55%{opacity:1}78%{opacity:1}79%{opacity:0.65}80%{opacity:1}}
+@keyframes bb-blink{50%{opacity:0}}
+@keyframes bb-boot{from{opacity:0}to{opacity:1}}
+@keyframes bb-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.bb-logo{animation:bb-flicker 2.6s steps(1) infinite}
+.bb-cursor{animation:bb-blink 0.9s steps(1) 6}
+.bb-boot div{animation:bb-boot 1ms linear both}
+.bb-boot div:nth-child(1){animation-delay:100ms}.bb-boot div:nth-child(2){animation-delay:420ms}.bb-boot div:nth-child(3){animation-delay:760ms}.bb-boot div:nth-child(4){animation-delay:1000ms}.bb-boot div:nth-child(5){animation-delay:1400ms}
+.bb-line{animation:bb-in 180ms cubic-bezier(0.16,1,0.3,1) both}
+.bb-enter:hover{background:#FFFFFF;color:#000000}
+.bb-enter:focus-visible{outline:2px solid #FFFFFF;outline-offset:6px}
+.bb-keywrap{caret-color:#FFFFFF}
+.bb-keywrap:focus{outline:none}
+.bb-keywrap::placeholder{color:transparent}
+.bb-keywrap:not(:placeholder-shown) + .bb-cursor{display:none}
+.bb-key-row:focus-within{box-shadow:inset 0 -2px 0 0 #FFFFFF}
+@media (prefers-reduced-motion: reduce){.bb-logo,.bb-cursor,.bb-boot div,.bb-line{animation:none}}
+</style>
+</head>
+<body>
+<div id="bb-root" tabindex="-1" style="outline: none; position: relative; width: 1440px; height: 1040px; box-sizing: border-box; display: flex; flex-direction: column; background: #000000; color: #FFFFFF; font-family: Cousine, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 16px; line-height: 24px; overflow: hidden">
+
+<div aria-hidden="true" style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(255,255,255,0.045) 3px, rgba(255,255,255,0.045) 4px); pointer-events: none"></div>
+
+<div aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
+<pre aria-hidden="true" style="position: absolute; left: 1296px; top: 941px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #303030; transform: rotate(-41deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1251px; top: 128px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #2A2A2A; transform: rotate(31deg); pointer-events: none;">\ \
+ \ \
+  \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 836px; top: 448px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #2A2A2A; transform: rotate(-24deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 751px; top: 172px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #444444; transform: rotate(-25deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 284px; top: 467px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #3D3D3D; transform: rotate(-47deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 54px; top: 130px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #2A2A2A; transform: rotate(-28deg); pointer-events: none;">\ \ \
+ \ \ \
+  \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 999px; top: 445px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #363636; transform: rotate(-7deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 727px; top: 740px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #363636; transform: rotate(2deg); pointer-events: none;"> o o
+o   o
+ (_)</pre>
+<pre aria-hidden="true" style="position: absolute; left: 515px; top: 104px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #3D3D3D; transform: rotate(36deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1100px; top: 603px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #363636; transform: rotate(-20deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 927px; top: 633px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #363636; transform: rotate(-21deg); pointer-events: none;">\  \  \  \
+ \  \  \  \
+  \  \  \
+   \  \  \
+    \  \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1359px; top: 391px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #3D3D3D; transform: rotate(-7deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 809px; top: 670px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #3D3D3D; transform: rotate(18deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 906px; top: 221px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #2A2A2A; transform: rotate(0deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 266px; top: 354px; margin: 0; font-family: inherit; font-size: 12px; line-height: 9px; font-weight: 700; color: #2A2A2A; transform: rotate(-47deg); pointer-events: none;"> o o
+o   o
+ (_)</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1145px; top: 233px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #444444; transform: rotate(25deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 177px; top: 142px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #444444; transform: rotate(-28deg); pointer-events: none;">\ \
+ \ \
+  \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 73px; top: 309px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #363636; transform: rotate(10deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 476px; top: 397px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #2A2A2A; transform: rotate(-44deg); pointer-events: none;"> o o
+o   o
+ (_)</pre>
+<pre aria-hidden="true" style="position: absolute; left: 376px; top: 150px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #303030; transform: rotate(10deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1101px; top: 714px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #444444; transform: rotate(30deg); pointer-events: none;">\ \
+ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 772px; top: 913px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #303030; transform: rotate(-39deg); pointer-events: none;">\ \ \
+ \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 250px; top: 966px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #3D3D3D; transform: rotate(3deg); pointer-events: none;"> o o
+o   o
+ (_)</pre>
+<pre aria-hidden="true" style="position: absolute; left: 97px; top: 441px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #363636; transform: rotate(23deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 52px; top: 810px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #363636; transform: rotate(-13deg); pointer-events: none;"> o o
+o   o
+ (_)</pre>
+<pre aria-hidden="true" style="position: absolute; left: 968px; top: 965px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #303030; transform: rotate(-14deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1130px; top: 941px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #2A2A2A; transform: rotate(-8deg); pointer-events: none;">\ \ \
+ \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 663px; top: 234px; margin: 0; font-family: inherit; font-size: 12px; line-height: 9px; font-weight: 700; color: #444444; transform: rotate(31deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1263px; top: 468px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #2A2A2A; transform: rotate(43deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 493px; top: 888px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #363636; transform: rotate(-9deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+</div>
+
+<header style="height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 1ch; padding: 0 16px; background: #FFFFFF; color: #000000; white-space: nowrap; overflow: hidden">
+<span style="font-weight: 700">badgerbox 0.1</span>
+<span aria-hidden="true">──</span>
+<span>[ ! ] authorized use only · teacher permission required</span>
+<span aria-hidden="true" id="bb-rule" style="flex-grow: 1; min-width: 0; overflow: hidden"></span>
+<span>node cambridge-01</span>
+</header>
+
+<main style="position: relative; flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1fr minmax(0, 720px) 1fr; padding: 24px 40px 0 40px; overflow: hidden">
+
+<div class="bb-boot" style="color: #8C8C8C; white-space: pre; align-self: start">
+<div>&gt; boot ......... ok</div>
+<div>&gt; models ....... quick default complex</div>
+<div>&gt; memory ....... nothing stored</div>
+<div>&gt; honor ........ pledge on</div>
+<div>&gt; status ....... <span style="color: #FFFFFF">READY</span></div>
+</div>
+
+<div style="display: flex; flex-direction: column; align-items: center; gap: 16px">
+<pre role="img" aria-label="badgerbox logo" class="bb-logo" id="bb-logo" style="margin: 0; font-family: Cousine, 'DejaVu Sans Mono', monospace; font-size: 13px; line-height: 13px; font-weight: 700; letter-spacing: 0; color: #FFFFFF; text-shadow: 0 0 12px rgba(255,255,255,0.35)"></pre>
+<div aria-hidden="true" style="width: 100%; color: #8C8C8C; white-space: pre; overflow: hidden; text-align: center">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</div>
+<div style="font-size: 40px; line-height: 44px; font-weight: 700; letter-spacing: 0.02em; text-align: center">B A D G E R B O X</div>
+<div style="color: #BDBDBD; text-align: center">hate the game</div>
+<form id="bb-form" style="margin-top: 16px">
+<div class="bb-key-row" style="position: relative; display: inline-flex; align-items: baseline; gap: 1ch; padding: 4px 2px">
+<span aria-hidden="true" style="font-weight: 700">&gt;</span>
+<label for="bb-key" style="position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">access key</label>
+<span aria-hidden="true" style="color: #BDBDBD">enter key</span>
+<div style="position: relative; display: inline-block">
+<input id="bb-key" class="bb-keywrap" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder=" " aria-describedby="bb-key-note" style="width: 8ch; margin: 0; padding: 0; border: 0; background: transparent; color: #FFFFFF; font-family: inherit; font-weight: 700; font-size: 20px; line-height: 28px">
+<span class="bb-cursor" aria-hidden="true" style="position: absolute; left: 0; top: 2px; width: 1ch; height: 24px; background: #FFFFFF; pointer-events: none"></span>
+</div>
+</div>
+<div id="bb-key-note" style="margin-top: 8px; color: #8C8C8C">this is a placeholder for the badgerbox key you'll get with a paid account</div>
+<div id="bb-key-error" class="bb-line" style="margin-top: 8px; display: none"><span style="background: #FFFFFF; color: #000000; font-weight: 700; padding: 0 4px">error</span> that key isn't recognized</div>
+</form>
+</div>
+
+<div style="color: #8C8C8C; white-space: pre; text-align: right; align-self: start">
+<div>sess 0x4A1F</div>
+<div>tty  /dev/badger0</div>
+<div>uptime 00:00:03</div>
+<div>run  #0</div>
+</div>
+
+<div id="bb-help" style="display: none; position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); max-width: 72ch; padding: 12px 2ch; background: #000000; border: 1px solid #FFFFFF; color: #BDBDBD">badgerbox takes an assignment you have permission to use it on, works out the subject and how hard it is, picks a model, and gives the work back with every step explained. type your access key and press enter to go in, or ? again to close this.</div>
+</main>
+
+<footer style="flex-shrink: 0">
+<div style="display: flex; align-items: center; gap: 3ch; padding: 0 16px; height: 40px; border-top: 1px solid #FFFFFF; white-space: nowrap; overflow: hidden">
+<span><span style="background: #FFFFFF; color: #000000; padding: 0 4px">enter</span> submit key</span>
+<button type="button" id="bb-help-btn" class="bb-enter" style="height: 28px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span style="background: #FFFFFF; color: #000000; padding: 0 4px">?</span> what is this</button>
+<span style="color: #8C8C8C; margin-left: auto">v0.1 · for students with teacher permission</span>
+</div>
+</footer>
+
+</div>
+<script src="badger.js"></script>
+<script>
+document.getElementById('bb-rule').textContent = '─'.repeat(160);
+document.getElementById('bb-logo').textContent = BADGER_ART;
+
+const VALID_KEY = '8008';
+const root = document.getElementById('bb-root');
+const keyInput = document.getElementById('bb-key');
+const keyError = document.getElementById('bb-key-error');
+const help = document.getElementById('bb-help');
+const form = document.getElementById('bb-form');
+
+function check(raw) {
+  const val = String(raw == null ? '' : raw).trim();
+  if (val === VALID_KEY) { window.location.href = 'terminal.html'; return; }
+  keyError.style.display = '';
+  keyInput.setAttribute('aria-invalid', 'true');
+  keyInput.value = '';
+  keyInput.focus();
+}
+
+keyInput.addEventListener('input', () => {
+  if (keyError.style.display !== 'none') { keyError.style.display = 'none'; keyInput.setAttribute('aria-invalid', 'false'); }
+});
+keyInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); check(e.target.value); }
+});
+form.addEventListener('submit', (e) => { e.preventDefault(); check(keyInput.value); });
+
+document.getElementById('bb-help-btn').addEventListener('click', () => {
+  help.style.display = help.style.display === 'none' ? '' : 'none';
+});
+
+root.addEventListener('keydown', (e) => {
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT') return;
+  if (e.key === '?') { e.preventDefault(); help.style.display = help.style.display === 'none' ? '' : 'none'; return; }
+  if (e.key === 'Escape' && help.style.display !== 'none') { e.preventDefault(); help.style.display = 'none'; return; }
+  if (e.key === 'Enter') { e.preventDefault(); check(keyInput.value); return; }
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && tag !== 'BUTTON') {
+    keyInput.focus();
+  }
+});
+
+keyInput.focus({ preventScroll: true });
+</script>
+</body>
+</html>
