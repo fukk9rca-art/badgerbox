@@ -12,7 +12,7 @@
   var HOLE = /\{\{\s*([A-Za-z_$][\w$]*(?:\.[\w$]+)*)\s*\}\}/g;
   var ONE_HOLE = /^\s*\{\{\s*([A-Za-z_$][\w$]*(?:\.[\w$]+)*)\s*\}\}\s*$/;
   var EVENT_ALIAS = { doubleclick: 'dblclick', focus: 'focusin', blur: 'focusout' };
-  var NO_BUBBLE = { scroll: true };
+  var NO_BUBBLE = { scroll: true, pointerleave: true, pointerenter: true, mouseleave: true, mouseenter: true };
 
   function lookup(scope, path) {
     var parts = path.split('.');
@@ -110,7 +110,7 @@
   }
   ['click', 'dblclick', 'input', 'change', 'submit', 'keydown', 'keyup', 'focusin', 'focusout',
    'scroll', 'paste', 'dragover', 'dragleave', 'drop', 'pointerdown', 'pointermove', 'pointerup',
-   'pointercancel', 'mousedown', 'mouseup'].forEach(bind);
+   'pointercancel', 'pointerleave', 'pointerenter', 'mousedown', 'mouseup', 'mousemove', 'mouseleave', 'mouseenter'].forEach(bind);
 
   /* ---------- component base ---------- */
   function DCLogic(props) {

@@ -538,7 +538,7 @@ o   o
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
 class Component extends DCLogic {
 componentDidMount() { this.focusBox(); }
-focusBox() { setTimeout(() => { const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
+focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
 componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
 later(fn, ms) { this.timers = this.timers || []; this.timers.push(setTimeout(fn, ms)); }
 renderVals() {
