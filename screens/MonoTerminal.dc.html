@@ -1,0 +1,1168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>badgerbox terminal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000000;color:#FFFFFF;font-family:Cousine,"DejaVu Sans Mono",Menlo,Consolas,monospace}
+a{color:#FFFFFF}a:hover{color:#BDBDBD}
+::selection{background:#FFFFFF;color:#000000}
+.bb-cursor{animation:bb-blink 1s steps(1) infinite}
+@keyframes bb-blink{50%{opacity:0}}
+@keyframes bb-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.bb-line{animation:bb-in 180ms cubic-bezier(0.16,1,0.3,1) both}
+@media (prefers-reduced-motion: reduce){.bb-cursor,.bb-line{animation:none}}
+.bb-prompt textarea{caret-color:transparent;scrollbar-color:#FFFFFF #000000}
+.bb-prompt textarea:focus{outline:none}
+.bb-prompt textarea::placeholder{color:#8C8C8C;opacity:1}
+.bb-box{position:relative}
+.bb-box legend{background:#FFFFFF;color:#000000}
+.bb-box:focus-within{box-shadow:inset 0 0 0 1px #FFFFFF}
+.bb-mark::before{content:"[ ]"}
+.bb-pledge input:checked + .bb-mark::before{content:"[x]"}
+.bb-pledge:has(input:focus-visible){outline:2px solid #FFFFFF;outline-offset:4px}
+.bb-btn:hover{background:#FFFFFF;color:#000000}
+.bb-dl:hover{background:#000000 !important;color:#FFFFFF !important}
+.bb-dl:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-btn:focus-visible,.bb-run:focus-visible,.bb-link:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-attach:has(input:focus-visible){outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-attach:hover{background:#FFFFFF;color:#000000}
+.bb-run:hover{background:#BDBDBD !important}
+.bb-paste:hover{background:#FFFFFF !important}
+.bb-paste:hover span{color:#000000 !important}
+.bb-paste:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-fast:hover{text-decoration:underline}
+.bb-auto:hover{background:#BDBDBD !important}
+.bb-auto:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-fast:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-drag:hover{background:#FFFFFF;color:#000000}
+.bb-drag:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+.bb-cancel:hover{background:#FFFFFF !important;color:#000000 !important}
+.bb-cancel:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-x:hover{background:#FFFFFF;color:#000000}
+.bb-x:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+.bb-tab[aria-selected="false"]:hover,.bb-tab-plain:hover{background:rgba(0,0,0,0.12) !important}
+.bb-tab:focus-visible,.bb-tab-plain:focus-visible{outline:2px dashed #8C8C8C;outline-offset:-5px}
+.bb-opt:hover{border-color:#FFFFFF !important;color:#FFFFFF !important}
+.bb-opt[aria-pressed="true"]:hover{color:#000000 !important}
+.bb-opt:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+@keyframes bb-flicker{0%,100%{opacity:.68}8%{opacity:.34}9%{opacity:.68}24%{opacity:.5}25%{opacity:.68}26%{opacity:.4}27%{opacity:.68}52%{opacity:.27}53%{opacity:.68}54%{opacity:.58}55%{opacity:.68}79%{opacity:.44}80%{opacity:.68}}
+@keyframes bb-red{0%,100%{color:var(--bb-accent);text-shadow:none}5%{color:#8A0303;text-shadow:0 0 14px rgba(138,3,3,0.8)}7%{color:var(--bb-accent);text-shadow:none}13%{color:#5E0202;text-shadow:none}14%{color:var(--bb-accent);text-shadow:none}48%{color:#A30808;text-shadow:0 0 18px rgba(163,8,8,0.9)}51%{color:var(--bb-accent);text-shadow:none}83%{color:#8A0303;text-shadow:0 0 10px rgba(138,3,3,0.6)}84%{color:var(--bb-accent);text-shadow:none}86%{color:#700202;text-shadow:0 0 8px rgba(112,2,2,0.6)}88%{color:var(--bb-accent);text-shadow:none}}
+@keyframes bb-flicker-idle{0%,100%{opacity:.68}3%{opacity:.34}4%{opacity:.68}11%{opacity:.5}12%{opacity:.68}13%{opacity:.4}14%{opacity:.68}29%{opacity:.27}31%{opacity:.58}32%{opacity:.68}47%{opacity:.44}48%{opacity:.68}62%{opacity:.3}63%{opacity:.68}64%{opacity:.5}65%{opacity:.68}66%{opacity:.36}68%{opacity:.68}91%{opacity:.45}92%{opacity:.68}}
+.bb-logo{animation:bb-flicker-idle 7.3s steps(1) infinite}
+.bb-logo-run{animation:bb-flicker 1s steps(1) infinite,bb-red 4.3s steps(1) infinite}
+@media (prefers-reduced-motion: reduce){.bb-logo{animation:none}}
+.bb-field{caret-color:#FFFFFF}
+.bb-field::placeholder{color:#8C8C8C;opacity:1}
+.bb-field:focus{outline:none;border-color:#FFFFFF !important}
+.bb-col{scrollbar-color:#FFFFFF #000000}
+.bb-hist:hover{background:#FFFFFF}
+.bb-hist:hover span{color:#000000 !important}
+.bb-hist:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+.bb-subj-btn:hover{background:#161616 !important}
+.bb-subj-btn:focus-visible{outline:2px solid #FFFFFF;outline-offset:-2px}
+.bb-set{scrollbar-color:#FFFFFF #000000;scrollbar-width:thin}
+.bb-grow{cursor:nwse-resize;touch-action:none}
+.bb-grow:hover,.bb-grow[aria-pressed="true"]{background:#FFFFFF !important;color:#000000 !important}
+.bb-grow:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+</style>
+</helmet>
+<div id="bb-root" tabindex="-1" onKeyDown="{{ onPageKey }}" onPointerUp="{{ onRefocus }}" onBlur="{{ onRootOut }}" onDragOver="{{ onDragOver }}" onDragLeave="{{ onDragLeave }}" onDrop="{{ onDrop }}" onPaste="{{ onPaste }}" style="outline: none; position: relative; width: 1440px; height: 1040px; box-sizing: border-box; display: flex; flex-direction: column; background: #000000; color: #FFFFFF; font-family: Cousine, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 16px; line-height: 24px">
+
+<div aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
+<pre aria-hidden="true" style="position: absolute; left: 466px; top: 195px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #2A2A2A; transform: rotate(10deg); pointer-events: none;">\ \ \
+ \ \ \
+  \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 918px; top: 125px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #444444; transform: rotate(43deg); pointer-events: none;">/ /
+ / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 759px; top: 389px; margin: 0; font-family: inherit; font-size: 12px; line-height: 9px; font-weight: 700; color: #3D3D3D; transform: rotate(47deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 100px; top: 516px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #363636; transform: rotate(-38deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 116px; top: 141px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #444444; transform: rotate(-28deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 605px; top: 804px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #363636; transform: rotate(24deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 190px; top: 260px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #363636; transform: rotate(39deg); pointer-events: none;">\ \ \
+ \ \ \
+  \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 885px; top: 912px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #444444; transform: rotate(13deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1367px; top: 101px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #303030; transform: rotate(23deg); pointer-events: none;">\ \ \
+ \ \ \
+  \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1204px; top: 320px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #363636; transform: rotate(47deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 219px; top: 166px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #363636; transform: rotate(18deg); pointer-events: none;">/ / /
+ / / /
+  / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 445px; top: 794px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #303030; transform: rotate(-26deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 269px; top: 583px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #444444; transform: rotate(-28deg); pointer-events: none;">\ \ \
+ \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 775px; top: 116px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #2A2A2A; transform: rotate(32deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 453px; top: 587px; margin: 0; font-family: inherit; font-size: 12px; line-height: 9px; font-weight: 700; color: #3D3D3D; transform: rotate(37deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 645px; top: 329px; margin: 0; font-family: inherit; font-size: 12px; line-height: 9px; font-weight: 700; color: #2A2A2A; transform: rotate(-9deg); pointer-events: none;">\  \  \  \
+ \  \  \  \
+  \  \  \
+   \  \  \
+    \  \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1116px; top: 689px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #444444; transform: rotate(-45deg); pointer-events: none;">/ /
+ / /
+  / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 744px; top: 847px; margin: 0; font-family: inherit; font-size: 12px; line-height: 9px; font-weight: 700; color: #363636; transform: rotate(15deg); pointer-events: none;"> o o
+o   o
+ (_)</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1026px; top: 319px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #2A2A2A; transform: rotate(-45deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 74px; top: 661px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #303030; transform: rotate(31deg); pointer-events: none;">\  \  \  \
+ \  \  \  \
+  \  \  \
+   \  \  \
+    \  \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1075px; top: 575px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #303030; transform: rotate(-19deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 979px; top: 594px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #363636; transform: rotate(-42deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1179px; top: 910px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #444444; transform: rotate(31deg); pointer-events: none;"> o o
+o   o
+ (_)</pre>
+<pre aria-hidden="true" style="position: absolute; left: 552px; top: 661px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #2A2A2A; transform: rotate(2deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 404px; top: 433px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #303030; transform: rotate(26deg); pointer-events: none;">\ \ \
+ \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1341px; top: 195px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #363636; transform: rotate(5deg); pointer-events: none;"> o o
+o   o
+ (_)</pre>
+<pre aria-hidden="true" style="position: absolute; left: 832px; top: 296px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #363636; transform: rotate(-24deg); pointer-events: none;">\ \ \
+ \ \ \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 25px; top: 437px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #2A2A2A; transform: rotate(24deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1335px; top: 681px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #3D3D3D; transform: rotate(18deg); pointer-events: none;">/  /  /  /
+ /  /  /  /
+  /  /  /
+   /  /  /
+    /  /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 731px; top: 615px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #363636; transform: rotate(19deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 1261px; top: 761px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #3D3D3D; transform: rotate(-8deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 561px; top: 419px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #3D3D3D; transform: rotate(16deg); pointer-events: none;">\  \  \  \
+ \  \  \  \
+  \  \  \
+   \  \  \
+    \  \</pre>
+<pre aria-hidden="true" style="position: absolute; left: 308px; top: 206px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #303030; transform: rotate(27deg); pointer-events: none;">/ / /
+ / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 20px; top: 196px; margin: 0; font-family: inherit; font-size: 12px; line-height: 9px; font-weight: 700; color: #2A2A2A; transform: rotate(-26deg); pointer-events: none;">/ /
+ / /</pre>
+</div>
+
+<header style="height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 1ch; padding: 0 16px; background: {{accent}}; color: #000000; white-space: nowrap; overflow: hidden">
+
+<span aria-hidden="true">──</span>
+<span style="font-weight: 700">badgerbox 0.1</span>
+<span aria-hidden="true">──</span>
+<span style="white-space: pre"> FEED ME </span>
+<span aria-hidden="true" style="flex-grow: 1; min-width: 0; overflow: hidden">────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
+<button type="button" class="bb-btn" onClick="{{ onToggleIntro }}" style="height: 32px; padding: 0 4px; margin: 0 -4px 0 0; background: transparent; color: #000000; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre">? help</button>
+</header>
+
+<div style="position: relative; flex-shrink: 0; height: 44px; display: flex; align-items: flex-end; padding: 0 16px; background: {{accent}}; color: #000000; white-space: nowrap; overflow: hidden">
+<div role="tablist" aria-label="kind of homework" onKeyDown="{{ onTabKey }}" style="display: flex; align-items: flex-end; height: 100%">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="9">
+<span aria-hidden="true" style="align-self: center; flex-shrink: 0; width: 1px; height: 18px; margin-top: 6px; background: {{ t.divider }}"></span>
+<button type="button" role="tab" id="{{ t.id }}" class="bb-tab" aria-selected="{{ t.selected }}" tabindex="{{ t.tabindex }}" onClick="{{ t.pick }}" style="height: 36px; padding: 0 2ch; background: {{ t.bg }}; color: {{ t.fg }}; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: {{ t.weight }}; cursor: pointer; white-space: pre">{{ t.text }}</button>
+</sc-for>
+</div>
+<span aria-hidden="true" style="flex-grow: 1"></span>
+<button type="button" class="bb-tab-plain" aria-pressed="{{ settingsOpen }}" onClick="{{ onToggleSettings }}" style="align-self: center; height: 32px; padding: 0 1ch; background: transparent; color: #000000; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ settingsLabel }}</button>
+<button type="button" class="bb-tab-plain" aria-pressed="{{ historyOpen }}" onClick="{{ onToggleHistory }}" style="align-self: center; height: 32px; padding: 0 1ch; background: transparent; color: #000000; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ historyLabel }}</button>
+</div>
+
+<main style="flex-grow: 1; min-height: 0; display: flex; align-items: flex-start; gap: 72px; padding: 32px 64px 0 64px; overflow: hidden">
+<div style="flex-shrink: 0; align-self: stretch; box-sizing: border-box; display: flex; flex-direction: column; justify-content: {{ leftJustify }}; padding-bottom: 32px">
+<sc-if value="{{ showLogo }}" hint-placeholder-val="{{ true }}">
+<pre role="img" aria-label="badgerbox logo" class="{{ logoClass }}" style="--bb-accent: {{accent}}; margin: 0; flex-shrink: 0; transform: scaleY(1.7); transform-origin: center; opacity: 0.68; font-family: Cousine, 'DejaVu Sans Mono', monospace; font-size: 10px; line-height: 10px; font-weight: 700; letter-spacing: 0; color: {{accent}}">                                               -:::: :::--:: %%%%%*****
+                                     %%%%%*=-:::::::::--::.:=-==--:::==+*
+                                %%%%%@%*=-::::::.:..::. .... .. ...   .:-==
+                            %%%%%%%@%=-::::::::....    .              ...:::
+                          %@%%%@@%*=::::::::........                     ...
+                       @@%%@%@@#+:::::::::.......                         .
+                     @@@@@%%%#=::::::........   ... . ..                     .
+                  @@@@%@@%%*-.::-=-::...::..............::.....   :.          .
+                @@@@@@%%#+-..:::::........:.:::::::::-----::::.. ..      . .....:..
+              @@@@@%%#*+::..:.: =: . ::::::-==+===++***===-=:::::..:::::::::.....::
+        *%%%%%%%%%#**=:::.::::::. .: :::*%%#****+++**===+*========-:===-:::::......
+  %#**+====:-=*#%%*=:......::::--:::::*%**%#******+==============++======::::::....
+ #*=:::--:::.:=+**%**+:.     ..::::-+***++==+=========-::::-============-::::::....
+=:::.   .   : :=======-:. ....:=+*+**=-==++---======--:::::::---=-::::::::::..::.
+  *-.      :  .-::-==-::.   :-======:::====----=====-:::::.:::::::::::::......::::.
+  *-..:::.    ..:::::::.  ..:----:::::::::--=--===----::::::::::::.:::........:::::
+   .            .::-:.    .::::::::::-::::::::::-=--::::-:::::::::::...:::..:::::::
+      .:..... . .......  ..:::::::::::::---:---::--:-::::::::::::::::::::::::::::::
+         ::.:...:.   ...... ....:::::.:::::::::::::::::::::::::::::.:::.:....::::::
+         *=..   =:.           ......:::::::::::::..........:.. ........    .:::::::
+         *=-    *=*:..         .....::::-:::.       ....         ...      ..  .::::
+          *      *  *-:.        .....:::::.                    ...              ...
+                       :.        :...::::..
+                       ::. .... .:.  ::..                                        ..
+                        :..::..:=:  .:::.
+                        =:=:...==:  .:::
+                        *+=:.:+=:. .::.
+                  *+=   #*-.=+-::  ::.
+                   ===  *++=+:::. ..    :..
+                    -::::-+:::...... .:::::...
+                     *+*+*#:     ....::::::...     .
+                     #*+*=:.        .:-:==::..        ..
+                                     :-==--:::...
+                                     ::+=--:::...     .
+                                      ::==-----:..
+                                      ---:==::::::..      .
+                                      ::==---:::..:....
+                                      ::----:::::::....
+                                       :---::::::..:....
+                                       ::::::::::......
+                                       :::--:::::.......
+                                       ..:::::::......
+                                        .::::.....  ..
+                                        ......:.....</pre>
+</sc-if>
+
+<sc-if value="{{ showHistory }}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="bb-hist-h" style="width: 52ch; flex-shrink: 0">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 2ch"><h2 id="bb-hist-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">past runs</h2><span style="color: #8C8C8C">sample data</span></div>
+<div aria-hidden="true" style="color: #8C8C8C">-------------</div>
+<sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ true }}">
+<ul style="list-style: none; margin: 8px 0 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="5">
+<li><a class="bb-hist" href="Results.dc.html" style="display: grid; grid-template-columns: 7ch 9ch minmax(0, 1fr); gap: 1ch; padding: 8px; margin: 0 -8px; color: #FFFFFF; text-decoration: none"><span style="color: #8C8C8C">{{ h.when }}</span><span style="color: #BDBDBD">{{ h.tab }}</span><span style="min-width: 0"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #FFFFFF">{{ h.title }}</span><span style="display: block; color: #8C8C8C">{{ h.meta }}</span></span></a></li>
+</sc-for>
+</ul>
+<button type="button" class="bb-btn" onClick="{{ onClearHistory }}" style="height: 32px; margin: 16px 0 0 -4px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>clear past runs<span aria-hidden="true"> ]</span></button>
+</sc-if>
+<sc-if value="{{ noHistory }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 8px; color: #BDBDBD">no past runs. finished runs show up here.</div>
+</sc-if>
+</section>
+</sc-if>
+<sc-if value="{{ showSettings }}" hint-placeholder-val="{{ false }}">
+<section id="bb-set" class="bb-set" aria-labelledby="bb-set-h" style="width: 52ch; flex: 0 1 auto; min-height: 0; overflow-y: auto; padding-right: 8px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 2ch"><h2 id="bb-set-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">settings</h2><span style="color: #8C8C8C">saved to your key</span></div>
+<div aria-hidden="true" style="color: #8C8C8C">-------------</div>
+<h3 style="margin: 8px 0 0 0; font-size: 16px; line-height: 24px; font-weight: 700">my classes</h3>
+<div style="color: #8C8C8C">one per subject tab. open one to tell badgerbox your class and how you want the work done, so it doesn't have to guess.</div>
+<ul style="list-style: none; margin: 8px 0 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{ subjects }}" as="k" hint-placeholder-count="8">
+<li id="{{ k.id }}" style="border: 1px solid {{ k.border }}; background: #0B0B0B">
+<button type="button" class="bb-subj-btn" aria-expanded="{{ k.expanded }}" onClick="{{ k.toggle }}" style="display: flex; align-items: center; gap: 1ch; width: 100%; min-height: 48px; box-sizing: border-box; padding: 6px 1ch; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">
+<span style="flex-shrink: 0; min-width: 11ch; box-sizing: border-box; padding: 0 1ch; background: {{ k.tagBg }}; color: {{ k.tagFg }}; border: 1px solid {{accent}}; font-weight: 700; white-space: pre">{{ k.tag }}</span>
+<span style="flex-grow: 1; min-width: 0"><span style="display: block; font-weight: 700; color: {{ k.nameColor }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ k.name }}</span><span style="display: block; color: #8C8C8C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ k.detail }}</span></span>
+<span aria-hidden="true" style="flex-shrink: 0; width: 2ch; text-align: center; font-weight: 700">{{ k.caret }}</span>
+</button>
+<sc-if value="{{ k.isOpen }}" hint-placeholder-val="{{ false }}">
+<div style="padding: 8px 1ch 12px 1ch; border-top: 1px dashed #5A5A5A">
+<label for="{{ k.nameId }}" style="color: #BDBDBD">your {{ k.label }} class</label>
+<input id="{{ k.nameId }}" class="bb-field" type="text" autocomplete="off" style="display: block; width: 100%; height: 36px; box-sizing: border-box; margin: 4px 0 0 0; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #5A5A5A; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px" placeholder="{{ k.namePh }}" value="{{ k.draftName }}" onInput="{{ k.onName }}" onKeyDown="{{ k.onFieldKey }}">
+<div style="margin-top: 12px; color: #BDBDBD">how you want the work done <span style="color: #8C8C8C">· up to 3, optional</span></div>
+<sc-for list="{{ k.rules }}" as="rl" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 1ch; margin-top: 4px">
+<label for="{{ rl.id }}" style="flex-shrink: 0; width: 2ch; color: #8C8C8C">{{ rl.n }}</label>
+<input id="{{ rl.id }}" class="bb-field" type="text" autocomplete="off" style="flex-grow: 1; min-width: 0; height: 36px; box-sizing: border-box; margin: 0; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #5A5A5A; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px" placeholder="{{ rl.ph }}" value="{{ rl.value }}" onInput="{{ rl.onInput }}" onKeyDown="{{ k.onFieldKey }}">
+</div>
+</sc-for>
+<div style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 1ch">
+<button type="button" class="bb-dl" onClick="{{ k.onSave }}" style="height: 36px; padding: 0 1ch; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre; background: {{accent}}; color: #000000; border: 2px solid {{accent}}">save</button>
+<button type="button" class="bb-btn" onClick="{{ k.onCancel }}" style="height: 36px; padding: 0 1ch; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre; background: transparent; color: #BDBDBD; border: 0; font-weight: 400"><span aria-hidden="true">[ </span>cancel<span aria-hidden="true"> ]</span></button>
+<sc-if value="{{ k.canRemove }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-btn" onClick="{{ k.onRemove }}" style="height: 36px; padding: 0 1ch; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre; background: transparent; color: #BDBDBD; border: 0; font-weight: 400"><span aria-hidden="true">[ </span>remove<span aria-hidden="true"> ]</span></button></sc-if>
+<span style="color: #BDBDBD">{{ k.note }}</span>
+</div>
+</div>
+</sc-if>
+</li>
+</sc-for>
+</ul>
+<h3 style="margin: 20px 0 4px 0; font-size: 16px; line-height: 24px; font-weight: 700">my format</h3>
+<sc-for list="{{ setGroups }}" as="g" hint-placeholder-count="2">
+<div role="group" aria-label="{{ g.label }}" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; min-height: 36px">
+<span aria-hidden="true" style="width: 11ch; flex-shrink: 0; color: #8C8C8C">{{ g.label }}</span>
+<sc-for list="{{ g.choices }}" as="c" hint-placeholder-count="2">
+<button type="button" class="bb-opt" aria-pressed="{{ c.pressed }}" onClick="{{ c.pick }}" style="height: 32px; padding: 0 1ch; background: {{ c.bg }}; color: {{ c.fg }}; border: 1px solid {{ c.border }}; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ c.text }}</button>
+</sc-for>
+</div>
+</sc-for>
+<h3 style="margin: 20px 0 4px 0; font-size: 16px; line-height: 24px; font-weight: 700"><label for="bb-voice">your voice</label></h3>
+<textarea id="bb-voice" class="bb-field" rows="2" placeholder="optional · paste something you wrote, so essays sound like you" aria-describedby="bb-voice-note" onInput="{{ onVoice }}" style="display: block; width: 100%; box-sizing: border-box; min-height: 56px; max-height: 120px; field-sizing: content; margin: 0; padding: 4px 1ch; resize: none; background: transparent; color: #FFFFFF; border: 1px solid #5A5A5A; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px"></textarea>
+<div id="bb-voice-note" style="color: #8C8C8C">{{ voiceNote }}</div>
+<h3 style="margin: 20px 0 4px 0; font-size: 16px; line-height: 24px; font-weight: 700">account</h3>
+<div style="display: flex; gap: 2ch"><span style="width: 11ch; flex-shrink: 0; color: #8C8C8C">key</span><span>8008 · active</span></div>
+<button type="button" class="bb-btn" onClick="{{ onClearHistory }}" style="height: 32px; margin: 4px 0 0 -4px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>{{ clearLabel }}<span aria-hidden="true"> ]</span></button>
+</section>
+</sc-if>
+</div>
+
+<div id="bb-col" class="bb-col" style="flex-grow: 1; min-width: 0; max-width: {{ colMax }}; align-self: stretch; overflow-y: auto; padding: 0 12px 24px 0">
+<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 1ch">
+<sc-if value="{{ isAuto }}" hint-placeholder-val="{{ true }}"><button type="button" class="bb-auto" aria-expanded="{{ fastOpen }}" aria-controls="bb-auto-panel" onClick="{{ onToggleFast }}" style="height: 36px; padding: 0 2ch; background: {{accent}}; color: #000000; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">&#9889; auto mode</button></sc-if>
+<button type="button" class="bb-btn" onClick="{{ onToggleIntro }}" aria-expanded="{{ introOpen }}" aria-controls="bb-intro" style="height: 36px; padding: 0 2ch; background: transparent; color: #FFFFFF; border: 2px solid #FFFFFF; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ introLabel }}</button>
+<span style="margin-left: auto; font-weight: 700">you@badgerbox:~/{{ tabId }}</span>
+</div>
+<sc-if value="{{ autoShown }}" hint-placeholder-val="{{ false }}">
+<div id="bb-auto-panel" style="margin-top: 12px; padding: 12px 2ch; border: 2px solid {{accent}}; color: #BDBDBD">
+<div style="color: #FFFFFF; font-weight: 700">&#9889; auto mode &middot; one click from Google Classroom</div>
+<div style="margin-top: 4px; max-width: 72ch">turns the homework open on your screen into a badgerbox run with one click &mdash; no screenshot, no copy-paste. it reads the text on the page (Google Classroom, Google Docs), so a photo worksheet still uses paste.</div>
+<div style="margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 1ch"><span style="color: #8C8C8C">drag this to your bookmarks bar once:</span><a class="bb-drag" draggable="true" href="{{ bookmarklet }}" onClick="{{ onFastNoop }}" style="display: inline-block; padding: 2px 1ch; border: 1px solid #FFFFFF; color: #FFFFFF; text-decoration: none; font-weight: 700; white-space: pre">&#9113; badgerbox</a><span style="color: #8C8C8C">then click it on any assignment</span></div>
+<pre style="margin: 8px 0 0 0; padding: 8px 1ch; background: #0A0A0A; border: 1px solid #303030; color: #BDBDBD; font-family: inherit; font-size: 13px; line-height: 18px; white-space: pre-wrap; word-break: break-all">{{ bookmarklet }}</pre>
+<div style="margin-top: 8px; color: #8C8C8C">heads up: some school Chromebooks turn off bookmarklets. if it does nothing, use paste instead. (badgerbox.app is a placeholder address until the site is live.)</div>
+</div>
+</sc-if>
+<sc-if value="{{ showIntro }}" hint-placeholder-val="{{ true }}">
+<div id="bb-intro">
+<div aria-hidden="true" style="color: #8C8C8C">-------------</div>
+<div style="display: flex"><span style="width: 8ch; flex-shrink: 0; font-weight: 700">takes</span><span style="color: #BDBDBD">a screenshot of the whole worksheet, a photo, a pdf, text or a public link</span></div>
+<div style="display: flex"><span style="width: 8ch; flex-shrink: 0; font-weight: 700">does</span><span style="color: #BDBDBD">finds every question, works it your class's way, checks each answer 2 ways</span></div>
+<div style="display: flex"><span style="width: 8ch; flex-shrink: 0; font-weight: 700">gives</span><span style="color: #BDBDBD">every answer marked [✓] or [!] not sure, with every step explained</span></div>
+
+<div style="margin-top: 24px; color: #8C8C8C">
+<div style="white-space: pre"># example</div>
+<div style="white-space: pre">&gt; <span style="color: #BDBDBD">solve 3x + 7 = 22</span></div>
+<div style="white-space: pre">  subject  algebra · easy · quick model</div>
+<div style="white-space: pre">  step 1   take 7 from both sides      3x = 15</div>
+<div style="white-space: pre">  step 2   divide both sides by 3      x = 5</div>
+<div style="white-space: pre">  check    put 5 back in: 3(5) + 7     = 22  <span style="color: #FFFFFF">[✓]</span></div>
+</div>
+</div>
+</sc-if>
+
+<form onSubmit="{{ onRun }}" style="margin: {{ formGap }} 0 0 0">
+<fieldset class="bb-box" style="margin: 0; padding: 0 16px 12px 16px; min-width: 0; border: 3px solid #FFFFFF">
+<legend style="padding: 0 10px; margin-left: 8px; font-weight: 700">[ badgerbox ]</legend>
+<pre aria-hidden="true" class="bb-gnaw" style="position: absolute; bottom: -8px; left: 42%; margin: 0; padding: 0 3px; background: #000000; font-family: inherit; font-size: 12px; line-height: 12px; font-weight: 700; color: #FFFFFF; pointer-events: none">v v v v</pre>
+<pre aria-hidden="true" class="bb-gnaw" style="position: absolute; right: -7px; top: 34%; margin: 0; padding: 2px 0; background: #000000; font-family: inherit; font-size: 12px; line-height: 11px; font-weight: 700; color: #FFFFFF; pointer-events: none">&lt;
+&lt;
+&lt;</pre>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; padding-top: 6px">
+<button type="button" class="bb-paste" onClick="{{ onPasteClick }}" aria-describedby="bb-hint" style="flex: 1 1 340px; min-width: 0; display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 14px; background: transparent; color: #FFFFFF; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 20px; text-align: left; cursor: pointer; overflow: hidden">
+<span aria-hidden="true" style="flex-shrink: 0; font-weight: 700; font-size: 20px">&#9113;</span>
+<span style="display: flex; flex-direction: column; min-width: 0; white-space: nowrap; overflow: hidden"><span style="font-weight: 700">paste a screenshot<span style="font-weight: 400; color: #8C8C8C"> &middot; Ctrl+V</span></span><span style="color: #8C8C8C; overflow: hidden; text-overflow: ellipsis">{{ pasteSub }}</span></span>
+</button>
+<label class="bb-attach" style="position: relative; display: flex; align-items: center; height: 48px; padding: 0 14px; border: 1px solid #5A5A5A; cursor: pointer; white-space: nowrap; flex-shrink: 0"><input type="file" multiple="" accept="image/png,image/jpeg,image/heic,image/webp,application/pdf,text/plain" onChange="{{ onFiles }}" aria-describedby="bb-hint" style="position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap"><span style="white-space: pre"><span aria-hidden="true">[ </span>attach<span aria-hidden="true"> ]</span></span></label>
+</div>
+<div id="bb-hint" style="color: #8C8C8C; margin: 6px 0 0 0; min-width: 0">{{ hint }}</div>
+
+<div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px">
+<sc-for list="{{ optGroups }}" as="g" hint-placeholder-count="2">
+<div role="group" aria-label="{{ g.label }}" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; min-height: 36px">
+<span aria-hidden="true" style="width: 11ch; flex-shrink: 0; color: #8C8C8C">{{ g.label }}</span>
+<sc-for list="{{ g.choices }}" as="c" hint-placeholder-count="3">
+<button type="button" class="bb-opt" aria-pressed="{{ c.pressed }}" onClick="{{ c.pick }}" style="height: 32px; padding: 0 1ch; background: {{ c.bg }}; color: {{ c.fg }}; border: 1px solid {{ c.border }}; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ c.text }}</button>
+</sc-for>
+</div>
+</sc-for>
+</div>
+
+<div role="group" aria-label="class" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; min-height: 36px">
+<span aria-hidden="true" style="width: 11ch; flex-shrink: 0; color: #8C8C8C">class</span>
+<sc-for list="{{ classChips }}" as="c" hint-placeholder-count="0">
+<button type="button" class="bb-opt" aria-pressed="{{ c.pressed }}" onClick="{{ c.pick }}" style="height: 32px; padding: 0 1ch; background: {{ c.bg }}; color: {{ c.fg }}; border: 1px solid {{ c.border }}; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ c.text }}</button>
+</sc-for>
+<span style="color: #BDBDBD">{{ classEmpty }}</span>
+<button type="button" class="bb-btn" onClick="{{ onToggleSettings }}" style="height: 32px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>edit<span aria-hidden="true"> ]</span></button>
+</div>
+<sc-if value="{{ hasClass }}" hint-placeholder-val="{{ false }}">
+<div style="margin: 0 0 6px 12ch; color: #8C8C8C">remembered: <span style="color: #BDBDBD">{{ classDetail }}</span></div>
+</sc-if>
+
+<sc-if value="{{ isWriting }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; min-height: 36px; margin-bottom: 8px">
+<span style="width: 11ch; flex-shrink: 0; color: #8C8C8C">your voice</span>
+<span style="color: #BDBDBD">{{ voiceLine }}</span>
+<button type="button" class="bb-btn" onClick="{{ onToggleSettings }}" style="height: 32px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>edit<span aria-hidden="true"> ]</span></button>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasFiles }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 1ch; margin-bottom: 4px">
+<span style="width: 11ch; flex-shrink: 0; color: #8C8C8C">{{ fileCount }}</span>
+<sc-for list="{{ files }}" as="f" hint-placeholder-count="0">
+<span style="display: inline-flex; align-items: center; gap: 1ch; height: 32px; box-sizing: border-box; padding: 0 0 0 1ch; border: 1px solid #5A5A5A; max-width: 100%">
+<span style="max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ f.name }}</span>
+<span style="color: #8C8C8C; white-space: nowrap">{{ f.meta }}</span>
+<button type="button" class="bb-x" onClick="{{ f.remove }}" aria-label="{{ f.removeLabel }}" style="height: 30px; width: 3ch; padding: 0; background: transparent; color: #BDBDBD; border: 0; border-left: 1px solid #5A5A5A; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">x</button>
+</span>
+</sc-for>
+<span style="color: #BDBDBD">{{ fileNote }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ showPicker }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-labelledby="bb-q-h" style="margin: 4px 0 8px 0; padding: 8px 0; border-top: 1px dashed #5A5A5A; border-bottom: 1px dashed #5A5A5A">
+<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0 2ch">
+<span id="bb-q-h">{{ pickerTitle }}</span>
+<span style="color: #8C8C8C">{{ pickerNote }}</span>
+<span style="margin-left: auto; display: flex; gap: 1ch">
+<button type="button" class="bb-btn" onClick="{{ onPickAll }}" style="height: 32px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>all<span aria-hidden="true"> ]</span></button>
+<button type="button" class="bb-btn" onClick="{{ onPickNone }}" style="height: 32px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>none<span aria-hidden="true"> ]</span></button>
+</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 4px 1ch; margin-top: 4px">
+<sc-for list="{{ questions }}" as="q" hint-placeholder-count="6">
+<button type="button" class="bb-opt" aria-pressed="{{ q.pressed }}" aria-label="{{ q.aria }}" onClick="{{ q.toggle }}" style="height: 32px; padding: 0 1ch; background: transparent; color: {{ q.fg }}; border: 1px solid {{ q.border }}; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre">{{ q.text }}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasLink }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 2ch; min-height: 32px; color: #BDBDBD">
+<span>~</span>
+<span>{{ linkNote }}</span>
+</div>
+</sc-if>
+
+<div class="bb-prompt" style="position: relative; display: flex; align-items: flex-start; gap: 1ch; margin-top: 4px">
+<span aria-hidden="true" style="font-weight: 700">&gt;</span>
+<label for="bb-text" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">your assignment</label>
+<div style="position: relative; flex-grow: 1; min-width: 0">
+<textarea id="bb-text" rows="1" placeholder="{{ textPlaceholder }}" aria-describedby="{{ describedText }}" aria-invalid="{{ textInvalid }}" onInput="{{ onType }}" onKeyDown="{{ onKey }}" onKeyUp="{{ onCaret }}" onClick="{{ onCaret }}" onFocus="{{ onCaret }}" onScroll="{{ onTaScroll }}" style="display: block; width: 100%; box-sizing: border-box; max-width: 100%; overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere; scrollbar-gutter: stable; scrollbar-width: thin; min-height: {{ taMinH }}; max-height: {{ taMaxH }}; field-sizing: content; margin: 0; padding: 0; border: 0; resize: none; background: transparent; color: #FFFFFF; font-family: inherit; font-size: 16px; line-height: 24px"></textarea>
+<div id="bb-text-mirror" aria-hidden="true" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; box-sizing: border-box; overflow-y: hidden; scrollbar-gutter: stable; scrollbar-width: thin; margin: 0; padding: 0; visibility: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 16px; line-height: 24px; pointer-events: none">{{ caretBefore }}<span class="bb-cursor" style="visibility: visible; display: inline-block; width: 1ch; height: 20px; vertical-align: -4px; background: {{accent}}"></span></div>
+</div>
+</div>
+<button type="button" class="bb-grow" aria-pressed="{{ boxDragging }}" aria-label="make the box bigger. arrow keys to resize, enter to reset" title="drag to make the box bigger · double-click to reset" onPointerDown="{{ onBoxDown }}" onPointerMove="{{ onBoxMove }}" onPointerUp="{{ onBoxUp }}" onPointerCancel="{{ onBoxUp }}" onDoubleClick="{{ onBoxReset }}" onKeyDown="{{ onBoxKey }}" style="position: absolute; right: -3px; bottom: -3px; width: 22px; height: 22px; margin: 0; padding: 0; background: #000000; color: #FFFFFF; border: 3px solid #FFFFFF; border-radius: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" style="display: block; pointer-events: none"><path d="M11 3 L3 11 M11 7 L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="square" fill="none"></path></svg>
+</button>
+</fieldset>
+
+<div style="display: flex; align-items: center; gap: 2ch; margin-top: 24px">
+<button type="button" class="{{ runClass }}" onClick="{{ onRunClick }}" style="height: 44px; box-sizing: border-box; padding: 0 2ch; background: {{ runBg }}; color: {{ runFg }}; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: nowrap"><span style="white-space: pre"><span aria-hidden="true">[ </span>{{ runLabel }}<span aria-hidden="true"> ]</span></span></button>
+<span style="color: #8C8C8C">{{ runHint }}</span>
+</div>
+
+<sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+<div id="bb-error" class="bb-line" style="margin-top: 16px"><span style="background: #FFFFFF; color: #000000; font-weight: 700; padding: 0 4px">error</span> {{ errorText }}</div>
+</sc-if>
+
+<sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 16px" aria-live="polite">
+<div style="white-space: pre">&gt; <span style="font-weight: 700">{{ echo }}</span></div>
+<sc-for list="{{ logLines }}" as="l" hint-placeholder-count="0">
+<div class="bb-line" style="white-space: pre; color: {{ l.color }}">{{ l.text }}</div>
+</sc-for>
+<sc-if value="{{ asking }}" hint-placeholder-val="{{ false }}">
+<div class="bb-line" style="margin-top: 8px; padding: 8px 2ch 10px 2ch; border: 1px solid #FFFFFF">
+<div><span aria-hidden="true" style="background: #FFFFFF; color: #000000; font-weight: 700; padding: 0 4px">?</span> <span id="bb-ask-q">{{ askText }}</span> <span style="color: #8C8C8C">{{ askCount }}</span></div>
+<div style="display: flex; align-items: center; gap: 1ch; margin-top: 8px">
+<span aria-hidden="true" style="font-weight: 700">&gt;</span>
+<input id="bb-ans" class="bb-field" type="text" autocomplete="off" placeholder="{{ askEg }}" aria-labelledby="bb-ask-q" onKeyDown="{{ onAnsKey }}" style="flex-grow: 1; min-width: 0; height: 32px; box-sizing: border-box; margin: 0; padding: 0 1ch; background: transparent; color: #FFFFFF; border: 1px solid #5A5A5A; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px">
+<button type="button" class="bb-btn" onClick="{{ onAnswer }}" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>answer<span aria-hidden="true"> ]</span></button>
+<button type="button" class="bb-btn" onClick="{{ onSkip }}" style="height: 32px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>skip<span aria-hidden="true"> ]</span></button>
+</div>
+<sc-if value="{{ askSave }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: flex-start; flex-wrap: wrap; gap: 4px 2ch; margin-top: 8px">
+<button type="button" class="bb-btn" aria-pressed="{{ saveOn }}" onClick="{{ onToggleSave }}" style="height: 32px; padding: 0 1ch; background: transparent; color: #FFFFFF; border: 1px solid #FFFFFF; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ saveLabel }}</button>
+<span style="flex: 1 1 40ch; min-width: 0; color: #BDBDBD">{{ saveWhy }}</span>
+</div>
+</sc-if>
+<div style="color: #BDBDBD">{{ askWhy }}</div>
+<div style="margin-top: 4px; color: #8C8C8C">it asks at most 3 things, and only when the answer would change the work. skip and it makes its best guess.</div>
+</div>
+</sc-if>
+<sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+<div class="bb-line" role="group" aria-label="answer checks" style="margin-top: 12px; padding: 8px 2ch; border: 1px solid #FFFFFF; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 1ch">
+<span style="font-weight: 700; margin-right: 1ch">checked</span>
+<sc-for list="{{ checks }}" as="k" hint-placeholder-count="6">
+<a class="bb-link" href="Results.dc.html" aria-label="{{ k.aria }}" style="display: inline-block; box-sizing: border-box; height: 32px; line-height: 30px; padding: 0 1ch; border: 1px solid {{ k.border }}; background: {{ k.bg }}; color: {{ k.fg }}; font-weight: 700; text-decoration: none; white-space: pre">{{ k.text }}</a>
+</sc-for>
+<span style="flex-basis: 100%; color: #BDBDBD">{{ checkNote }}</span>
+</div>
+<div class="bb-line" style="margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 2ch"><a id="bb-open" class="bb-link" href="Results.dc.html" style="display: inline-block; height: 32px; line-height: 32px; padding: 0 1ch; background: {{accent}}; color: #000000; font-weight: 700; text-decoration: none"><span style="white-space: pre"><span aria-hidden="true">[ </span>open the walkthrough<span aria-hidden="true"> ]</span></span></a><button type="button" class="bb-dl" onClick="{{ onSheet }}" style="height: 32px; padding: 0 2ch; background: {{accent}}; color: #000000; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ sheetLabel }}</button></div>
+</sc-if>
+</div>
+</sc-if>
+</form>
+</div>
+</main>
+
+<footer style="flex-shrink: 0">
+<div role="status" style="display: flex; align-items: center; gap: 2ch; padding: 8px 16px; border-top: 1px solid #FFFFFF; white-space: nowrap; overflow: hidden">
+<span style="font-weight: 700">{{ statusMain }}</span>
+<span style="color: #BDBDBD">{{ statusNeed }}</span>
+</div>
+<div style="height: 32px; display: flex; align-items: center; gap: 3ch; padding: 0 16px; white-space: nowrap; overflow: hidden">
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">enter</span> run</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+s</span> settings</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">ctrl+o</span> attach file</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">ctrl+v</span> paste screenshot</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">←/→</span> switch tab</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+h</span> past runs</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+i</span> intro</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">esc</span> back</span>
+</div>
+</footer>
+
+<sc-if value="{{ dragging }}" hint-placeholder-val="{{ false }}">
+<div aria-hidden="true" style="position: absolute; inset: 0; box-sizing: border-box; border: 8px solid {{accent}}; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; pointer-events: none">
+<div style="padding: 12px 3ch; background: {{accent}}; color: #000000; font-weight: 700; font-size: 24px; line-height: 32px">-- let go to drop it in the badgerbox --</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+componentDidMount() { this.focusBox(); }
+focusBox() { setTimeout(() => { const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
+componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
+later(fn, ms) { this.timers = this.timers || []; this.timers.push(setTimeout(fn, ms)); }
+renderVals() {
+const s = this.state || {};
+const accent = this.props.accent ?? '#FFFFFF';
+const TABS = [
+  { id: 'auto', label: 'auto', hint: 'drop a file anywhere, or type, paste or link it below', subject: 'chemistry', level: 'hard', model: 'complex', opts: [] },
+  { id: 'math', label: 'math', hint: 'type the problem, or drop a photo of the worksheet', subject: 'algebra', level: 'medium', model: 'default', opts: [{ key: 'calc', label: 'calculator', choices: ['allowed', 'not allowed'] }] },
+  { id: 'writing', label: 'writing', hint: 'paste the essay prompt or rubric, or drop a photo of it', subject: 'english · essay', level: 'medium', model: 'complex', opts: [{ key: 'kind', label: 'type', choices: ['essay', 'paragraph', 'short response'] }, { key: 'len', label: 'length', choices: ['short', '~500 words', '~1000 words'] }, { key: 'cite', label: 'cite', choices: ['none', 'MLA', 'APA'] }] },
+  { id: 'reading', label: 'reading', hint: 'paste the passage and the questions, or drop photos of both', subject: 'reading', level: 'easy', model: 'quick', opts: [{ key: 'ans', label: 'answers', choices: ['short', 'full sentences'] }] },
+  { id: 'science', label: 'science', hint: 'type the problem, or drop the problem set or lab sheet', subject: 'chemistry', level: 'hard', model: 'complex', opts: [{ key: 'kind', label: 'type', choices: ['problem set', 'lab write-up'] }] },
+  { id: 'social', label: 'social', hint: 'paste the history, government or social studies question', subject: 'us history', level: 'medium', model: 'default', opts: [{ key: 'src', label: 'sources', choices: ['not needed', 'cite sources'] }, { key: 'len', label: 'length', choices: ['short answer', 'paragraph', 'essay'] }] },
+  { id: 'language', label: 'language', hint: 'paste the sentences, or drop a screenshot of the exercise', subject: 'spanish', level: 'easy', model: 'quick', opts: [{ key: 'lang', label: 'language', choices: ['spanish', 'french', 'other'] }, { key: 'dir', label: 'direction', choices: ['into english', 'from english'] }] },
+  { id: 'code', label: 'code', hint: 'paste the assignment and any starter code', subject: 'computer science', level: 'medium', model: 'default', opts: [{ key: 'lang', label: 'language', choices: ['python', 'java', 'javascript', 'other'] }] },
+  { id: 'online', label: 'online', hint: 'press ctrl+v to paste a screenshot of the question, or drop it in', subject: 'algebra', level: 'medium', model: 'default', opts: [{ key: 'site', label: 'site', choices: ['IXL', 'Khan', 'DeltaMath', 'Quizlet', 'forms', 'other'] }] }
+];
+const OUTPUT = { key: 'out', label: 'output', choices: ['explained', 'show work', 'final answers'] };
+const HIST = [
+  { when: 'nov 10', tab: 'science', title: 'stoichiometry worksheet', meta: '#4 · 5 steps · explained' },
+  { when: 'nov 09', tab: 'writing', title: 'gatsby essay intro', meta: '~500 words · MLA' },
+  { when: 'nov 07', tab: 'online', title: 'IXL screenshot · slope', meta: '3 questions · show work' },
+  { when: 'nov 05', tab: 'language', title: 'spanish preterite drill', meta: '12 answers · answers only' },
+  { when: 'nov 02', tab: 'math', title: 'quadratics 1-6', meta: '6 problems · explained' }
+];
+const CLASSES = [
+  { tab: 'science', short: '10th grade chem', name: 'chemistry · 10th grade', detail: 'mole ratios · 3 sig figs · units on every line' },
+  { tab: 'math', short: 'algebra 2', name: 'algebra 2', detail: 'factor first · exact answers · box the final answer' },
+  { tab: 'writing', short: 'english 11', name: 'english 11', detail: 'MLA · short paragraphs · quote, then explain' }
+];
+const classesOf = (st) => Array.isArray(st.classes) ? st.classes : [];
+const rulesOf = (c) => Array.isArray(c.rules) ? c.rules : ((c.detail && !/saved from|this run/.test(c.detail)) ? c.detail.split(' \u00b7 ') : []);
+const detailOf = (rules) => { const r = rules.filter((x) => String(x || '').trim()); return r.length ? r.join(' \u00b7 ') : 'no work preferences yet \u00b7 add them in settings'; };
+const SUBJ_EG = {
+  math: ['e.g. algebra 2, 10th grade', 'e.g. factor first', 'e.g. box the final answer', 'e.g. exact answers, no decimals'],
+  writing: ['e.g. english 11, honors', 'e.g. MLA format', 'e.g. short paragraphs', 'e.g. quote, then explain'],
+  reading: ['e.g. 9th grade ELA', 'e.g. full sentences', 'e.g. cite the line number', 'e.g. one quote per answer'],
+  science: ['e.g. chemistry, 10th grade', 'e.g. 3 sig figs', 'e.g. units on every line', 'e.g. use 22.4 L at STP'],
+  social: ['e.g. AP US history', 'e.g. claim, evidence, reasoning', 'e.g. cite the textbook', 'e.g. a date in every answer'],
+  language: ['e.g. spanish 2', 'e.g. formal (usted)', 'e.g. latin american spanish', 'e.g. show the conjugation'],
+  code: ['e.g. AP computer science A', 'e.g. java, no libraries', 'e.g. comment every method', 'e.g. loops, not recursion'],
+  online: ['e.g. IXL, 8th grade math', 'e.g. answer only', 'e.g. show work so I can check', "e.g. match the site's rounding"]
+};
+const tabClasses = (st) => { const id = TABS[st.tab || 0].id; return classesOf(st).filter((c) => c.tab === id); };
+const classIdx = (st) => { const id = TABS[st.tab || 0].id; const n = tabClasses(st).length; const v = (st.cls || {})[id]; return (v != null && v < n) ? v : Math.max(0, n - 1); };
+const SETS = [{ key: 'work', label: 'work shown', choices: ['every step', 'key steps'] }, { key: 'round', label: 'rounding', choices: ['like the worksheet', '3 sig figs', 'exact'] }];
+const syncM = (id, ta) => setTimeout(() => { const m = document.getElementById(id); const t = ta || document.getElementById(id.replace('-mirror', '')); if (m && t) m.scrollTop = t.scrollTop; }, 0);
+const MAX_GH = 480, MAX_GW = 560;
+const growH = s.growH || 0;
+const growW = s.growW || 0;
+const clampG = (v, m) => Math.round(Math.min(m, Math.max(0, v)));
+const tabIdx = s.tab || 0;
+const tab = TABS[tabIdx];
+const text = String(s.text || '').trim();
+const files = s.files || [];
+const isDoc = (f) => /image|pdf/i.test(f.type || '') || /\.(png|jpe?g|heic|webp|pdf)$/i.test(f.name);
+const docs = files.filter(isDoc);
+const showPicker = docs.length > 0;
+const Q = 6;
+const picked = Array.isArray(s.picked) ? s.picked : [0, 1, 2, 3, 4, 5];
+const needPick = showPicker && picked.length === 0;
+const optVal = (k) => (s.opt && s.opt[k] != null) ? s.opt[k] : 0;
+const setOpt = (k, i) => this.setState({ opt: Object.assign({}, s.opt || {}, { [k]: i }) });
+const back = () => { const a = document.querySelector('header a.bb-link'); if (a) a.click(); };
+const pickTab = (i) => this.setState({ tab: i, tried: false, phase: 0 });
+const okTypes = ['image/png','image/jpeg','image/heic','image/webp','application/pdf','text/plain'];
+const hasLink = /https?:\/\/\S+/i.test(text);
+const hasWork = !!text || files.length > 0;
+const needTick = false;
+const ok = hasWork && !needTick && !needPick;
+const badFile = s.badFile || '';
+const showError = (!!s.tried && !ok) || !!badFile;
+const running = !!s.tried && ok && !badFile;
+const phase = s.phase || 0;
+const pad = (a, b) => a + ' ' + '.'.repeat(Math.max(2, 30 - a.length)) + ' ' + b;
+const outs = Array.isArray(s.outs) ? s.outs : [0, 1, 2];
+const toggleOut = (i) => {
+  const on = outs.indexOf(i) !== -1;
+  if (on && outs.length === 1) return;
+  this.setState({ outs: on ? outs.filter((x) => x !== i) : outs.concat([i]).sort((a, b) => a - b) });
+};
+const outName = outs.map((i) => OUTPUT.choices[i]).join(' + ');
+const TEXT_EG = {
+  auto: 'e.g. solve 3x + 7 = 22',
+  math: 'e.g. factor x² + 5x + 6',
+  writing: 'e.g. write a 5 paragraph essay on symbolism in the great gatsby',
+  reading: 'e.g. paste the passage, then: why does the narrator leave town?',
+  science: 'e.g. 10.0 g of Al reacts with 35.0 g of Cl₂. which runs out first?',
+  social: 'e.g. what caused the war of 1812? answer in one paragraph',
+  language: 'e.g. translate: ayer fui al mercado con mi hermana',
+  code: 'e.g. write a function that reverses a string without slicing',
+  online: 'e.g. just the answer to the question in my screenshot'
+};
+const ASK_EG = {
+  auto: 'e.g. 10th grade chemistry',
+  math: 'e.g. exact, leave it as a fraction',
+  writing: 'e.g. 11th grade english, pretty formal',
+  reading: 'e.g. yes, one quote per answer',
+  science: 'e.g. 10th grade chemistry',
+  social: 'e.g. unit 4, the american revolution',
+  language: 'e.g. spanish 2',
+  code: 'e.g. no imports, loops only',
+  online: 'e.g. 8th grade'
+};
+const ASK = {
+  auto: 'what class is this for? it uses the methods you were taught.',
+  math: 'should answers be exact (fractions, radicals) or rounded decimals?',
+  writing: 'what grade or class is this for, and how formal should it sound?',
+  reading: 'do your answers need quotes from the passage?',
+  science: 'what class is this for? it uses the methods you were taught.',
+  social: 'what unit or textbook is this from?',
+  language: 'what level are you in? (spanish 1, 2, AP...)',
+  code: "anything you're not allowed to use? (libraries, built-ins)",
+  online: 'what grade level is this set?'
+};
+const ctx = String(s.ctx || '').trim();
+const voiceWords = String(s.voice || '').trim() ? String(s.voice).trim().split(/\s+/).length : 0;
+const API = window.bbApi || null;
+const LIVE_ON = !!(API && API.isLive());
+const build = (st) => {
+  const LV = this.live || null;
+  const bTab = TABS[st.tab || 0];
+  const bText = String(st.text || '').trim();
+  const bDocs = (st.files || []).filter(isDoc);
+  const bPicked = Array.isArray(st.picked) ? st.picked : [0, 1, 2, 3, 4, 5];
+  const bCtx = String(st.ctx || '').trim();
+  const bVoice = String(st.voice || '').trim() ? String(st.voice).trim().split(/\s+/).length : 0;
+  const bOuts = Array.isArray(st.outs) ? st.outs : [0, 1, 2];
+  const ans = st.answers || {};
+  const essay = bTab.id === 'writing' || ((bTab.id === 'auto' || bTab.id === 'social') && /essay|paragraph|write (a|an|me|my)/i.test(bText));
+  const qs = [];
+  const bAuto = bTab.id === 'auto';
+  const bClasses = bAuto ? [] : tabClasses(st);
+  if (bAuto || !bClasses.length || ans.class) qs.push({ id: 'class', text: bAuto ? 'what class is this for? used for this run only.' : 'what class is this for? it works the way that class does.', eg: ASK_EG[bTab.id] });
+  if (essay && bVoice === 0) qs.push({ id: 'voice', text: 'want it to sound like you? paste a few sentences you wrote.', eg: 'e.g. paste a paragraph from an old essay' });
+  if (essay && bTab.id !== 'writing') qs.push({ id: 'len', text: 'how long should it be? (a paragraph, a page, a word count)', eg: 'e.g. 5 paragraphs, about 600 words' });
+  if (bTab.id === 'reading' && !bDocs.length && bText.length < 200) qs.push({ id: 'passage', text: 'paste the passage these questions are about.', eg: 'e.g. paste the whole passage here' });
+  if (!LIVE_ON && bDocs.length && !bText && bPicked.indexOf(2) !== -1) qs.push({ id: 'blurry', text: '#3 is hard to read in the photo. can you type it out?', eg: 'e.g. 3) 2x - 5 = 11' });
+  if (bTab.id === 'math') qs.push({ id: 'method', text: 'did your teacher want a certain method? (factoring, quadratic formula...)', eg: 'e.g. quadratic formula' });
+  const asked = qs.slice(0, 3);
+  const lines = [];
+  lines.push(pad(bDocs.length ? 'reading ' + bDocs[0].name.slice(0, 18) : 'reading your assignment', 'ok'));
+  if (LV) lines.push('  ' + LV.questions.length + ' question' + (LV.questions.length === 1 ? '' : 's') + ' found');
+  else if (bDocs.length && !LIVE_ON) lines.push('  ' + Q + ' questions found, doing ' + bPicked.length);
+  lines.push(pad('finding the subject', LV ? String(LV.subject).slice(0, 22) : (LIVE_ON ? '...' : bTab.subject)));
+  let pending = null;
+  let num = 0;
+  for (let i = 0; i < asked.length; i++) {
+    const a = ans[asked[i].id];
+    num = i + 1;
+    if (a == null) { pending = asked[i]; break; }
+    if (asked[i].id === 'class') lines.push(!a ? '  skipped \u00b7 using its best guess' : (ans.classSaved ? '  saved "' + String(a).slice(0, 24) + '" to the ' + bTab.id + ' tab \u00b7 won\'t ask again' : '  using "' + String(a).slice(0, 28) + '" for this run \u00b7 not saved'));
+    else lines.push(a ? '  you said: ' + String(a).slice(0, 44) : '  skipped, using its best guess');
+  }
+  const askAt = lines.length;
+  const bCls = bClasses[classIdx(st)] || (ans.class ? { short: ans.class, detail: 'this run only \u00b7 not saved' } : null);
+  if (bCls) { lines.push(pad('matching your class', bCls.short.slice(0, 22))); lines.push('  ' + bCls.detail); }
+  if (essay && (bVoice > 0 || ans.voice)) lines.push('  matching your writing sample');
+  lines.push(pad('checking how hard it is', LV ? LV.level : (LIVE_ON ? '...' : bTab.level)));
+  lines.push(pad('picking a model', LV ? 'default' : (LIVE_ON ? 'default' : bTab.model)));
+  const wAt = lines.length;
+  lines.push('working through it');
+  if (this.apiError) lines.push('  [!] ' + String(this.apiError).slice(0, 60) + ' · showing the sample');
+  if (LV) {
+    lines.push('checking every answer 2 ways');
+    LV.questions.forEach((q, i) => lines.push('  #' + (q.number || i + 1) + '  ' + (q.sure ? '[\u2713] both ways match' : '[!] not sure · ' + String(q.flag || 'look at it').slice(0, 44))));
+  } else if (bDocs.length) {
+    lines.push('checking every answer 2 ways');
+    bPicked.forEach((i) => lines.push('  #' + (i + 1) + '  ' + (i === 2 ? '[!] not sure · the 2 ways disagree at step 2' : '[\u2713] both ways match')));
+  } else lines.push(pad('checking the answer 2 ways', '[\u2713] match'));
+  lines.push('done in ' + (LV && LV.seconds ? LV.seconds : 34) + 's · ' + bOuts.map((i) => OUTPUT.choices[i]).join(' + '));
+  return { lines: lines, askAt: askAt, pending: pending, num: num, total: asked.length, wIdx: wAt };
+};
+const B = build(s);
+const allLog = B.lines;
+const askAt = B.askAt;
+const pendingAsk = !!B.pending;
+const wIdx = B.wIdx;
+const bars = ['[##----------]', '[#####-------]', '[########----]', '[##########--]', '[############]'];
+const logLines = allLog.slice(0, phase).map((t, i) => ({
+  text: i === wIdx ? t + ' ' + (phase >= allLog.length ? bars[4] : bars[Math.min(Math.max(phase - wIdx - 1, 0), 3)]) : t,
+  color: (i === allLog.length - 1 || t.indexOf('[!]') !== -1) ? '#FFFFFF' : '#BDBDBD'
+}));
+let errorText = '';
+if (badFile) errorText = badFile + " isn't a type badgerbox can read. use png, jpg, heic, pdf or plain text";
+else if (!hasWork && needTick) errorText = "can't run yet: add your assignment and tick the permission box";
+else if (!hasWork) errorText = "can't run yet: add your assignment first";
+else if (needPick) errorText = "can't run yet: pick at least one question";
+else if (needTick) errorText = "can't run yet: tick the permission box first";
+const missing = [];
+if (!hasWork) missing.push('your assignment');
+if (needPick) missing.push('a question');
+if (needTick) missing.push('the permission tick');
+const autoIntro = tabIdx === 0 && files.length === 0 && !running;
+const showIntro = s.intro != null ? !!s.intro : autoIntro;
+const showHistory = !!s.hist;
+const showSettings = !!s.set && !showHistory;
+const classes = classesOf(s);
+const openSubj = s.setOpen || '';
+const draft = s.draft || { name: '', rules: ['', '', ''] };
+const subjOf = (id) => { const list = classes.filter((x) => x.tab === id); return list[selIdx(id)] || null; };
+const scrollSubj = (id) => [80, 240].forEach((ms) => this.later(() => { const li = document.getElementById('bb-subj-' + id); if (li && li.scrollIntoView) li.scrollIntoView({ block: 'nearest' }); }, ms));
+const openSection = (id) => {
+  if (openSubj === id) { this.setState({ setOpen: '', subjNote: '' }); return; }
+  const c = subjOf(id);
+  const rl = c ? rulesOf(c).slice(0, 3) : [];
+  while (rl.length < 3) rl.push('');
+  this.setState({ setOpen: id, draft: { name: c ? c.name : '', rules: rl }, subjNote: '' });
+  this.later(() => { const el = document.getElementById('bb-cls-' + id); if (el) el.focus({ preventScroll: true }); }, 90);
+  scrollSubj(id);
+};
+const saveSection = (id) => {
+  const st = this.state || {};
+  const d = st.draft || draft;
+  const name = String(d.name || '').trim();
+  if (!name) { this.setState({ subjNote: 'add the class name first' }); const el = document.getElementById('bb-cls-' + id); if (el) el.focus(); return; }
+  const rules = d.rules.map((x) => String(x || '').trim()).filter((x) => x).slice(0, 3);
+  const entry = { tab: id, short: name.slice(0, 24), name: name, rules: rules, detail: detailOf(rules) };
+  const old = subjOf(id);
+  const all = classesOf(st);
+  const next = old ? all.map((x) => (x === old ? entry : x)) : all.concat([entry]);
+  this.setState({ classes: next, setOpen: '', subjNote: '', saveFlash: id });
+  this.later(() => { if ((this.state || {}).saveFlash === id) this.setState({ saveFlash: '' }); }, 2500);
+};
+const tClasses = tab.id === 'auto' ? [] : tabClasses(s);
+const selIdx = (id) => { const n = classes.filter((x) => x.tab === id).length; const v = (s.cls || {})[id]; return (v != null && v < n) ? v : Math.max(0, n - 1); };
+const askingClass = running && pendingAsk && phase === askAt && B.pending.id === 'class';
+const saveOn = s.saveCls !== false;
+const cIdx = classIdx(s);
+const LVR = this.live || null;
+const lvFlags = LVR ? LVR.questions.filter((q) => !q.sure).length : 0;
+const flagged = LVR ? lvFlags > 0 : (showPicker && picked.indexOf(2) !== -1);
+const nChecked = LVR ? LVR.questions.length : (showPicker ? picked.length : 1);
+const flash = (k, ms) => { this.setState({ sheet: false, addCls: false, [k]: true }); this.later(() => this.setState({ [k]: false }), ms || 3000); };
+const pickClass = (i, id) => this.setState({ cls: Object.assign({}, (s.cls && typeof s.cls === 'object') ? s.cls : {}, { [id || tab.id]: i }) });
+const fmt = (n) => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+const toBottom = () => [0, 60, 220].forEach((ms) => this.later(() => { const c = document.getElementById('bb-col'); if (c) c.scrollTop = c.scrollHeight; }, ms));
+const fileKey = (f) => f.name + ':' + f.size;
+const startApi = (st) => {
+  if (!API || this.apiStarted) return;
+  this.apiStarted = true;
+  const id = this.runId;
+  const t = TABS[st.tab || 0];
+  const ans = st.answers || {};
+  const cl = (t.id === 'auto' ? [] : tabClasses(st))[classIdx(st)] || null;
+  const cls = cl ? { name: cl.name, rules: rulesOf(cl) } : (ans.class ? { name: ans.class, rules: [] } : null);
+  const fs = (st.files || []).filter(isDoc);
+  const data = this.fileData || {};
+  const payload = {
+    tab: t.id,
+    text: String(st.text || ''),
+    cls: cls,
+    answers: ans,
+    outputs: (Array.isArray(st.outs) ? st.outs : [0, 1, 2]).map((i) => OUTPUT.choices[i]),
+    picked: fs.length && Array.isArray(st.picked) ? st.picked.map((i) => i + 1) : null,
+    files: (st.files || []).map((f) => data[fileKey(f)]).filter(Boolean),
+    meta: { fileName: fs[0] ? fs[0].name : '', classShort: cl ? cl.short : (ans.class || ''), classDetail: cl ? cl.detail : '', tab: t.id }
+  };
+  this.apiPending = true;
+  API.solve(payload).then((res) => {
+    if (id !== this.runId) return;
+    this.apiPending = false;
+    if (res && res.source === 'model') this.live = res;
+    else if (res && (res.source === 'error')) this.apiError = res.error || 'the model request failed';
+    this.forceUpdate();
+  });
+};
+const advance = () => {
+  const st = this.state || {};
+  const p = st.phase || 0;
+  const b = build(st);
+  if (p >= b.lines.length) return;
+  if (!this.apiStarted && p >= b.askAt && !(b.pending && p === b.askAt)) startApi(st);
+  if (this.apiPending && p >= b.wIdx + 1) { this.later(advance, 400); return; }
+  if (b.pending && p === b.askAt) {
+    this.later(() => { const a = document.getElementById('bb-ans'); if (a) a.focus(); }, 60);
+    toBottom();
+    return;
+  }
+  this.setState({ phase: p + 1 });
+  toBottom();
+  if (p + 1 >= b.lines.length) this.later(() => { const a = document.activeElement; const t = a && a.tagName; if (t !== 'TEXTAREA' && t !== 'INPUT') { const o = document.getElementById('bb-open'); if (o) o.focus({ preventScroll: true }); } }, 120);
+  this.later(advance, p >= b.wIdx ? 420 : 650);
+};
+const answer = (val) => {
+  const st = this.state || {};
+  const b = build(st);
+  if (!b.pending) return;
+  const v = String(val || '').trim();
+  const patch = { answers: Object.assign({}, st.answers || {}, { [b.pending.id]: v }) };
+  const tId = TABS[st.tab || 0].id;
+  if (b.pending.id === 'class' && v && tId !== 'auto' && st.saveCls !== false) { patch.classes = classesOf(st).concat([{ tab: tId, short: v.slice(0, 24), name: v, rules: [], detail: 'no work preferences yet \u00b7 add them in settings' }]); patch.answers.classSaved = '1'; }
+  this.setState(patch);
+  const a = document.getElementById('bb-ans');
+  if (a) a.value = '';
+  const root = document.getElementById('bb-root');
+  if (root) root.focus({ preventScroll: true });
+  this.later(advance, 250);
+};
+const submit = () => {
+  if (badFile) return;
+  if (!ok) {
+    this.setState({ tried: true });
+    toBottom();
+    const id = !hasWork ? 'bb-text' : needPick ? 'bb-q-h' : 'bb-agree';
+    this.later(() => { const el = document.getElementById(id); if (el) el.focus(); }, 0);
+    return;
+  }
+  const cur = this.state || {};
+  if (cur.tried && cur.phase && cur.phase < build(cur).lines.length) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  this.runId = (this.runId || 0) + 1;
+  this.apiStarted = false;
+  this.apiPending = false;
+  this.live = null;
+  this.apiError = '';
+  this.setState({ cancelled: false, tried: true, phase: reduce ? 99 : 1, answers: reduce ? { class: '', voice: '', len: '', passage: '', blurry: '', method: '' } : {} });
+  if (reduce) startApi(Object.assign({}, this.state || {}, { answers: {} }));
+  toBottom();
+  if (!reduce) this.later(advance, 650);
+};
+const inProgress = running && phase < allLog.length;
+const cancel = () => {
+  this.runId = (this.runId || 0) + 1;
+  this.apiPending = false;
+  (this.timers || []).forEach(clearTimeout);
+  this.timers = [];
+  this.setState({ tried: false, phase: 0, answers: {}, cancelled: true });
+};
+const doneNow = running && phase >= allLog.length;
+const openWalk = () => { const a = document.getElementById('bb-open'); if (a) a.click(); };
+const addFiles = (list) => {
+  const next = files.slice();
+  let bad = '';
+  let over = false;
+  Array.from(list || []).forEach((f) => {
+    if (okTypes.indexOf(f.type) === -1 && !/\.(png|jpe?g|heic|webp|pdf|txt)$/i.test(f.name)) { bad = f.name; return; }
+    if (!next.some((x) => x.name === f.name && x.size === f.size)) { if (next.length >= 3) { over = true; return; } next.push({ name: f.name, size: f.size, type: f.type }); const blob = f.blob || ((typeof Blob !== 'undefined' && f instanceof Blob) ? f : null); if (blob && API) { const k = f.name + ':' + f.size; API.readFile(blob).then((d) => { if (d) { this.fileData = this.fileData || {}; this.fileData[k] = d; } }); } }
+  });
+  this.setState({ files: next, badFile: bad, tried: false, dragging: false, picked: null, fileNote: over ? '3 files max. remove one to add another.' : '' });
+};
+const groups = tab.opts.map((g) => ({ label: g.label, choices: g.choices, k: tab.id + '.' + g.key })).concat([{ label: OUTPUT.label, choices: OUTPUT.choices, k: OUTPUT.key }]);
+const bookmarklet = "javascript:(function(){var s=''+(window.getSelection?window.getSelection():'');var t=s.length>20?s:(document.body?document.body.innerText:'').slice(0,6000);window.open('https://badgerbox.app/in#'+encodeURIComponent(t.trim()),'_blank');})();";
+return {
+  accent: accent,
+  tabId: tab.id,
+  onPasteClick: () => {
+    const ta = document.getElementById('bb-text'); if (ta) ta.focus();
+    try {
+      if (navigator.clipboard && navigator.clipboard.read) {
+        navigator.clipboard.read().then((items) => {
+          for (const it of items) {
+            const ty = (it.types || []).filter((x) => /^image\//.test(x))[0];
+            if (ty) { it.getType(ty).then((blob) => addFiles([{ name: 'screenshot.png', size: (blob && blob.size) || 0, type: (blob && blob.type) || 'image/png', blob: blob }])).catch(() => {}); return; }
+          }
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  },
+  pasteSub: files.length ? 'added \u2014 paste another or type a note' : 'the fastest way on a school Chromebook',
+  fastOpen: s.fast ? 'true' : 'false',
+  fastShown: !!s.fast,
+  isAuto: tabIdx === 0,
+  autoShown: tabIdx === 0 && !!s.fast,
+  fastLabel: s.fast ? '[-] fast mode' : '[+] fast mode \u00b7 one click from Classroom',
+  onToggleFast: () => this.setState({ fast: !s.fast }),
+  onFastNoop: (e) => { e.preventDefault(); },
+  bookmarklet: bookmarklet,
+  isWriting: tab.id === 'writing',
+  showSettings: showSettings,
+  settingsOpen: showSettings ? 'true' : 'false',
+  settingsLabel: showSettings ? '[ close settings ]' : '[ settings ]',
+  onToggleSettings: () => this.setState({ set: !showSettings, hist: false }),
+  classChips: tClasses.map((c, i) => { const on = i === cIdx; return { text: c.short, pressed: on ? 'true' : 'false', bg: on ? accent : 'transparent', fg: on ? '#000000' : '#BDBDBD', border: on ? accent : '#5A5A5A', pick: () => pickClass(i) }; }),
+  hasClass: tClasses.length > 0,
+  classEmpty: tClasses.length ? '' : (tab.id === 'auto' ? 'asked each run, never saved \u00b7 auto can be any class' : 'not set yet \u00b7 badgerbox asks on your first ' + tab.id + ' run'),
+  subjects: TABS.slice(1).map((t, n) => {
+    const c = subjOf(t.id);
+    const isOpen = openSubj === t.id;
+    const eg = SUBJ_EG[t.id] || ['', '', '', ''];
+    return {
+      id: 'bb-subj-' + t.id,
+      tag: (n + 1) + ':' + t.label,
+      label: t.label,
+      tagBg: c ? accent : '#000000',
+      tagFg: c ? '#000000' : accent,
+      border: isOpen ? '#FFFFFF' : (c ? '#6B6B6B' : '#3A3A3A'),
+      name: c ? c.name : 'no class yet',
+      nameColor: c ? '#FFFFFF' : '#8C8C8C',
+      detail: s.saveFlash === t.id ? 'saved \u00b7 every ' + t.label + ' run uses this now' : (c ? detailOf(rulesOf(c)) : 'click to add your class'),
+      caret: isOpen ? '\u25be' : '\u25b8',
+      expanded: isOpen ? 'true' : 'false',
+      isOpen: isOpen,
+      toggle: () => openSection(t.id),
+      nameId: 'bb-cls-' + t.id,
+      namePh: eg[0],
+      draftName: isOpen ? draft.name : '',
+      onName: (e) => this.setState({ draft: Object.assign({}, (this.state || {}).draft || draft, { name: e.target.value }), subjNote: '' }),
+      rules: [0, 1, 2].map((j) => ({
+        n: (j + 1) + '.',
+        id: 'bb-rule-' + t.id + '-' + j,
+        ph: eg[j + 1],
+        value: isOpen ? (draft.rules[j] || '') : '',
+        onInput: (e) => { const d = (this.state || {}).draft || draft; const rl = d.rules.slice(); rl[j] = e.target.value; this.setState({ draft: Object.assign({}, d, { rules: rl }) }); }
+      })),
+      onFieldKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); saveSection(t.id); } else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); this.setState({ setOpen: '', subjNote: '' }); } },
+      onSave: () => saveSection(t.id),
+      onCancel: () => this.setState({ setOpen: '', subjNote: '' }),
+      canRemove: !!c,
+      onRemove: () => this.setState({ classes: classes.filter((x) => x !== c), setOpen: '', subjNote: '' }),
+      note: isOpen ? (s.subjNote || '') : ''
+    };
+  }),
+  classNone: classes.length ? '' : 'none yet. badgerbox asks for your class on your first run in a subject tab, and saves it here if you tick the box.',
+  classDetail: tClasses[cIdx] ? tClasses[cIdx].detail : '',
+  classRowsOld: classes.map((c) => { const i = classes.filter((x) => x.tab === c.tab).indexOf(c); const on = i === selIdx(c.tab); return { name: c.name + ' \u00b7 ' + c.tab + ' tab', detail: c.detail, mark: on ? '[x]' : '[ ]', pressed: on ? 'true' : 'false', border: on ? '#FFFFFF' : '#5A5A5A', pick: () => pickClass(i, c.tab) }; }),
+  askSave: askingClass && tab.id !== 'auto',
+  saveOn: saveOn ? 'true' : 'false',
+  saveLabel: (saveOn ? '[x]' : '[ ]') + ' save this class to the ' + tab.id + ' tab',
+  saveWhy: saveOn ? "saving is for you: you won't be asked again here, and every " + tab.id + " run uses this class's methods, units and rounding, so the work comes out more accurate." : 'not saved: badgerbox asks again next run and has less to go on, so answers may not match how your class does it.',
+  onToggleSave: () => this.setState({ saveCls: !saveOn }),
+  askWhy: (askingClass && tab.id === 'auto') ? 'not saved on auto, because the work here could be for any class. it only makes this run more accurate. to save a class, use a subject tab.' : '',
+  onAddClass: () => { const next = CLASSES.filter((c) => !classes.some((x) => x.name === c.name))[0]; if (!next) { flash('addCls'); return; } this.setState({ classes: classes.concat([next]) }); },
+  setGroups: SETS.map((g) => ({ label: g.label, choices: g.choices.map((c, i) => { const on = optVal('set.' + g.key) === i; return { text: c, pressed: on ? 'true' : 'false', bg: on ? accent : 'transparent', fg: on ? '#000000' : '#BDBDBD', border: on ? accent : '#5A5A5A', pick: () => setOpt('set.' + g.key, i) }; }) })),
+  voiceLine: voiceWords === 0 ? 'no writing sample saved yet' : 'saved · ' + voiceWords + ' words',
+  clearLabel: s.cleared ? 'past runs cleared' : 'clear past runs',
+  checks: LVR ? LVR.questions.map((q, i) => (!q.sure ? { text: '#' + (q.number || i + 1) + ' [!]', aria: 'question ' + (q.number || i + 1) + ', not sure, open its walkthrough', bg: accent, fg: '#000000', border: accent } : { text: '#' + (q.number || i + 1) + ' [\u2713]', aria: 'question ' + (q.number || i + 1) + ', checked, open its walkthrough', bg: 'transparent', fg: '#FFFFFF', border: '#5A5A5A' })) : showPicker ? picked.map((i) => (i === 2 ? { text: '#3 [!]', aria: 'question 3, not sure, open its walkthrough', bg: accent, fg: '#000000', border: accent } : { text: '#' + (i + 1) + ' [\u2713]', aria: 'question ' + (i + 1) + ', checked, open its walkthrough', bg: 'transparent', fg: '#FFFFFF', border: '#5A5A5A' })) : [{ text: 'answer [\u2713]', aria: 'answer checked, open the walkthrough', bg: 'transparent', fg: '#FFFFFF', border: '#5A5A5A' }],
+  checkNote: LVR ? (lvFlags ? (nChecked - lvFlags) + ' checked 2 ways and match · ' + lvFlags + ' not sure · click any one to see its steps' : 'all ' + nChecked + ' checked 2 ways and match · click any one to see its steps') : flagged ? (nChecked - 1) + ' checked 2 ways and match · #3 not sure, look at step 2 · click any one to see its steps' : (showPicker ? 'all ' + nChecked + ' checked 2 ways and match · click any one to see its steps' : 'solved 2 ways, both match · click to see the steps'),
+  sheetLabel: s.sheet ? 'preparing worksheet...' : '\u2913 completed worksheet',
+  onSheet: () => flash('sheet'),
+  ctxPlaceholder: tab.id === 'writing' ? 'optional · e.g. 11th grade english, teacher likes short paragraphs' : 'optional · e.g. 10th grade chemistry, we just did moles',
+  onCtx: (e) => { this.setState({ ctx: e.target.value }); if (running && pendingAsk && phase === askAt) this.later(advance, 600); },
+  onVoice: (e) => this.setState({ voice: e.target.value }),
+  voiceNote: voiceWords === 0 ? 'a paragraph or two is enough. it copies your style, not your words.' : voiceWords + ' words · ' + (voiceWords < 80 ? 'a bit more helps it match you' : 'enough to match your style'),
+  asking: running && pendingAsk && phase === askAt,
+  askText: B.pending ? B.pending.text : '',
+  askEg: B.pending ? B.pending.eg : '',
+  textPlaceholder: '  ' + (files.length ? 'e.g. just #4 please' : TEXT_EG[tab.id]),
+  askCount: B.total > 1 ? B.num + ' of ' + B.total : '',
+  onAnsKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); answer(e.target.value); } },
+  onAnswer: () => { const a = document.getElementById('bb-ans'); answer(a ? a.value : ''); },
+  onSkip: () => answer(''),
+  tabs: TABS.map((t, i) => {
+    const on = i === tabIdx;
+    return {
+      id: 'bb-tab-' + t.id,
+      text: i + ':' + t.label,
+      selected: on ? 'true' : 'false',
+      tabindex: on ? '0' : '-1',
+      bg: on ? '#000000' : 'transparent',
+      fg: on ? '#FFFFFF' : '#000000',
+      divider: (i > 0 && !on && i - 1 !== tabIdx) ? 'rgba(0,0,0,0.45)' : 'transparent',
+      weight: on ? '700' : '400',
+      pick: () => pickTab(i)
+    };
+  }),
+  onTabKey: (e) => {
+    if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); e.stopPropagation(); const ta = document.getElementById('bb-text'); if (ta) ta.focus(); return; }
+    let n = -1;
+    if (e.key === 'ArrowRight') n = (tabIdx + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') n = (tabIdx - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') n = 0;
+    else if (e.key === 'End') n = TABS.length - 1;
+    if (n < 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    pickTab(n);
+    this.later(() => { const b = document.getElementById('bb-tab-' + TABS[n].id); if (b) b.focus(); }, 0);
+  },
+  optGroups: groups.map((g) => ({
+    label: g.label,
+    choices: g.choices.map((c, i) => {
+      if (g.k === OUTPUT.key) {
+        const on = outs.indexOf(i) !== -1;
+        return { text: (on ? '[x] ' : '[ ] ') + c, pressed: on ? 'true' : 'false', bg: 'transparent', fg: on ? '#FFFFFF' : '#8C8C8C', border: on ? '#FFFFFF' : '#5A5A5A', pick: () => toggleOut(i) };
+      }
+      const on = optVal(g.k) === i;
+      return { text: c, pressed: on ? 'true' : 'false', bg: on ? accent : 'transparent', fg: on ? '#000000' : '#BDBDBD', border: on ? accent : '#5A5A5A', pick: () => setOpt(g.k, i) };
+    })
+  })),
+  showPicker: showPicker,
+  pickerTitle: Q + ' questions found in ' + (docs.length > 1 ? docs.length + ' files' : (docs[0] ? docs[0].name : '')),
+  pickerNote: needPick ? 'pick at least one' : 'doing ' + picked.length + ' of ' + Q,
+  questions: Array.from({ length: Q }, (_, i) => {
+    const on = picked.indexOf(i) !== -1;
+    return {
+      text: (on ? '[x]' : '[ ]') + ' #' + (i + 1),
+      aria: 'question ' + (i + 1),
+      pressed: on ? 'true' : 'false',
+      fg: on ? '#FFFFFF' : '#8C8C8C',
+      border: on ? '#FFFFFF' : '#5A5A5A',
+      toggle: () => this.setState({ picked: on ? picked.filter((x) => x !== i) : picked.concat([i]).sort((a, b) => a - b), tried: false })
+    };
+  }),
+  onPickAll: () => this.setState({ picked: null, tried: false }),
+  onPickNone: () => this.setState({ picked: [], tried: false }),
+  linkNote: tab.id === 'online' ? "most homework sites need a login, so badgerbox can't open that link. paste a screenshot instead" : 'link found · it has to open without a login',
+  showLogo: !showHistory && !showSettings,
+  showHistory: showHistory,
+  historyOpen: showHistory ? 'true' : 'false',
+  historyLabel: showHistory ? '[ close past runs ]' : '[ past runs ]',
+  onToggleHistory: () => this.setState({ hist: !showHistory, set: false }),
+  history: s.cleared ? [] : HIST,
+  hasHistory: !s.cleared,
+  noHistory: !!s.cleared,
+  onClearHistory: () => this.setState({ cleared: true }),
+  onPaste: (e) => {
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    const imgs = [];
+    Array.from(items).forEach((it) => {
+      if (it.kind === 'file' && /^image\//.test(it.type)) {
+        const f = it.getAsFile();
+        if (f) imgs.push({ name: 'screenshot-' + (files.length + imgs.length + 1) + '.png', size: f.size, type: f.type || 'image/png', blob: f });
+      }
+    });
+    if (imgs.length) { e.preventDefault(); addFiles(imgs); }
+  },
+  logoClass: (running && phase < allLog.length) ? 'bb-logo bb-logo-run' : 'bb-logo',
+  showIntro: showIntro,
+  introLabel: showIntro ? '[-] hide intro' : '[+] show intro',
+  leftJustify: (showHistory || showSettings) ? 'flex-start' : 'center',
+  introOpen: showIntro ? 'true' : 'false',
+  compact: !showIntro,
+  formGap: showIntro ? '24px' : '16px',
+  onToggleIntro: () => this.setState({ intro: !showIntro }),
+  hint: files.length ? 'add more, or type a note like "just #4"' : tab.hint,
+  files: files.map((f, i) => ({
+    name: f.name,
+    meta: fmt(f.size),
+    removeLabel: 'remove ' + f.name,
+    remove: () => this.setState({ files: files.filter((_, j) => j !== i), badFile: '', tried: false, fileNote: '' })
+  })),
+  hasLink: hasLink,
+  hasFiles: files.length > 0,
+  fileCount: 'files ' + files.length + '/3',
+  fileNote: s.fileNote || '',
+  onFiles: (e) => { addFiles(e.target.files); e.target.value = ''; },
+  onDragOver: (e) => { e.preventDefault(); if (!s.dragging) this.setState({ dragging: true }); },
+  onDragLeave: (e) => { if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget)) this.setState({ dragging: false }); },
+  onDrop: (e) => { e.preventDefault(); addFiles(e.dataTransfer && e.dataTransfer.files); },
+  onType: (e) => { this.setState({ text: e.target.value, caretPos: e.target.selectionStart, tried: false, cancelled: false }); syncM('bb-text-mirror', e.target); },
+  onCaret: (e) => { const p = e.target.selectionStart; if (p !== (this.state || {}).caretPos) this.setState({ caretPos: p }); syncM('bb-text-mirror', e.target); },
+  onTaScroll: (e) => syncM('bb-text-mirror', e.target),
+  caretBefore: String(s.text || '').slice(0, s.caretPos != null ? s.caretPos : undefined),
+  onKey: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (doneNow) openWalk(); else submit(); } },
+  onRootOut: () => setTimeout(() => { const a = document.activeElement; if (!a || a === document.body || a.id === 'bb-root') this.focusBox(); }, 0),
+  onRefocus: () => { if (!this.dragB) this.focusBox(); },
+  colMax: growW ? 'calc(84ch + ' + growW + 'px)' : '84ch',
+  taMinH: (24 + growH) + 'px',
+  taMaxH: (240 + growH) + 'px',
+  boxDragging: s.boxDragging ? 'true' : 'false',
+  onBoxDown: (e) => {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const root = document.getElementById('bb-root');
+    const scale = root && root.offsetWidth ? (root.getBoundingClientRect().width / root.offsetWidth) || 1 : 1;
+    this.dragB = { x: e.clientX, y: e.clientY, w: growW, h: growH, scale: scale };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+    this.setState({ boxDragging: true });
+  },
+  onBoxMove: (e) => {
+    const d = this.dragB;
+    if (!d) return;
+    const h = clampG(d.h + (e.clientY - d.y) / d.scale, MAX_GH);
+    const w = clampG(d.w + (e.clientX - d.x) / d.scale, MAX_GW);
+    const st = this.state || {};
+    if (h !== (st.growH || 0) || w !== (st.growW || 0)) this.setState({ growH: h, growW: w });
+  },
+  onBoxUp: (e) => {
+    if (!this.dragB) return;
+    this.dragB = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+    this.setState({ boxDragging: false });
+    this.focusBox();
+  },
+  onBoxReset: () => this.setState({ growH: 0, growW: 0 }),
+  onBoxKey: (e) => {
+    const step = e.shiftKey ? 80 : 24;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); this.setState({ growH: clampG(growH + (e.key === 'ArrowDown' ? step : -step), MAX_GH) }); return; }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); e.stopPropagation(); this.setState({ growW: clampG(growW + (e.key === 'ArrowRight' ? step : -step), MAX_GW) }); return; }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); this.setState({ growH: 0, growW: 0 }); }
+  },
+  onPageKey: (e) => {
+    const tag = (e.target && e.target.tagName) || '';
+    const typing = tag === 'TEXTAREA' || tag === 'INPUT';
+    if (e.altKey && !e.ctrlKey && !e.metaKey && (e.code === 'KeyH' || e.code === 'KeyS' || e.code === 'KeyI')) { e.preventDefault(); if (e.code === 'KeyH') this.setState({ hist: !showHistory, set: false }); else if (e.code === 'KeyS') this.setState({ set: !showSettings, hist: false }); else this.setState({ intro: !showIntro }); return; }
+    if (e.key === 'Escape') { e.preventDefault(); if (inProgress) { cancel(); return; } if (showHistory || showSettings) { this.setState({ hist: false, set: false }); return; } back(); return; }
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'o' || e.key === 'O')) { e.preventDefault(); const f = document.querySelector('.bb-attach input'); if (f) f.click(); return; }
+    if (e.key === 'Enter' && !e.shiftKey && doneNow && tag !== 'TEXTAREA' && tag !== 'A') { e.preventDefault(); openWalk(); return; }
+    if (e.key === 'Enter' && !e.shiftKey && !running) {
+      const t = e.target || {};
+      const skip = tag === 'TEXTAREA' || tag === 'A' || t.type === 'file' || (t.closest && t.closest('section[aria-labelledby="bb-hist-h"], section[aria-labelledby="bb-set-h"]'));
+      if (!skip) { e.preventDefault(); submit(); return; }
+    }
+    if (typing) return;
+    if (e.key === 'Enter' && tag !== 'BUTTON' && tag !== 'A') { e.preventDefault(); submit(); return; }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') return;
+    if (e.key.length === 1 && e.key !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey) { const ta = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (ta) ta.focus(); }
+  },
+  onAgree: (e) => this.setState({ agreed: e.target.checked, tried: false }),
+  onRun: (e) => { e.preventDefault(); submit(); },
+  onRunClick: () => { if (inProgress) cancel(); else submit(); },
+  runClass: inProgress ? 'bb-cancel' : 'bb-run',
+  runLabel: inProgress ? 'cancel' : (running ? 'run again' : (showPicker && picked.length ? (picked.length === Q ? 'run all ' + Q : 'run ' + picked.length + ' of ' + Q) : 'run')),
+  runBg: inProgress ? '#000000' : accent,
+  runFg: inProgress ? '#FFFFFF' : '#000000',
+  runHint: inProgress ? 'or press esc to stop the run' : (doneNow ? 'press enter to open the walkthrough' : 'or press enter'),
+  onRootBlur: () => this.later(() => { const a = document.activeElement; if (!a || a === document.body) { const r = document.getElementById('bb-root'); if (r) r.focus({ preventScroll: true }); } }, 0),
+  showError: showError,
+  running: running,
+  done: running && phase >= allLog.length,
+  logLines: logLines,
+  errorText: errorText,
+  echo: (text.split('\n')[0] || (files[0] ? files[0].name : '')).slice(0, 60),
+  textInvalid: showError && !hasWork ? 'true' : 'false',
+  tickInvalid: showError && needTick && hasWork ? 'true' : 'false',
+  describedText: showError ? 'bb-hint bb-error' : 'bb-hint',
+  dragging: !!s.dragging,
+  statusMain: s.sheet ? '[worksheet] a clean, printable completed copy would download here when badgerbox is live' : s.addCls ? '[settings] adding a class would open here when badgerbox is live' : running ? (phase >= allLog.length ? (flagged ? '[done] ' + (nChecked - (LVR ? lvFlags : 1)) + ' checked, ' + (LVR ? lvFlags : 1) + ' to look at' : '[done] every answer checked') : (pendingAsk && phase === askAt ? '[waiting] badgerbox has a question for you' : (this.apiPending ? '[running] the model is working on it, this can take up to a minute' : '[running] working on your assignment'))) : (s.cancelled ? '[cancelled] run stopped' : '[ready] waiting for an assignment'),
+  statusNeed: running ? '' : (ok ? 'ready to run' : 'still needed: ' + missing.join(', '))
+};
+}
+}
+</script>
+</body>
+</html>

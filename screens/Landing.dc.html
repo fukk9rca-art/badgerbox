@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>badgerbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000000;color:#FFFFFF;font-family:Cousine,"DejaVu Sans Mono",Menlo,Consolas,monospace}
+a{color:#FFFFFF}a:hover{color:#BDBDBD}
+::selection{background:#FFFFFF;color:#000000}
+@keyframes bb-blink{50%{opacity:0}}
+@keyframes bb-in{from{opacity:0}to{opacity:1}}
+.bb-cursor{animation:bb-blink 0.9s steps(1) infinite}
+.bb-type div{animation:bb-in 1ms linear both}
+.bb-type div:nth-child(1){animation-delay:150ms}.bb-type div:nth-child(2){animation-delay:500ms}.bb-type div:nth-child(3){animation-delay:850ms}.bb-type div:nth-child(4){animation-delay:1200ms}.bb-type div:nth-child(5){animation-delay:1550ms}.bb-type div:nth-child(6){animation-delay:1900ms}
+.bb-cta{transition:background 120ms,color 120ms}
+.bb-cta:hover{background:#000000 !important;color:#FFFFFF !important;box-shadow:inset 0 0 0 2px #FFFFFF}
+.bb-cta:focus-visible,.bb-link:focus-visible{outline:2px solid #FFFFFF;outline-offset:4px}
+.bb-link{text-decoration:none}
+.bb-link:hover{background:#FFFFFF;color:#000000}
+@media (max-width: 760px){.bb-grid3,.bb-grid2{grid-template-columns:1fr !important}.bb-hide-sm{display:none !important}.bb-hero-title{font-size:28px !important;line-height:36px !important}}
+@media (prefers-reduced-motion: reduce){.bb-cursor,.bb-type div{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; min-height: 100vh; box-sizing: border-box; background: #000000; color: #FFFFFF; font-family: Cousine, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 16px; line-height: 24px; overflow: hidden">
+
+<div aria-hidden="true" style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(255,255,255,0.045) 3px, rgba(255,255,255,0.045) 4px); pointer-events: none"></div>
+
+<header style="position: relative; height: 32px; display: flex; align-items: center; gap: 1ch; padding: 0 16px; background: {{accent}}; color: #000000; white-space: nowrap; overflow: hidden">
+<span style="font-weight: 700">badgerbox 0.1</span>
+<span aria-hidden="true">──</span>
+<span>public index</span>
+<span aria-hidden="true" style="flex-grow: 1; min-width: 0; overflow: hidden">────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
+</header>
+
+<nav aria-label="sections" style="position: relative; display: flex; flex-wrap: wrap; gap: 0 3ch; padding: 8px 16px; border-bottom: 1px solid #FFFFFF; color: #BDBDBD">
+<span style="color: #8C8C8C">~/</span>
+<a class="bb-link" href="#why" style="color: #BDBDBD; padding: 0 2px">why</a>
+<a class="bb-link" href="#what" style="color: #BDBDBD; padding: 0 2px">what</a>
+<a class="bb-link" href="#how" style="color: #BDBDBD; padding: 0 2px">how</a>
+<a class="bb-link" href="#access" style="color: #BDBDBD; padding: 0 2px">access</a>
+<a class="bb-link" href="#faq" style="color: #BDBDBD; padding: 0 2px">faq</a>
+<a class="bb-link" href="Enter.dc.html" style="margin-left: auto; color: #FFFFFF; font-weight: 700; padding: 0 2px">[ enter ]</a>
+</nav>
+
+<main style="position: relative; max-width: 1040px; margin: 0 auto; padding: 0 24px">
+
+<section aria-labelledby="bb-hero" style="padding: 96px 0 80px 0">
+<div class="bb-type" style="color: #8C8C8C; white-space: pre-wrap">
+<div>$ man badgerbox</div>
+<div> </div>
+<div>NAME</div>
+<div>     badgerbox — the whole worksheet from one screenshot, checked</div>
+<div> </div>
+<div>SYNOPSIS</div>
+</div>
+<h1 id="bb-hero" class="bb-hero-title" style="margin: 16px 0 0 0; font-size: 56px; line-height: 64px; font-weight: 700; letter-spacing: 0.02em">B A D G E R B O X<span class="bb-cursor" aria-hidden="true" style="display: inline-block; width: 0.6em; height: 0.85em; margin-left: 0.2em; vertical-align: -0.05em; background: {{accent}}"></span></h1>
+<p style="margin: 24px 0 0 0; max-width: 62ch; font-size: 20px; line-height: 32px; color: #E6E6E6">Screenshot the worksheet. badgerbox finds every question, works each one the way your class was taught, double-checks every answer, and tells you which ones it isn't sure about.</p>
+<p style="margin: 16px 0 0 0; color: #8C8C8C">hate the game.</p>
+<div style="margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 3ch">
+<a class="bb-cta" href="Enter.dc.html" style="display: inline-flex; align-items: center; height: 48px; padding: 0 3ch; background: {{accent}}; color: #000000; font-weight: 700; text-decoration: none">[ enter the badgerbox ]</a>
+<a class="bb-link" href="#why" style="display: inline-flex; align-items: center; height: 48px; padding: 0 1ch; color: #BDBDBD">why not a chatbot ↓</a>
+</div>
+</section>
+
+<section id="why" aria-labelledby="bb-why" style="padding: 48px 0; border-top: 1px dashed #5A5A5A">
+<h2 id="bb-why" style="margin: 0 0 8px 0; font-size: 16px; line-height: 24px; font-weight: 700"># why not just ask a chatbot</h2>
+<p style="margin: 0 0 24px 0; max-width: 72ch; color: #BDBDBD">a chatbot gives you an answer. badgerbox gives you the whole worksheet, checked.</p>
+<div class="bb-grid2" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+<div style="border: 1px solid #FFFFFF; padding: 16px 2ch">
+<div style="font-weight: 700"><span style="color: #8C8C8C">[1]</span> whole worksheet, one screenshot</div>
+<div style="margin-top: 8px; color: #BDBDBD">paste a screenshot. every question is found and worked separately. no prompting, no copying questions over one at a time.</div>
+</div>
+<div style="border: 1px solid #FFFFFF; padding: 16px 2ch">
+<div style="font-weight: 700"><span style="color: #8C8C8C">[2]</span> every answer checked</div>
+<div style="margin-top: 8px; color: #BDBDBD">each problem is solved two ways and compared. answers that agree get a [✓]. ones that don't get flagged, with the step to look at.</div>
+</div>
+<div style="border: 1px solid #FFFFFF; padding: 16px 2ch">
+<div style="font-weight: 700"><span style="color: #8C8C8C">[3]</span> done your class's way</div>
+<div style="margin-top: 8px; color: #BDBDBD">tell it your class once. it uses the method, units and rounding your teacher expects, on every run after that.</div>
+</div>
+<div style="border: 1px solid #FFFFFF; padding: 16px 2ch">
+<div style="font-weight: 700"><span style="color: #8C8C8C">[4]</span> comes back shaped like the assignment</div>
+<div style="margin-top: 8px; color: #BDBDBD">same order, same numbering, work shown. download a clean completed copy to print or study from.</div>
+</div>
+</div>
+</section>
+
+<section id="what" aria-labelledby="bb-what" style="padding: 48px 0; border-top: 1px dashed #5A5A5A">
+<h2 id="bb-what" style="margin: 0 0 24px 0; font-size: 16px; line-height: 24px; font-weight: 700"># what it takes, does, gives</h2>
+<div class="bb-grid3" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+<div style="border: 1px solid #FFFFFF; padding: 16px 2ch">
+<div style="font-weight: 700">takes</div>
+<div style="margin-top: 8px; color: #BDBDBD">typed or pasted text, a worksheet photo (png, jpg, heic), a pdf, or a link that opens without a login.</div>
+</div>
+<div style="border: 1px solid #FFFFFF; padding: 16px 2ch">
+<div style="font-weight: 700">does</div>
+<div style="margin-top: 8px; color: #BDBDBD">finds each question, works it your class's way, then solves it a second way to check the answer.</div>
+</div>
+<div style="border: 1px solid #FFFFFF; padding: 16px 2ch">
+<div style="font-weight: 700">gives</div>
+<div style="margin-top: 8px; color: #BDBDBD">the finished work, a [✓] or a flag on every answer, and a step-by-step walkthrough of how each part was reached.</div>
+</div>
+</div>
+</section>
+
+<section id="how" aria-labelledby="bb-how" style="padding: 48px 0; border-top: 1px dashed #5A5A5A">
+<h2 id="bb-how" style="margin: 0 0 24px 0; font-size: 16px; line-height: 24px; font-weight: 700"># how a run goes</h2>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0">
+<li style="display: grid; grid-template-columns: 6ch minmax(0, 1fr); gap: 2ch; padding: 16px 0; border-bottom: 1px solid #303030"><span style="color: #8C8C8C">[01]</span><span><span style="font-weight: 700">drop it in.</span> <span style="color: #BDBDBD">paste a screenshot, or a file, text or link. every question gets picked out.</span></span></li>
+<li style="display: grid; grid-template-columns: 6ch minmax(0, 1fr); gap: 2ch; padding: 16px 0; border-bottom: 1px solid #303030"><span style="color: #8C8C8C">[02]</span><span><span style="font-weight: 700">it gets worked and checked.</span> <span style="color: #BDBDBD">subject and difficulty pick the model. each answer is solved twice and compared.</span></span></li>
+<li style="display: grid; grid-template-columns: 6ch minmax(0, 1fr); gap: 2ch; padding: 16px 0"><span style="color: #8C8C8C">[03]</span><span><span style="font-weight: 700">read the walkthrough.</span> <span style="color: #BDBDBD">the answer, whether it checked out, then every step that got there.</span></span></li>
+</ol>
+<pre aria-label="example run" style="margin: 32px 0 0 0; padding: 16px 2ch; border: 1px solid #FFFFFF; font-family: inherit; font-size: 14px; line-height: 22px; color: #BDBDBD; white-space: pre-wrap; overflow-x: auto"><span style="color: #FFFFFF">&gt;</span> worksheet.jpg  "just #4 please"
+  subject ...... algebra
+  difficulty ... default
+  model ........ default
+  checked ...... 2 ways, answers match
+  status ....... <span style="color: #FFFFFF">done · [✓] checked · 6 steps explained</span></pre>
+</section>
+
+<section id="access" aria-labelledby="bb-access" style="padding: 48px 0; border-top: 1px dashed #5A5A5A">
+<h2 id="bb-access" style="margin: 0 0 24px 0; font-size: 16px; line-height: 24px; font-weight: 700"># access</h2>
+<div class="bb-grid2" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+<div style="border: 1px solid #FFFFFF; padding: 24px 2ch">
+<div style="font-weight: 700">access key</div>
+<div style="margin-top: 8px; font-size: 32px; line-height: 40px; font-weight: 700">[YOUR PRICE]</div>
+<div style="margin-top: 8px; color: #BDBDBD">a paid account gets you a badgerbox key. type it on the enter screen, agree once that you won't use it to cheat, and you're in.</div>
+<a class="bb-cta" href="Enter.dc.html" style="display: inline-flex; align-items: center; height: 44px; margin-top: 24px; padding: 0 2ch; background: {{accent}}; color: #000000; font-weight: 700; text-decoration: none">[ i have a key ]</a>
+</div>
+<div style="border: 1px dashed #5A5A5A; padding: 24px 2ch; color: #BDBDBD">
+<div style="font-weight: 700; color: #FFFFFF">what's included</div>
+<div style="margin-top: 8px; white-space: pre-wrap">+ whole worksheets from one screenshot
++ every answer checked two ways
++ your class and format remembered
++ clean completed copy to download
++ full step-by-step walkthroughs
++ past runs you can reopen</div>
+</div>
+</div>
+</section>
+
+<section id="faq" aria-labelledby="bb-faq" style="padding: 48px 0; border-top: 1px dashed #5A5A5A">
+<h2 id="bb-faq" style="margin: 0 0 24px 0; font-size: 16px; line-height: 24px; font-weight: 700"># faq</h2>
+<dl style="margin: 0; display: flex; flex-direction: column; gap: 24px; max-width: 72ch">
+<div><dt style="font-weight: 700">&gt; why not just use a chatbot?</dt><dd style="margin: 4px 0 0 2ch; color: #BDBDBD">a chatbot takes one question at a time, needs prompting, and doesn't tell you when it's wrong. badgerbox takes the whole worksheet, checks every answer two ways, flags the ones it isn't sure about, and works the way your class does.</dd></div>
+<div><dt style="font-weight: 700">&gt; is this cheating?</dt><dd style="margin: 4px 0 0 2ch; color: #BDBDBD">badgerbox shows the method so you can do the next one yourself. when you activate your key you agree, once, not to use it to cheat. what you do with the work is on you.</dd></div>
+<div><dt style="font-weight: 700">&gt; what can't it read?</dt><dd style="margin: 4px 0 0 2ch; color: #BDBDBD">word files and links behind a login. paste the text or export a pdf instead.</dd></div>
+<div><dt style="font-weight: 700">&gt; does it keep my work?</dt><dd style="margin: 4px 0 0 2ch; color: #BDBDBD">finished runs are kept in past runs so you can reopen them. you can clear them any time.</dd></div>
+</dl>
+</section>
+
+<section aria-label="get started" style="padding: 64px 0 96px 0; border-top: 1px dashed #5A5A5A; text-align: center">
+<div style="color: #8C8C8C">$ ./badgerbox --start</div>
+<a class="bb-cta" href="Enter.dc.html" style="display: inline-flex; align-items: center; height: 56px; margin-top: 24px; padding: 0 4ch; background: {{accent}}; color: #000000; font-size: 20px; font-weight: 700; text-decoration: none">[ enter the badgerbox ]</a>
+</section>
+
+</main>
+
+<footer style="position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 3ch; padding: 8px 16px; border-top: 1px solid #FFFFFF; color: #8C8C8C">
+<span>badgerbox v0.1</span>
+<span style="margin-left: auto">sess 0x4A1F · /dev/badger0</span>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":3040}}'>
+class Component extends DCLogic {
+renderVals() {
+return { accent: this.props.accent ?? '#FFFFFF' };
+}
+}
+</script>
+</body>
+</html>
