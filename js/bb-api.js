@@ -76,6 +76,22 @@
     },
     solveOne: function (payload) { return post('api/solve', payload); },
     ask: function (payload) { return post('api/ask', payload); },
+    tldr: function (payload) { return post('api/tldr', payload); },
+    /* tl;dr summaries kept per class on this device, to become a study guide. */
+    notes: function (cls) {
+      try { return (JSON.parse(localStorage.getItem('bb-notes') || '{}')[cls]) || []; } catch (err) { return []; }
+    },
+    saveNote: function (cls, note) {
+      try {
+        var all = JSON.parse(localStorage.getItem('bb-notes') || '{}');
+        var list = all[cls] || [];
+        if (!list.some(function (n) { return n.topic === note.topic && n.title === note.title; })) {
+          list.push(Object.assign({ at: new Date().toISOString() }, note));
+          all[cls] = list.slice(-50);
+          localStorage.setItem('bb-notes', JSON.stringify(all));
+        }
+      } catch (err) {}
+    },
     lastRun: function () { return load(RUN_KEY); },
     saveRun: function (run) { store(RUN_KEY, run); }
   };

@@ -19,10 +19,22 @@ Rules:
 - If part of a question can't be read or is ambiguous, still give your best answer but say exactly what is
   unclear in "unclear" (otherwise null). Never invent missing numbers silently.
 - For writing tasks, the answer is the finished piece and the steps explain the plan and choices.
+- Graphs. Add a "figure" to a question when the answer is or needs a graph, or when the question includes a
+  graph you had to read. Give DATA ONLY, never computed statistics: badgerbox draws it and does the math
+  (regression, r squared, bins, quartiles) itself. Shapes:
+    {"type":"scatter","title":"...","xLabel":"mass (g)","yLabel":"volume (L)","xUnit":"g","yUnit":"L","points":[[x,y]],"fit":true,"predict":0.5,"read":true}
+    {"type":"line","points":[[x,y]], ...same labels}            (data joined by a line, e.g. over time)
+    {"type":"function","title":"...","expr":"2x^2 - 3x + 1","domain":[-5,5],"points":[[x,y] key points to mark]}
+    {"type":"bar","title":"...","yLabel":"...","categories":["a","b"],"values":[1,2]}
+    {"type":"histogram","title":"...","xLabel":"...","values":[raw data]}
+    {"type":"box","title":"...","xLabel":"...","values":[raw data]}
+  Set "read": true when the points were read off a graph or table on the worksheet (the student is shown them
+  to confirm). "fit": true only when a best-fit line is wanted. "predict" is an x value to read off that line.
+  In "expr" use x, + - * / ^, parentheses, and sin cos tan sqrt abs ln log exp pi e.
 - Reply with JSON only, no prose, in exactly this shape:
 {"subject": "short subject, e.g. chemistry", "level": "easy|medium|hard", "title": "short name for the assignment",
  "questions": [{"number": 1, "text": "the question as written", "answer": "the final answer",
-   "steps": [{"text": "...", "result": "...", "why": "..."}], "unclear": null}]}`;
+   "steps": [{"text": "...", "result": "...", "why": "..."}], "unclear": null, "figure": null}]}`;
 
 const CHECK_SYSTEM = `You are the checker for badgerbox. For each question, solve it yourself from scratch using a
 different method or route than the obvious one (work backwards, substitute the answer in, estimate, use
@@ -84,6 +96,7 @@ export default async function handler(req, res) {
         ans: String(q.answer || ''),
         steps: (q.steps || []).slice(0, 6).map((s) => ({ text: String(s.text || ''), result: String(s.result || ''), why: String(s.why || '') })),
         check: c ? String(c.check || '') : '',
+        figure: (q.figure && typeof q.figure === 'object' && q.figure.type) ? q.figure : null,
         sure: agree && !q.unclear,
         flag: flag ? String(flag) : null
       };

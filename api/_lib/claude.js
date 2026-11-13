@@ -17,17 +17,35 @@ function fakeReply(system) {
   if (/checker/.test(system)) {
     return JSON.stringify({ checks: [
       { number: 1, agree: true, check: 'substituted x = 5 back in: 3(5) + 7 = 22.', note: null },
-      { number: 2, agree: false, check: 'graphing both sides gives x = 3.5, not 4.', note: 'step 2 divides only one side by 2.' }
+      { number: 2, agree: false, check: 'graphing both sides gives x = 3.5, not 4.', note: 'step 2 divides only one side by 2.' },
+      { number: 3, agree: true, check: 'checked two more points on the line: (1, 1) and (2, 3).', note: null },
+      { number: 4, agree: true, check: 'recounted the bins from the sorted list.', note: null }
     ] });
   }
   if (/follow-up/.test(system)) return 'fake model: this is where the real follow-up answer goes.';
+  if (/tl;dr/.test(system)) {
+    return JSON.stringify({ topic: 'solving linear equations', nutshell: 'undo what was done to x, in reverse order, doing the same thing to both sides.',
+      basis: 'worked out from the assignment (fake model).', sections: [
+        { head: 'key ideas', items: ['an equation stays true if you do the same thing to both sides.', 'undo addition and subtraction first, then multiplication and division.'] },
+        { head: 'how to do it', items: ['move the plain numbers away from x.', 'divide by the number in front of x.', 'put the answer back in to check.'] },
+        { head: 'watch out for', items: ['dividing only one side.'] },
+        { head: 'remember', items: ['always check by substituting.'] }] });
+  }
   return JSON.stringify({ subject: 'algebra', level: 'easy', title: 'linear equations', questions: [
     { number: 1, text: 'Solve 3x + 7 = 22', answer: 'x = 5', unclear: null, steps: [
       { text: 'take 7 from both sides', result: '3x = 15', why: 'undo the + 7 first so the x term is alone.' },
       { text: 'divide both sides by 3', result: 'x = 5', why: 'undo the times 3.' }] },
     { number: 2, text: 'Solve 2x - 1 = 6', answer: 'x = 4', unclear: null, steps: [
       { text: 'add 1 to both sides', result: '2x = 7', why: 'undo the - 1.' },
-      { text: 'divide by 2', result: 'x = 4', why: 'undo the times 2.' }] }
+      { text: 'divide by 2', result: 'x = 4', why: 'undo the times 2.' }] },
+    { number: 3, text: 'Graph y = 2x - 1 and mark the intercepts', answer: 'a line through (0, -1) and (0.5, 0)', unclear: null,
+      figure: { type: 'function', title: 'y = 2x - 1', expr: '2x - 1', domain: [-4, 4], points: [[0, -1], [0.5, 0]] }, steps: [
+      { text: 'find the y-intercept', result: '(0, -1)', why: 'set x to 0.' },
+      { text: 'find the x-intercept', result: '(0.5, 0)', why: 'set y to 0 and solve.' }] },
+    { number: 4, text: 'Make a histogram of the quiz scores 62 70 71 74 75 78 80 81 83 85 88 90 94', answer: 'most scores fall between 70 and 90', unclear: null,
+      figure: { type: 'histogram', title: 'quiz scores', xLabel: 'score', yLabel: 'count', values: [62, 70, 71, 74, 75, 78, 80, 81, 83, 85, 88, 90, 94] }, steps: [
+      { text: 'pick equal bins', result: 'width 10', why: 'equal bins make the bars comparable.' },
+      { text: 'count the scores in each bin', result: '1, 5, 5, 2', why: 'each score goes in exactly one bin.' }] }
   ] });
 }
 

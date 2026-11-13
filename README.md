@@ -34,8 +34,10 @@ Test access key on the enter screen: `8008`.
 | `index.html` `enter.html` `app.html` `walkthrough.html` `states.html` | Generated pages (landing, key + agreement, main screen, walkthrough, box states). |
 | `js/dc-lite.js` | Small runtime that runs the screen format in a normal browser. |
 | `js/bb-api.js` | The pages' link to the backend. |
+| `js/bb-plot.js` | Draws graphs (scatter + best fit, line, function, bar, histogram, box plot) and does the statistics itself. |
 | `api/solve.js` | Finds and works every question, then a second pass checks each answer a different way. |
 | `api/ask.js` | Answers follow-up questions in the walkthrough chat. |
+| `api/tldr.js` | Builds the tl;dr: what the assignment is teaching, worked out from the class and the work. |
 | `api/status.js` | Tells the pages whether a model is connected. |
 | `css/site.css` | Fixes for real window sizes (Chromebooks, short screens). |
 
@@ -44,6 +46,7 @@ chemistry sample, so the site always works.
 
 ## Not built yet
 
+- The per-class study guide: tl;dr summaries are saved on the device, but there is no screen to read them yet.
 - Accounts, real access keys, usage limits and billing (`8008` is a stand-in).
 - Model routing by subject and difficulty (one model for now).
 - Past runs are sample data; saved classes and settings reset when the page reloads.

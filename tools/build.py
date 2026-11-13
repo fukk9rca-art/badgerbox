@@ -22,10 +22,10 @@ PAGES = {
 HEAD = (
     '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
     '<link rel="icon" href="favicon.svg" type="image/svg+xml">\n'
-    '<style>x-dc{display:none}</style>\n'
     '<link rel="stylesheet" href="css/site.css">\n'
     '<script src="vendor/morphdom-umd.min.js" defer></script>\n'
     '<script src="js/bb-api.js" defer></script>\n'
+    '<script src="js/bb-plot.js" defer></script>\n'
     '<script src="js/dc-lite.js" defer></script>'
 )
 
@@ -34,6 +34,8 @@ def convert(src, dst):
     page = os.path.basename(dst)
     s = io.open(src, encoding='utf-8').read()
     s = s.replace('<script src="./support.js"></script>', HEAD, 1)
+    # keep the raw template out of the live page until the runtime renders it
+    s = s.replace('<x-dc>', '<template data-dc>', 1).replace('</x-dc>', '</template>', 1)
     s = s.replace('<html lang="en">', '<html lang="en" data-page="%s">' % page[:-5], 1)
     for a, b in PAGES.items():
         s = s.replace('href="%s"' % a, 'href="%s"' % b)
