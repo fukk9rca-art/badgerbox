@@ -57,7 +57,18 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 @keyframes bb-red{0%,100%{color:var(--bb-accent);text-shadow:none}5%{color:#8A0303;text-shadow:0 0 14px rgba(138,3,3,0.8)}7%{color:var(--bb-accent);text-shadow:none}13%{color:#5E0202;text-shadow:none}14%{color:var(--bb-accent);text-shadow:none}48%{color:#A30808;text-shadow:0 0 18px rgba(163,8,8,0.9)}51%{color:var(--bb-accent);text-shadow:none}83%{color:#8A0303;text-shadow:0 0 10px rgba(138,3,3,0.6)}84%{color:var(--bb-accent);text-shadow:none}86%{color:#700202;text-shadow:0 0 8px rgba(112,2,2,0.6)}88%{color:var(--bb-accent);text-shadow:none}}
 @keyframes bb-flicker-idle{0%,100%{opacity:.68}3%{opacity:.34}4%{opacity:.68}11%{opacity:.5}12%{opacity:.68}13%{opacity:.4}14%{opacity:.68}29%{opacity:.27}31%{opacity:.58}32%{opacity:.68}47%{opacity:.44}48%{opacity:.68}62%{opacity:.3}63%{opacity:.68}64%{opacity:.5}65%{opacity:.68}66%{opacity:.36}68%{opacity:.68}91%{opacity:.45}92%{opacity:.68}}
 .bb-logo{animation:bb-flicker-idle 7.3s steps(1) infinite}
-.bb-logo-run{animation:bb-flicker 1s steps(1) infinite,bb-red 4.3s steps(1) infinite}
+.bb-logo-run{animation:bb-flicker 1s steps(1) infinite,bb-red 2.1s steps(1) infinite}
+@keyframes bb-march{to{transform:translateX(-50%)}}
+@keyframes bb-march-back{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes bb-eq{0%,100%{transform:scaleY(.15)}20%{transform:scaleY(.9)}35%{transform:scaleY(.4)}55%{transform:scaleY(1)}75%{transform:scaleY(.3)}}
+@keyframes bb-sweep{0%{transform:translateX(-14ch)}100%{transform:translateX(90ch)}}
+.bb-work-a{display:inline-block;white-space:pre;animation:bb-march 9s linear infinite}
+.bb-work-b{display:inline-block;white-space:pre;animation:bb-march-back 14s linear infinite}
+.bb-eq{transform-origin:bottom;animation:bb-eq 1.1s ease-in-out infinite}
+.bb-work-scan{animation:bb-sweep 2.4s linear infinite}
+@media (prefers-reduced-motion: reduce){.bb-work-a,.bb-work-b,.bb-eq,.bb-work-scan{animation:none}}
+.bb-side-btn:hover{background:#161616 !important}
+.bb-side-btn:focus-visible{outline:2px solid #FFFFFF;outline-offset:-2px}
 @media (prefers-reduced-motion: reduce){.bb-logo{animation:none}}
 .bb-field{caret-color:#FFFFFF}
 .bb-field::placeholder{color:#8C8C8C;opacity:1}
@@ -259,12 +270,12 @@ o   o
 
 <sc-if value="{{ showHistory }}" hint-placeholder-val="{{ false }}">
 <section aria-labelledby="bb-hist-h" style="width: 52ch; flex-shrink: 0">
-<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 2ch"><h2 id="bb-hist-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">past runs</h2><span style="color: #8C8C8C">sample data</span></div>
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 2ch"><h2 id="bb-hist-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">past runs</h2><span style="color: #8C8C8C">{{ histNote }}</span></div>
 <div aria-hidden="true" style="color: #8C8C8C">-------------</div>
 <sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ true }}">
 <ul style="list-style: none; margin: 8px 0 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
 <sc-for list="{{ history }}" as="h" hint-placeholder-count="5">
-<li><a class="bb-hist" href="Results.dc.html" style="display: grid; grid-template-columns: 7ch 9ch minmax(0, 1fr); gap: 1ch; padding: 8px; margin: 0 -8px; color: #FFFFFF; text-decoration: none"><span style="color: #8C8C8C">{{ h.when }}</span><span style="color: #BDBDBD">{{ h.tab }}</span><span style="min-width: 0"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #FFFFFF">{{ h.title }}</span><span style="display: block; color: #8C8C8C">{{ h.meta }}</span></span></a></li>
+<li><button type="button" class="bb-hist" onClick="{{ h.open }}" style="display: grid; grid-template-columns: 7ch 9ch minmax(0, 1fr); gap: 1ch; width: calc(100% + 16px); box-sizing: border-box; padding: 8px; margin: 0 -8px; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer"><span style="color: #8C8C8C">{{ h.when }}</span><span style="color: #BDBDBD">{{ h.tab }}</span><span style="min-width: 0"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #FFFFFF">{{ h.title }}</span><span style="display: block; color: #8C8C8C">{{ h.meta }}</span></span></button></li>
 </sc-for>
 </ul>
 <button type="button" class="bb-btn" onClick="{{ onClearHistory }}" style="height: 32px; margin: 16px 0 0 -4px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>clear past runs<span aria-hidden="true"> ]</span></button>
@@ -276,7 +287,7 @@ o   o
 </sc-if>
 <sc-if value="{{ showSettings }}" hint-placeholder-val="{{ false }}">
 <section id="bb-set" class="bb-set" aria-labelledby="bb-set-h" style="width: 52ch; flex: 0 1 auto; min-height: 0; overflow-y: auto; padding-right: 8px">
-<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 2ch"><h2 id="bb-set-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">settings</h2><span style="color: #8C8C8C">saved to your key</span></div>
+<div style="position: sticky; top: 0; z-index: 2; background: #000000; display: flex; align-items: center; gap: 2ch; padding-bottom: 2px"><h2 id="bb-set-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">settings</h2><span style="color: #8C8C8C">saved on this device</span><button type="button" class="bb-btn" onClick="{{ onToggleSettings }}" style="margin-left: auto; height: 36px; padding: 0 1ch; background: transparent; color: #FFFFFF; border: 1px solid #FFFFFF; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">x close</button></div>
 <div aria-hidden="true" style="color: #8C8C8C">-------------</div>
 <h3 style="margin: 8px 0 0 0; font-size: 16px; line-height: 24px; font-weight: 700">my classes</h3>
 <div style="color: #8C8C8C">one per subject tab. open one to tell badgerbox your class and how you want the work done, so it doesn't have to guess.</div>
@@ -320,7 +331,7 @@ o   o
 </div>
 </sc-for>
 <h3 style="margin: 20px 0 4px 0; font-size: 16px; line-height: 24px; font-weight: 700"><label for="bb-voice">your voice</label></h3>
-<textarea id="bb-voice" class="bb-field" rows="2" placeholder="optional · paste something you wrote, so essays sound like you" aria-describedby="bb-voice-note" onInput="{{ onVoice }}" style="display: block; width: 100%; box-sizing: border-box; min-height: 56px; max-height: 120px; field-sizing: content; margin: 0; padding: 4px 1ch; resize: none; background: transparent; color: #FFFFFF; border: 1px solid #5A5A5A; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px"></textarea>
+<textarea id="bb-voice" class="bb-field" rows="2" placeholder="optional · paste something you wrote, so essays sound like you" aria-describedby="bb-voice-note" onInput="{{ onVoice }}" style="display: block; width: 100%; box-sizing: border-box; min-height: 56px; max-height: 120px; field-sizing: content; margin: 0; padding: 4px 1ch; resize: none; background: transparent; color: #FFFFFF; border: 1px solid #5A5A5A; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px">{{ voiceText }}</textarea>
 <div id="bb-voice-note" style="color: #8C8C8C">{{ voiceNote }}</div>
 <h3 style="margin: 20px 0 4px 0; font-size: 16px; line-height: 24px; font-weight: 700">account</h3>
 <div style="display: flex; gap: 2ch"><span style="width: 11ch; flex-shrink: 0; color: #8C8C8C">key</span><span>8008 · active</span></div>
@@ -479,6 +490,19 @@ o   o
 <sc-for list="{{ logLines }}" as="l" hint-placeholder-count="0">
 <div class="bb-line" style="white-space: pre; color: {{ l.color }}">{{ l.text }}</div>
 </sc-for>
+<sc-if value="{{ working }}" hint-placeholder-val="{{ false }}">
+<div class="bb-line" style="margin-top: 10px; border: 1px solid #5A5A5A; padding: 8px 2ch 10px 2ch; max-width: 78ch">
+<div aria-hidden="true" style="overflow: hidden; height: 18px; font-size: 13px; line-height: 18px; font-weight: 700; color: #6B6B6B"><span class="bb-work-a">{{ workStrip }}{{ workStrip }}</span></div>
+<div aria-hidden="true" style="position: relative; display: flex; align-items: flex-end; gap: 3px; height: 44px; margin: 4px 0; overflow: hidden">
+<sc-for list="{{ workBars }}" as="wb" hint-placeholder-count="0">
+<span class="bb-eq" style="flex: 1 1 0; height: 100%; background: {{ wb.bg }}; animation-delay: {{ wb.delay }}; animation-duration: {{ wb.dur }}"></span>
+</sc-for>
+<span class="bb-work-scan" style="position: absolute; top: 0; bottom: 0; left: 0; width: 12ch; background: linear-gradient(90deg, rgba(0,0,0,0), rgba(0,0,0,0.85), rgba(0,0,0,0))"></span>
+</div>
+<div aria-hidden="true" style="overflow: hidden; height: 18px; font-size: 13px; line-height: 18px; font-weight: 700; color: #6B6B6B"><span class="bb-work-b">{{ workStrip }}{{ workStrip }}</span></div>
+<div role="status" style="display: flex; justify-content: space-between; gap: 2ch; margin-top: 6px"><span><span aria-hidden="true" style="background: {{accent}}; color: #000000; font-weight: 700; padding: 0 4px">{{ workSpin }}</span> {{ workMsg }}</span><span style="color: #BDBDBD; white-space: nowrap">{{ workTime }}</span></div>
+</div>
+</sc-if>
 <sc-if value="{{ asking }}" hint-placeholder-val="{{ false }}">
 <div class="bb-line" style="margin-top: 8px; padding: 8px 2ch 10px 2ch; border: 1px solid #FFFFFF">
 <div><span aria-hidden="true" style="background: #FFFFFF; color: #000000; font-weight: 700; padding: 0 4px">?</span> <span id="bb-ask-q">{{ askText }}</span> <span style="color: #8C8C8C">{{ askCount }}</span></div>
@@ -512,6 +536,25 @@ o   o
 </sc-if>
 </form>
 </div>
+<aside class="bb-side" aria-label="past runs" style="flex: 0 0 36ch; min-width: 0; align-self: stretch; overflow-y: auto; padding-bottom: 24px">
+<div style="border: 1px solid #5A5A5A; background: #0B0B0B">
+<button type="button" class="bb-side-btn" aria-expanded="{{ sideOpen }}" onClick="{{ onToggleSide }}" style="display: flex; align-items: center; gap: 1ch; width: 100%; min-height: 44px; box-sizing: border-box; padding: 6px 1ch; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">
+<span style="font-weight: 700">past runs</span>
+<span style="color: #8C8C8C">{{ sideCount }}</span>
+<span aria-hidden="true" style="margin-left: auto; width: 2ch; text-align: center; font-weight: 700">{{ sideCaret }}</span>
+</button>
+<sc-if value="{{ sideShown }}" hint-placeholder-val="{{ false }}">
+<div style="padding: 4px 1ch 8px 1ch; border-top: 1px dashed #5A5A5A">
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+<li><button type="button" class="bb-side-btn" onClick="{{ h.open }}" style="display: block; width: 100%; box-sizing: border-box; padding: 6px 4px; background: transparent; color: #FFFFFF; border: 0; border-bottom: 1px solid #262626; border-radius: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ h.title }}</span><span style="display: block; color: #8C8C8C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ h.when }} · {{ h.tab }} · {{ h.meta }}</span></button></li>
+</sc-for>
+</ul>
+<div style="color: #8C8C8C; padding: 4px">{{ sideNote }}</div>
+</div>
+</sc-if>
+</div>
+</aside>
 </main>
 
 <footer style="flex-shrink: 0">
@@ -540,7 +583,11 @@ o   o
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
 class Component extends DCLogic {
-componentDidMount() { this.focusBox(); }
+componentDidMount() {
+  try { const j = JSON.parse(localStorage.getItem('bb-settings') || 'null'); if (j && typeof j === 'object') this.setState(j); } catch (err) {}
+  this.loaded = true;
+  this.focusBox();
+}
 focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; if (window.getSelection && String(window.getSelection())) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
 componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
 later(fn, ms) { this.timers = this.timers || []; this.timers.push(setTimeout(fn, ms)); }
@@ -592,6 +639,10 @@ const MAX_GH = 480, MAX_GW = 560;
 const growH = s.growH || 0;
 const growW = s.growW || 0;
 const clampG = (v, m) => Math.round(Math.min(m, Math.max(0, v)));
+if (this.loaded) {
+  const keepStr = JSON.stringify({ tab: s.tab, classes: s.classes, cls: s.cls, opt: s.opt, outs: s.outs, voice: s.voice, saveCls: s.saveCls, side: s.side });
+  if (keepStr !== this.keepStr) { this.keepStr = keepStr; try { localStorage.setItem('bb-settings', keepStr); } catch (err) {} }
+}
 const tabIdx = s.tab || 0;
 const tab = TABS[tabIdx];
 const text = String(s.text || '').trim();
@@ -680,7 +731,7 @@ const build = (st) => {
   if (essay && bTab.id !== 'writing') qs.push({ id: 'len', text: 'how long should it be? (a paragraph, a page, a word count)', eg: 'e.g. 5 paragraphs, about 600 words' });
   if (bTab.id === 'reading' && !bDocs.length && bText.length < 200) qs.push({ id: 'passage', text: 'paste the passage these questions are about.', eg: 'e.g. paste the whole passage here' });
   if (!LIVE_ON && bDocs.length && !bText && bPicked.indexOf(2) !== -1) qs.push({ id: 'blurry', text: '#3 is hard to read in the photo. can you type it out?', eg: 'e.g. 3) 2x - 5 = 11' });
-  if (bTab.id === 'math') qs.push({ id: 'method', text: 'did your teacher want a certain method? (factoring, quadratic formula...)', eg: 'e.g. quadratic formula' });
+  if (bTab.id === 'math' && !(bClasses[classIdx(st)] && rulesOf(bClasses[classIdx(st)]).length)) qs.push({ id: 'method', text: 'did your teacher want a certain method? (factoring, quadratic formula...)', eg: 'e.g. quadratic formula' });
   const asked = qs.slice(0, 3);
   const lines = [];
   lines.push(pad(bDocs.length ? 'reading ' + bDocs[0].name.slice(0, 18) : 'reading your assignment', 'ok'));
@@ -860,6 +911,10 @@ const submit = () => {
   if (cur.tried && cur.phase && cur.phase < build(cur).lines.length) return;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   this.runId = (this.runId || 0) + 1;
+  this.runStart = Date.now();
+  const tickId = this.runId;
+  const tick = () => { const st = this.state || {}; if (tickId !== this.runId || !st.tried || (st.phase || 0) >= build(st).lines.length) return; this.setState({ tick: Date.now() }); this.later(tick, 1000); };
+  this.later(tick, 1000);
   this.apiStarted = false;
   this.apiPending = false;
   this.live = null;
@@ -870,6 +925,13 @@ const submit = () => {
   if (!reduce) this.later(advance, 650);
 };
 const inProgress = running && phase < allLog.length;
+const elapsed = Math.max(0, Math.round((Date.now() - (this.runStart || Date.now())) / 1000));
+const WORK_MSGS = ['reading it', 'finding every question', 'working each one out', 'solving each one a second way', 'comparing the two answers'];
+const realHist = (API && API.history) ? API.history() : [];
+const fmtWhen = (iso) => { try { const d = new Date(iso); return ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][d.getMonth()] + ' ' + String(d.getDate()).padStart(2, '0'); } catch (err) { return ''; } };
+const goWalk = () => { window.location.href = 'walkthrough.html'; };
+const histItems = realHist.length ? realHist.map((h) => ({ when: fmtWhen(h.at), tab: h.tab || 'auto', title: h.title || 'assignment', meta: h.n + ' question' + (h.n === 1 ? '' : 's') + (h.flags ? ' · ' + h.flags + ' [!]' : ''), open: () => { if (API.openRun(h.id)) goWalk(); } }))
+  : (LIVE_ON || s.cleared ? [] : HIST.map((h) => Object.assign({}, h, { open: goWalk })));
 const cancel = () => {
   this.runId = (this.runId || 0) + 1;
   this.apiPending = false;
@@ -983,6 +1045,20 @@ return {
   onVoice: (e) => this.setState({ voice: e.target.value }),
   voiceNote: voiceWords === 0 ? 'a paragraph or two is enough. it copies your style, not your words.' : voiceWords + ' words · ' + (voiceWords < 80 ? 'a bit more helps it match you' : 'enough to match your style'),
   asking: running && pendingAsk && phase === askAt,
+  working: inProgress && !(pendingAsk && phase === askAt),
+  workStrip: '\\\\\\  ///   ^ ^ ^ ^   \\\\ //   v v v v   ///  \\\\\\   .:.   / / /   \\ \\ \\   ^ ^   ',
+  workBars: Array.from({ length: 40 }, (_, i) => ({ bg: i % 7 === 3 ? '#8C8C8C' : accent, delay: '-' + ((i * 137) % 1100) + 'ms', dur: (800 + (i * 53) % 700) + 'ms' })),
+  workSpin: ['|', '/', '-', '\\'][elapsed % 4],
+  workMsg: this.apiPending ? (elapsed < WORK_MSGS.length * 4 ? WORK_MSGS[Math.floor(elapsed / 4)] : 'still working · long worksheets can take up to a minute') : 'getting it ready',
+  workTime: String(Math.floor(elapsed / 60)).padStart(2, '0') + ':' + String(elapsed % 60).padStart(2, '0'),
+  voiceText: String(s.voice || ''),
+  sideOpen: s.side ? 'true' : 'false',
+  sideShown: !!s.side,
+  sideCaret: s.side ? '\u25be' : '\u25b8',
+  sideCount: histItems.length ? '(' + histItems.length + ')' : '',
+  onToggleSide: () => this.setState({ side: !s.side }),
+  sideNote: histItems.length ? (realHist.length ? 'click one to reopen it' : 'sample data') : 'nothing yet. finished runs show up here.',
+  histNote: realHist.length ? 'on this device' : (LIVE_ON ? '' : 'sample data'),
   askText: B.pending ? B.pending.text : '',
   askEg: B.pending ? B.pending.eg : '',
   textPlaceholder: '  ' + (files.length ? 'e.g. just #4 please' : TEXT_EG[tab.id]),
@@ -1051,10 +1127,10 @@ return {
   historyOpen: showHistory ? 'true' : 'false',
   historyLabel: showHistory ? '[ close past runs ]' : '[ past runs ]',
   onToggleHistory: () => this.setState({ hist: !showHistory, set: false }),
-  history: s.cleared ? [] : HIST,
-  hasHistory: !s.cleared,
-  noHistory: !!s.cleared,
-  onClearHistory: () => this.setState({ cleared: true }),
+  history: histItems,
+  hasHistory: histItems.length > 0,
+  noHistory: histItems.length === 0,
+  onClearHistory: () => { if (API && API.clearHistory) API.clearHistory(); this.setState({ cleared: true }); },
   onPaste: (e) => {
     const items = e.clipboardData && e.clipboardData.items;
     if (!items) return;

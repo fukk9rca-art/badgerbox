@@ -151,7 +151,8 @@
       }
     }
 
-    var tpl = document.createElement('div');
+    // keep the template in the inert <template> document so its {{ holes }} never load as real URLs
+    var tpl = (xdc.content ? xdc.content.ownerDocument : document).createElement('div');
     while (source.firstChild) tpl.appendChild(source.firstChild);
     var root = document.createElement('div');
     root.id = 'dc-mount';

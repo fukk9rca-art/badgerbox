@@ -7,6 +7,10 @@
 (function () {
   'use strict';
   var RUN_KEY = 'bb-run';
+  var FILES_KEY = 'bb-run-files';
+  var HIST_KEY = 'bb-history';
+  function loadLocal(key, fallback) { try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (err) { return fallback; } }
+  function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (err) { return false; } }
   var KEY_KEY = 'bb-key';
   function accessKey() { try { return localStorage.getItem(KEY_KEY) || ''; } catch (err) { return ''; } }
   var status = { live: false, model: '', checked: false };
@@ -80,8 +84,20 @@
         res.seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
         res.meta = (payload && payload.meta) || {};
         res.request = { tab: payload && payload.tab, cls: payload && payload.cls };
-        if (res.source === 'model') store(RUN_KEY, res);
-        else { try { sessionStorage.removeItem(RUN_KEY); } catch (err) {} }
+        try { sessionStorage.removeItem(FILES_KEY); } catch (err) {}
+        if (res.source === 'model') {
+          res.id = 'r' + Date.now();
+          store(RUN_KEY, res);
+          // keep the worksheet images for this tab only, so answers can be put back on them
+          var imgs = ((payload && payload.files) || []).filter(function (f) { return f && /^image\//.test(f.type || ''); });
+          if (imgs.length) store(FILES_KEY, imgs);
+          var qs = res.questions || [];
+          var hist = loadLocal(HIST_KEY, []);
+          hist.unshift({ id: res.id, at: new Date().toISOString(), tab: (res.meta || {}).tab || '', title: res.title || res.subject || 'assignment',
+            n: qs.length, flags: qs.filter(function (q) { return !q.sure; }).length, run: res });
+          hist = hist.slice(0, 12);
+          while (hist.length && !saveLocal(HIST_KEY, hist)) hist.pop();
+        } else { try { sessionStorage.removeItem(RUN_KEY); } catch (err) {} }
         return res;
       });
     },
@@ -104,6 +120,17 @@
       } catch (err) {}
     },
     lastRun: function () { return load(RUN_KEY); },
+    runFiles: function () { return load(FILES_KEY) || []; },
+    /* finished runs kept on this device (without the worksheet images) */
+    history: function () { return loadLocal(HIST_KEY, []); },
+    openRun: function (id) {
+      var h = loadLocal(HIST_KEY, []).filter(function (x) { return x.id === id; })[0];
+      if (!h || !h.run) return false;
+      try { sessionStorage.removeItem(FILES_KEY); } catch (err) {}
+      store(RUN_KEY, h.run);
+      return true;
+    },
+    clearHistory: function () { try { localStorage.removeItem(HIST_KEY); } catch (err) {} },
     saveRun: function (run) { store(RUN_KEY, run); }
   };
 

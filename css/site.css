@@ -25,3 +25,9 @@ html:not(.dc-ready) body { visibility: hidden; }
 
 /* Let people select and copy the text inside step rows and other text buttons. */
 .bb-step, .bb-step * { -webkit-user-select: text; user-select: text; }
+
+/* The past runs box sits in the empty space on the right, on windows wide enough to have some. */
+.bb-side { display: none; }
+@media (min-width: 1700px) {
+  .bb-side { display: block; }
+}

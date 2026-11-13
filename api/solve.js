@@ -20,6 +20,12 @@ Rules:
 - If part of a question can't be read or is ambiguous, still give your best answer but say exactly what is
   unclear in "unclear" (otherwise null). Never invent missing numbers silently.
 - For writing tasks, the answer is the finished piece and the steps explain the plan and choices.
+- Where the answer goes. When the assignment came as images, add "place" to each question: the spot on the
+  worksheet where the student would write that answer (the blank line, the box, or the empty space right after
+  the question). {"page": 1, "x": 0.12, "y": 0.34, "w": 0.5}: page = which image (1 = the first), x and y = the
+  top-left corner of where the writing should start, as fractions of the image's width and height (0 to 1),
+  w = how wide the space is as a fraction of the width. Look carefully at the layout: answers must not sit on
+  top of printed text. Use null when the assignment was not an image or there is no sensible spot.
 - Graphs. Add a "figure" to a question when the answer is or needs a graph, or when the question includes a
   graph you had to read. Give DATA ONLY, never computed statistics: badgerbox draws it and does the math
   (regression, r squared, bins, quartiles) itself. Shapes:
@@ -35,7 +41,7 @@ Rules:
 - Reply with JSON only, no prose, in exactly this shape:
 {"subject": "short subject, e.g. chemistry", "level": "easy|medium|hard", "title": "short name for the assignment",
  "questions": [{"number": 1, "text": "the question as written", "answer": "the final answer",
-   "steps": [{"text": "...", "result": "...", "why": "..."}], "unclear": null, "figure": null}]}`;
+   "steps": [{"text": "...", "result": "...", "why": "..."}], "unclear": null, "figure": null, "place": null}]}`;
 
 const CHECK_SYSTEM = `You are the checker for badgerbox. For each question, solve it yourself from scratch using a
 different method or route than the obvious one (work backwards, substitute the answer in, estimate, use
@@ -100,6 +106,7 @@ export default async function handler(req, res) {
         steps: (q.steps || []).slice(0, 6).map((s) => ({ text: String(s.text || ''), result: String(s.result || ''), why: String(s.why || '') })),
         check: c ? String(c.check || '') : '',
         figure: (q.figure && typeof q.figure === 'object' && q.figure.type) ? q.figure : null,
+        place: (q.place && isFinite(Number(q.place.x)) && isFinite(Number(q.place.y))) ? { page: Number(q.place.page) || 1, x: Math.min(1, Math.max(0, Number(q.place.x))), y: Math.min(1, Math.max(0, Number(q.place.y))), w: Math.min(1, Math.max(0.1, Number(q.place.w) || 0.5)) } : null,
         sure: agree && !q.unclear,
         flag: flag ? String(flag) : null
       };

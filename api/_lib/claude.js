@@ -32,10 +32,10 @@ function fakeReply(system) {
         { head: 'remember', items: ['always check by substituting.'] }] });
   }
   return JSON.stringify({ subject: 'algebra', level: 'easy', title: 'linear equations', questions: [
-    { number: 1, text: 'Solve 3x + 7 = 22', answer: 'x = 5', unclear: null, steps: [
+    { number: 1, text: 'Solve 3x + 7 = 22', answer: 'x = 5', unclear: null, place: { page: 1, x: 0.55, y: 0.1, w: 0.4 }, steps: [
       { text: 'take 7 from both sides', result: '3x = 15', why: 'undo the + 7 first so the x term is alone.' },
       { text: 'divide both sides by 3', result: 'x = 5', why: 'undo the times 3.' }] },
-    { number: 2, text: 'Solve 2x - 1 = 6', answer: 'x = 4', unclear: null, steps: [
+    { number: 2, text: 'Solve 2x - 1 = 6', answer: 'x = 4', unclear: null, place: { page: 1, x: 0.55, y: 0.4, w: 0.4 }, steps: [
       { text: 'add 1 to both sides', result: '2x = 7', why: 'undo the - 1.' },
       { text: 'divide by 2', result: 'x = 4', why: 'undo the times 2.' }] },
     { number: 3, text: 'Graph y = 2x - 1 and mark the intercepts', answer: 'a line through (0, -1) and (0.5, 0)', unclear: null,
@@ -50,7 +50,7 @@ function fakeReply(system) {
 }
 
 export async function callModel({ system, content, maxTokens = 8000 }) {
-  if (FAKE) return fakeReply(system);
+  if (FAKE) { await new Promise((r) => setTimeout(r, Number(process.env.BADGERBOX_FAKE_DELAY) || 0)); return fakeReply(system); }
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {

@@ -78,7 +78,9 @@ chemistry sample, so the site always works.
 - The per-class study guide: tl;dr summaries are saved on the device, but there is no screen to read them yet.
 - Real accounts and billing. Keys and daily limits exist (`keys.json`) but are managed by hand and only enforced on your own computer.
 - Model routing by subject and difficulty (one model for now).
-- Past runs are sample data; saved classes and settings reset when the page reloads.
+- Past runs, classes and settings are saved in the browser on one device only, not to an account.
+- Answers are placed on the student's own worksheet only for screenshots and photos (not PDFs), and the
+  model's placement is approximate, which is why answers can be dragged.
 - Phone layout for the main screen and walkthrough (the landing page already works on phones).
 - The bookmarklet points at the placeholder `badgerbox.app`.
 - `[YOUR PRICE]` on the landing page.
