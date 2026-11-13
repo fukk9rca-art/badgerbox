@@ -6,14 +6,14 @@
 <title>badgerbox terminal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<style>x-dc{display:none}</style>
 <link rel="stylesheet" href="css/site.css">
 <script src="vendor/morphdom-umd.min.js" defer></script>
 <script src="js/bb-api.js" defer></script>
+<script src="js/bb-plot.js" defer></script>
 <script src="js/dc-lite.js" defer></script>
 </head>
 <body>
-<x-dc>
+<template data-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&amp;display=swap" rel="stylesheet">
@@ -541,7 +541,7 @@ o   o
 </div>
 </sc-if>
 </div>
-</x-dc>
+</template>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
 class Component extends DCLogic {
 componentDidMount() { this.focusBox(); }

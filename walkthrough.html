@@ -6,14 +6,14 @@
 <title>badgerbox walkthrough</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<style>x-dc{display:none}</style>
 <link rel="stylesheet" href="css/site.css">
 <script src="vendor/morphdom-umd.min.js" defer></script>
 <script src="js/bb-api.js" defer></script>
+<script src="js/bb-plot.js" defer></script>
 <script src="js/dc-lite.js" defer></script>
 </head>
 <body>
-<x-dc>
+<template data-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&amp;display=swap" rel="stylesheet">
@@ -44,6 +44,10 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 .bb-q:focus-visible,.bb-fix:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
 .bb-fix:hover{outline:1px solid #FFFFFF;outline-offset:2px}
 .bb-paper{scrollbar-color:#000000 #FFFFFF}
+.bb-tl{scrollbar-color:#FFFFFF #000000;scrollbar-width:thin}
+.bb-tlbtn:hover{background:#000000 !important;color:#FFFFFF !important}
+.bb-tlbtn:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-plot{touch-action:none}
 .bb-split{cursor:col-resize;touch-action:none}
 .bb-vsplit{cursor:row-resize;touch-action:none}
 .bb-vsplit:hover .bb-vsplit-line,.bb-vsplit:focus-visible .bb-vsplit-line,.bb-vsplit[aria-pressed="true"] .bb-vsplit-line{background:#FFFFFF !important;height:3px !important;top:5px !important}
@@ -112,6 +116,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <button type="button" class="bb-btn" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap" onClick="{{ onCopy }}"><span aria-hidden="true">[ </span>{{ copyLabel }}<span aria-hidden="true"> ]</span></button>
 <button type="button" class="bb-btn" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap" onClick="{{ onPdf }}"><span aria-hidden="true">[ </span>save as pdf<span aria-hidden="true"> ]</span></button>
 </div>
+<button type="button" class="bb-tlbtn" aria-pressed="{{ tlOpen }}" aria-label="tl;dr: the whole assignment in a nutshell" onClick="{{ onTl }}" style="display: block; width: 100%; height: 56px; margin-top: 16px; padding: 0 2ch; background: {{accent}}; color: #000000; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 24px; line-height: 32px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; white-space: pre">{{ tlLabel }}</button>
 </section>
 
 <button type="button" class="bb-split" aria-pressed="{{ dragging }}" aria-label="resize the log and walkthrough panels. left and right arrows to move, enter to reset" title="drag to resize · double-click to reset" onPointerDown="{{ onSplitDown }}" onPointerMove="{{ onSplitMove }}" onPointerUp="{{ onSplitUp }}" onPointerCancel="{{ onSplitUp }}" onDoubleClick="{{ onSplitReset }}" onKeyDown="{{ onSplitKey }}" style="position: relative; width: 11px; height: 100%; margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; color: #FFFFFF">
@@ -162,6 +167,55 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 </li>
 </sc-for>
 </ol>
+</sc-if>
+
+<sc-if value="{{ showGraph }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 12px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 3ch">
+<figure style="flex: 1 1 380px; min-width: 0; max-width: 560px; margin: 0">
+<figcaption style="color: #BDBDBD"><span style="color: #FFFFFF; font-weight: 700">fig</span> {{ g.title }}</figcaption>
+<div class="bb-plot" role="img" aria-label="{{ g.aria }}" onPointerMove="{{ g.onMove }}" onPointerLeave="{{ g.onLeave }}" style="position: relative; width: 100%; aspect-ratio: 560 / 300; margin-top: 4px; font-size: 12px; line-height: 16px; color: #BDBDBD">
+<svg aria-hidden="true" viewBox="0 0 560 300" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: hidden">
+<path d="{{ g.gridPath }}" stroke="#3A3A3A" stroke-width="1" stroke-dasharray="2 4" fill="none"></path>
+<path d="{{ g.axisPath }}" stroke="#FFFFFF" stroke-width="1.5" fill="none"></path>
+<path d="{{ g.tickPath }}" stroke="#FFFFFF" stroke-width="1.5" fill="none"></path>
+<path d="{{ g.strokePath }}" stroke="{{accent}}" stroke-width="2" fill="none"></path>
+<path d="{{ g.dashPath }}" stroke="#FFFFFF" stroke-width="1" stroke-dasharray="5 4" fill="none"></path>
+<path d="{{ g.boxPath }}" stroke="#FFFFFF" stroke-width="2" fill="#000000"></path>
+<path d="{{ g.fillPath }}" fill="#FFFFFF" stroke="none"></path>
+<path d="{{ g.hovPath }}" stroke="#FFFFFF" stroke-width="2" fill="none"></path>
+</svg>
+<sc-for list="{{ g.labels }}" as="t" hint-placeholder-count="0">
+<span aria-hidden="true" style="position: absolute; left: {{ t.left }}; top: {{ t.top }}; transform: {{ t.shift }}; white-space: nowrap">{{ t.text }}</span>
+</sc-for>
+<sc-if value="{{ g.hovOn }}" hint-placeholder-val="{{ false }}">
+<span aria-hidden="true" style="position: absolute; left: {{ g.hovLeft }}; top: {{ g.hovTop }}; transform: translate(-50%, -100%); margin-top: -10px; padding: 0 6px; background: {{accent}}; color: #000000; font-size: 14px; line-height: 22px; font-weight: 700; white-space: nowrap; pointer-events: none">{{ g.hovText }}</span>
+</sc-if>
+</div>
+<div style="margin-top: 2px; display: flex; flex-wrap: wrap; gap: 0 3ch; font-size: 14px; line-height: 22px; color: #BDBDBD">
+<sc-for list="{{ g.legend }}" as="lg" hint-placeholder-count="2">
+<span><span aria-hidden="true" style="color: #FFFFFF; white-space: pre">{{ lg.mark }}</span> {{ lg.text }}</span>
+</sc-for>
+</div>
+<div style="font-size: 14px; line-height: 22px; color: #8C8C8C">{{ g.hint }}</div>
+</figure>
+<sc-if value="{{ g.readOn }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-labelledby="bb-read-h" style="flex: 0 1 30ch; min-width: 24ch; padding: 8px 2ch 10px 2ch; border: 1px solid {{ g.readBorder }}">
+<div id="bb-read-h" style="font-weight: 700">{{ g.readHead }}</div>
+<div style="color: #8C8C8C">{{ g.readSub }}</div>
+<ul style="list-style: none; margin: 6px 0 0 0; padding: 0">
+<sc-for list="{{ g.rows }}" as="row" hint-placeholder-count="5">
+<li style="display: flex; gap: 1ch; color: {{ row.color }}; font-weight: {{ row.weight }}"><span style="width: 3ch; color: #8C8C8C; font-weight: 400">{{ row.n }}</span><span style="white-space: pre">{{ row.text }}</span></li>
+</sc-for>
+</ul>
+<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 1ch">
+<sc-for list="{{ g.btns }}" as="f" hint-placeholder-count="2">
+<button type="button" class="bb-fix" onClick="{{ f.pick }}" style="height: 36px; padding: 0 1ch; background: {{ f.bg }}; color: {{ f.fg }}; border: 1px solid #FFFFFF; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ f.text }}</button>
+</sc-for>
+</div>
+<div style="margin-top: 4px; color: #8C8C8C">{{ g.readNote }}</div>
+</div>
+</sc-if>
+</div>
 </sc-if>
 
 <sc-if value="{{ showAnswer }}" hint-placeholder-val="{{ true }}">
@@ -246,6 +300,62 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 </div>
 </sc-if>
 
+<sc-if value="{{ showTl }}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; padding-top: 12px">
+<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 2ch">
+<h2 style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700"><span aria-hidden="true" style="color: #8C8C8C">3:</span>tl;dr <span style="color: #BDBDBD">{{ tlTitle }}</span></h2>
+<span style="margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 1ch">
+<button type="button" class="bb-btn" onClick="{{ onNotes }}" style="height: 36px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>{{ notesLabel }}<span aria-hidden="true"> ]</span></button>
+<button type="button" class="bb-btn" onClick="{{ onTl }}" style="height: 36px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>&lt; back to steps<span aria-hidden="true"> ]</span></button>
+</span>
+</div>
+<sc-if value="{{ tlBusy }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="margin-top: 16px; color: #BDBDBD; white-space: pre">{{ tlBusyText }}</div>
+</sc-if>
+<sc-if value="{{ tlReady }}" hint-placeholder-val="{{ true }}">
+<div class="bb-tl" tabindex="0" aria-label="summary" style="margin-top: 12px; flex: 1 1 0; min-height: 0; overflow-y: auto; padding-right: 8px">
+<div style="padding: 10px 2ch; background: {{accent}}; color: #000000">
+<div style="font-weight: 700">{{ tlTopic }}</div>
+<div>{{ tlNutshell }}</div>
+</div>
+<div style="padding: 6px 2ch 8px 2ch; border: 1px solid #6B6B6B; border-top: 0; color: #BDBDBD; display: flex; flex-wrap: wrap; align-items: center; gap: 0 2ch">
+<span style="flex: 1 1 40ch; min-width: 0">{{ tlBasis }}</span>
+<button type="button" class="bb-btn" onClick="{{ onTlWrong }}" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>that's not it<span aria-hidden="true"> ]</span></button>
+</div>
+<sc-for list="{{ tlSections }}" as="sec" hint-placeholder-count="4">
+<section style="display: grid; grid-template-columns: 16ch minmax(0, 1fr); gap: 0 2ch; padding: 12px 0; border-bottom: 1px dashed #5A5A5A">
+<h3 style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">{{ sec.head }}</h3>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="3">
+<li style="display: flex; gap: 1ch"><span aria-hidden="true" style="flex-shrink: 0; width: 3ch; color: #8C8C8C">{{ it.n }}</span><span style="min-width: 0; color: {{ it.color }}">{{ it.text }}</span></li>
+</sc-for>
+</ol>
+</section>
+</sc-for>
+</div>
+</sc-if>
+<div id="bb-thread" class="bb-thread" aria-live="polite" aria-label="follow-up questions" style="margin-top: 8px; flex: 0 1 auto; max-height: 30%; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{ thread }}" as="m" hint-placeholder-count="0">
+<div style="padding: 4px 16px; border-left: 1px solid {{ m.border }}; color: {{ m.color }}; max-width: 72ch; white-space: pre-wrap">{{ m.text }}</div>
+</sc-for>
+</div>
+<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 1ch">
+<sc-for list="{{ tlChips }}" as="c" hint-placeholder-count="4">
+<button type="button" class="bb-opt" onClick="{{ c.ask }}" style="height: 32px; padding: 0 1ch; background: transparent; color: #BDBDBD; border: 1px solid #5A5A5A; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ c.text }}</button>
+</sc-for>
+</div>
+<div class="bb-prompt" style="position: relative; margin-top: 8px; display: flex; align-items: flex-start; gap: 1ch; padding: 10px 12px; border: 1px solid #6B6B6B">
+<span aria-hidden="true" style="font-weight: 700">&gt;</span>
+<label for="bb-ask" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">ask about any step</label>
+<div style="position: relative; flex-grow: 1; min-width: 0">
+<textarea id="bb-ask" rows="1" placeholder=" " onInput="{{ onAskType }}" onKeyDown="{{ onAskKey }}" onKeyUp="{{ onCaret }}" onClick="{{ onCaret }}" onFocus="{{ onCaret }}" onScroll="{{ onTaScroll }}" style="display: block; width: 100%; box-sizing: border-box; max-width: 100%; overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere; scrollbar-gutter: stable; scrollbar-width: thin; min-height: 24px; max-height: 96px; field-sizing: content; margin: 0; padding: 0; border: 0; resize: none; background: transparent; color: #FFFFFF; font-family: inherit; font-size: 16px; line-height: 24px"></textarea>
+<div id="bb-ask-mirror" aria-hidden="true" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; box-sizing: border-box; overflow-y: hidden; scrollbar-gutter: stable; scrollbar-width: thin; margin: 0; padding: 0; visibility: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 16px; line-height: 24px; pointer-events: none">{{ caretBefore }}<span class="bb-cursor" style="visibility: visible; display: inline-block; width: 1ch; height: 20px; vertical-align: -4px; background: {{accent}}"></span></div>
+</div>
+<span style="color: #8C8C8C; white-space: nowrap">{{ askHint }}</span>
+</div>
+</div>
+</sc-if>
+
 </section>
 
 </main>
@@ -259,6 +369,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <span><span style="background: {{accent}}; color: #000000; padding: 0 4px">←/→</span> question</span>
 <span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+1-5</span> open a step</span>
 <span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+w</span> worksheet</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+t</span> tl;dr</span>
 <span><span style="background: {{accent}}; color: #000000; padding: 0 4px">drag :</span> resize</span>
 <span><span style="background: {{accent}}; color: #000000; padding: 0 4px">enter</span> ask</span>
 <span><span style="background: {{accent}}; color: #000000; padding: 0 4px">esc</span> back</span>
@@ -267,7 +378,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 </footer>
 
 </div>
-</x-dc>
+</template>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
 class Component extends DCLogic {
 componentDidMount() { this.focusBox(); }
@@ -279,6 +390,22 @@ const accent = this.props.accent ?? '#FFFFFF';
 const later = (fn, ms) => { this.timers = this.timers || []; this.timers.push(setTimeout(fn, ms)); };
 const fix = s.fix || '';
 const big = fix === '32';
+const BP = window.bbPlot || null;
+const PTS0 = [[0.10, 0.09], [0.20, 0.19], [0.30, 0.27], [0.40, 0.38], [0.60, 0.55]];
+const pts = Array.isArray(s.pts) ? s.pts : PTS0;
+const f2 = (n) => (Math.round(n * 100) / 100).toFixed(2);
+const linreg = (ps) => {
+  const n = ps.length; let sx = 0, sy = 0;
+  ps.forEach((q) => { sx += q[0]; sy += q[1]; });
+  const mx = sx / n, my = sy / n; let sxx = 0, sxy = 0, syy = 0;
+  ps.forEach((q) => { sxx += (q[0] - mx) * (q[0] - mx); sxy += (q[0] - mx) * (q[1] - my); syy += (q[1] - my) * (q[1] - my); });
+  const m = sxx ? sxy / sxx : 0;
+  return { m: m, b: my - m * mx, r2: (sxx && syy) ? (sxy * sxy) / (sxx * syy) : 1 };
+};
+const fit = linreg(pts);
+const PX = 0.5;
+const pred = fit.m * PX + fit.b;
+const fitEq = 'V = ' + f2(fit.m) + 'm ' + (fit.b < 0 ? '− ' : '+ ') + f2(Math.abs(fit.b));
 const QS = [
   { text: 'How many moles are in 25.0 g of water (H₂O)?', ans: '1.39 mol H₂O',
     check: 'second way: multiply back. 1.387 mol × 18.02 g/mol = 25.0 g, which is the mass you started with.',
@@ -317,13 +444,12 @@ const QS = [
       { text: 'divide what was collected by the theoretical yield', result: '38.0 ÷ 43.9 = 0.866', why: 'percent yield compares what you really got with the most you could have got.' },
       { text: 'multiply by 100', result: '0.866 × 100 = 86.6 %', why: 'turns the fraction into a percent. a yield under 100 % is normal: some product is always lost.' }
     ] },
-  { text: 'How many liters of H₂ gas at STP form when 6.00 g of magnesium reacts with excess HCl?', ans: '5.53 L of H₂',
-    check: 'second way: the ideal gas law. V = nRT/P = 0.2468 × 0.08206 × 273.15 ÷ 1.00 = 5.53 L. matches the molar volume route.',
+  { figure: { type: 'scatter', title: 'volume of H₂ against mass of Mg', xLabel: 'mass of Mg (g)', yLabel: 'H₂ (L)', xUnit: 'g', yUnit: 'L', points: pts, fit: true, predict: PX, read: true }, text: 'The graph shows the volume of H₂ collected at STP for different masses of magnesium. Use it to predict the volume of H₂ from 0.50 g of Mg.', ans: f2(pred) + ' L of H₂',
+    check: 'second way: stoichiometry, no graph needed. 0.50 g ÷ 24.31 g/mol × 22.4 L/mol = 0.46 L. ' + (Math.abs(pred - 0.46) < 0.015 ? 'matches the graph.' : 'the graph gives ' + f2(pred) + ' L, so check the points read off it.'),
     steps: [
-      { text: 'balance the equation', result: 'Mg + 2HCl → MgCl₂ + H₂', why: 'one magnesium replaces the hydrogen in two HCl, releasing one H₂ molecule.' },
-      { text: 'turn the mass of Mg into moles', result: '6.00 ÷ 24.31 = 0.247', why: 'molar mass of magnesium is 24.31 g/mol. HCl is in excess, so magnesium decides how much H₂ forms.' },
-      { text: 'use the 1 : 1 ratio to get moles of H₂', result: '0.247 mol H₂', why: 'the balanced equation makes 1 H₂ for every 1 Mg.' },
-      { text: 'multiply by the molar volume at STP', result: '0.247 × 22.4 = 5.53 L', why: 'at STP one mole of any gas takes up 22.4 L. your class uses 22.4, so that is what is used here.' }
+      { text: 'read the points off the graph', result: pts.length + ' points', why: 'each dot is one trial: the mass of Mg used and the H₂ collected. the box next to the graph lists what badgerbox read, so you can fix a point if it is off.' },
+      { text: 'fit a straight line through them', result: fitEq, why: 'the points fall on a line, so volume is proportional to mass. the line is a least-squares fit worked out by badgerbox\'s own math, not estimated by eye.' },
+      { text: 'put 0.50 g into the line', result: f2(fit.m) + ' × 0.50 ' + (fit.b < 0 ? '− ' : '+ ') + f2(Math.abs(fit.b)) + ' = ' + f2(pred) + ' L', why: '0.50 g sits between two measured points, so reading it off the line is safe. rounded to 2 decimal places like the data.' }
     ] }
 ];
 const syncM = (id, ta) => setTimeout(() => { const m = document.getElementById(id); const t = ta || document.getElementById(id.replace('-mirror', '')); if (m && t) m.scrollTop = t.scrollTop; }, 0);
@@ -339,7 +465,6 @@ const DEF_W = 500, MIN_W = 320, MAX_W = 880;
 const leftW = (s.leftW != null) ? s.leftW : DEF_W;
 const clampW = (w) => Math.round(Math.min(MAX_W, Math.max(MIN_W, w)));
 const DEF_H = 430, MIN_H = 120, MAX_H = 660;
-const walkH = (s.walkH != null) ? s.walkH : DEF_H;
 const clampH = (h) => Math.round(Math.min(MAX_H, Math.max(MIN_H, h)));
 const isFlag = (i) => LIVE ? (!QL[i].sure && !okd[i]) : (i === 2 && !fix);
 const flagIdx = QL.map((_, i) => i).filter(isFlag);
@@ -348,6 +473,10 @@ const flagNames = flagIdx.map((i) => '#' + numOf(i)).join(', ');
 const cur = Math.min(N - 1, (s.q != null) ? s.q : (LIVE ? (nFlag ? flagIdx[0] : 0) : 2));
 const Q = QL[cur];
 const flagNow = isFlag(cur);
+const FIG = Q.figure || null;
+const G = (FIG && BP) ? BP.build(FIG, { hov: s.hov }) : null;
+const readOk = !!(s.readOk || {})[cur];
+const walkH = (s.walkH != null) ? s.walkH : (G ? 600 : DEF_H);
 const open = (s.open != null) ? s.open : (flagNow ? 1 : -1);
 const asked = String(s.asked || '');
 const VIEWS = ['explained', 'show work', 'final answers'];
@@ -363,15 +492,17 @@ const toggleView = (i) => {
 };
 const PRESETS = [[0, 1, 2], [0, 2], [1, 2], [2], [0]];
 const presetIdx = PRESETS.findIndex((p) => p.join() === vs.join());
-const thread = s.thread || [];
+const tKey = (!!s.tl && !s.sheet) ? 'tlThread' : 'thread';
+const thread = s[tKey] || [];
 const sheet = !!s.sheet;
+const tl = !!s.tl && !sheet;
 const back = () => { const a = document.querySelector('header a.bb-link'); if (a) a.click(); };
-const goQ = (i) => this.setState({ q: (i + N) % N, open: null, sheet: false });
+const goQ = (i) => this.setState({ q: (i + N) % N, open: null, sheet: false, tl: false, hov: null, fixPt: false });
 const say = (lines) => {
-  this.setState({ thread: ((this.state || {}).thread || []).concat(lines) });
+  this.setState({ [tKey]: ((this.state || {})[tKey] || []).concat(lines) });
   [0, 60, 220].forEach((ms) => later(() => { const el = document.getElementById('bb-thread'); if (el) el.scrollTop = el.scrollHeight; }, ms));
 };
-const flash = (k, ms) => { this.setState({ copied: false, pdf: false, dl: false, print: false, [k]: true }); later(() => this.setState({ [k]: false }), ms || 3000); };
+const flash = (k, ms) => { this.setState({ copied: false, pdf: false, dl: false, print: false, notes: false, [k]: true }); later(() => this.setState({ [k]: false }), ms || 3000); };
 const replyFor = (q) => {
   const t = q.toLowerCase();
   const m = t.match(/step\s*(\d)/);
@@ -382,7 +513,7 @@ const replyFor = (q) => {
   if (/mole/.test(t)) return 'moles let you compare different substances by count instead of by weight. one mole of anything is the same number of particles, so the ratios in a balanced equation only work once the amounts are in moles.';
   return "this is where badgerbox's answer to your question shows up once it's connected to a model.";
 };
-const rerun = (i, text) => {
+const rerun = (i, text, shown) => {
   if (!LIVE || !API) return;
   this.setState({ retry: 'busy' });
   const req = RUN.request || {};
@@ -390,7 +521,7 @@ const rerun = (i, text) => {
     const run = API.lastRun();
     if (!run || !run.questions || !run.questions[i]) return;
     if (res && res.source === 'model' && res.questions && res.questions[0]) {
-      const nq = Object.assign({}, res.questions[0], { number: run.questions[i].number, text: text || run.questions[i].text });
+      const nq = Object.assign({}, res.questions[0], { number: run.questions[i].number, text: shown || text || run.questions[i].text });
       run.questions[i] = nq;
       API.saveRun(run);
       this.setState({ retry: '', open: null });
@@ -401,35 +532,117 @@ const rerun = (i, text) => {
     }
   });
 };
+const tlReply = (q) => {
+  const t = q.toLowerCase();
+  if (/quiz|practice|test me/.test(t)) return 'quick one: 4.0 g of H₂ reacts with 16.0 g of O₂ to make water. which runs out first?\n(work it out, then check: H₂ is 1.98 mol, O₂ is 0.50 mol. the O₂ only needs 1.00 mol of H₂, so oxygen runs out first.)';
+  if (/simpl|easier|eli5|short/.test(t)) return 'in one line: turn everything into moles, use the balanced equation as the recipe to see what runs out, then turn the answer back into grams.';
+  if (/memor|remember/.test(t)) return 'three things: the path (balance, grams to moles, ratio, moles to grams, round), percent yield = actual ÷ theoretical × 100, and 22.4 L per mole of gas at STP. molar masses come off the periodic table, so don\'t memorize those.';
+  if (/matter|why|point/.test(t)) return 'it is how you know how much of each ingredient to use and how much product to expect. the next units (solutions, gas laws) all start from the same grams to moles step.';
+  return "this is where badgerbox's answer about the material shows up once it's connected to a model.";
+};
+const scrollThread = () => [0, 60, 220].forEach((ms) => later(() => { const el = document.getElementById('bb-thread'); if (el) el.scrollTop = el.scrollHeight; }, ms));
+const liveAsk = (clean, context, fallback) => {
+  say([{ who: 'you', text: clean }, { who: 'bb', text: 'thinking...' }]);
+  API.ask({ question: clean, context: context, cls: (RUN.request || {}).cls }).then((res) => {
+    const t = ((this.state || {})[tKey] || []).slice();
+    t[t.length - 1] = { who: 'bb', text: res && res.source === 'model' ? res.answer : (res && res.error ? 'could not answer: ' + res.error : fallback(clean)) };
+    this.setState({ [tKey]: t });
+    scrollThread();
+  });
+};
+const SAMPLE_TL = {
+  topic: 'stoichiometry · limiting reactants and yield',
+  nutshell: 'a balanced equation is a recipe. turn grams into moles, use the recipe to see what runs out and how much you make, then turn it back into grams.',
+  basis: 'worked out from your class (10th grade chem) and what this worksheet asks. you didn\'t have to tell it.',
+  sections: [
+    { head: 'key ideas', items: ['the coefficients in a balanced equation are mole ratios, not gram ratios.', 'grams can\'t be compared between substances. moles can.', 'the limiting reactant runs out first and decides how much product forms.', 'percent yield = actual ÷ theoretical × 100.', 'at STP, 1 mole of any gas takes up 22.4 L.'] },
+    { head: 'how to do it', items: ['balance the equation.', 'turn every given mass into moles (÷ molar mass).', 'use the mole ratio to get moles of what you want.', 'turn moles back into grams or liters.', 'round to 3 sig figs and put units on every line, the way your class does.'] },
+    { head: 'watch out for', items: ['comparing grams to find the limiting reactant. compare moles.', 'skipping the balancing step, which makes every ratio wrong.', 'using the reactant that is left over to work out the product.'] },
+    { head: 'remember', items: ['the path: balance → moles → ratio → moles → grams.', 'molar masses come from the periodic table. you don\'t memorize them.', 'a graph of product against reactant is a straight line through zero (#6).'] }
+  ]
+};
+const TL = LIVE ? (RUN.tldr || null) : Object.assign({}, SAMPLE_TL, s.tlTopicUser ? { topic: s.tlTopicUser, basis: 'based on what you told badgerbox, your class (10th grade chem) and this worksheet.' } : {});
+const classLabel = LIVE ? ((RUN.meta || {}).classShort || RUN.subject || 'this class') : '10th grade chem';
+const fetchTl = (hint) => {
+  this.setState({ tlState: 'busy', tlErr: '' });
+  API.tldr({ title: RUN.title, subject: RUN.subject, cls: (RUN.request || {}).cls, hint: hint || '', questions: QL.map((q) => ({ text: q.text, answer: q.ans })) }).then((res) => {
+    if (res && res.source === 'model' && res.tldr) {
+      const run = API.lastRun() || RUN;
+      run.tldr = res.tldr;
+      API.saveRun(run);
+      API.saveNote(classLabel, { title: run.title || run.subject || '', topic: res.tldr.topic, nutshell: res.tldr.nutshell });
+      this.setState({ tlState: 'ready' });
+    } else this.setState({ tlState: 'error', tlErr: (res && res.error) || 'no reply from the model' });
+    later(() => this.focusBox(), 60);
+  });
+};
+const fixPoint = (txt) => {
+  const m = /(-?\d*\.?\d+)\s*[, ]\s*(-?\d*\.?\d+)/.exec(txt);
+  if (!m) { say([{ who: 'you', text: txt }, { who: 'bb', text: 'type the point like (0.30, 0.28): the across value first, then the up value.' }]); return; }
+  const x = Number(m[1]), y = Number(m[2]);
+  const cp = (FIG.points || []).map((q) => [Number(q[0]), Number(q[1])]);
+  let k = 0;
+  cp.forEach((q, i) => { if (Math.abs(q[0] - x) < Math.abs(cp[k][0] - x)) k = i; });
+  const next = cp.map((q, i) => (i === k ? [x, y] : q));
+  const ok = Object.assign({}, s.readOk || {}, { [cur]: true });
+  if (LIVE) {
+    const run = API.lastRun();
+    if (run && run.questions[cur] && run.questions[cur].figure) { run.questions[cur].figure.points = next; API.saveRun(run); }
+    this.setState({ fixPt: false, readOk: ok, edited: k });
+    say([{ who: 'you', text: txt }, { who: 'bb', text: 'point ' + (k + 1) + ' is now (' + x + ', ' + y + '). working #' + numOf(cur) + ' out again with the corrected points.' }]);
+    rerun(cur, Q.text + '\n\nThe points read off the graph, corrected by the student: ' + JSON.stringify(next), Q.text);
+    return;
+  }
+  const nf = linreg(next);
+  this.setState({ pts: next, fixPt: false, readOk: ok, edited: k });
+  say([{ who: 'you', text: txt }, { who: 'bb', text: 'point ' + (k + 1) + ' is now (' + f2(x) + ', ' + f2(y) + '). line refit and #6 re-checked: the prediction is ' + f2(nf.m * PX + nf.b) + ' L.' }]);
+};
 const ask = (q) => {
   const clean = String(q || '').trim();
   if (!clean) return;
+  if (s.fixPt && !tl && FIG) { this.setState({ asked: '' }); fixPoint(clean); return; }
+  if (tl && s.tlAsk) {
+    this.setState({ asked: '', tlAsk: false });
+    if (LIVE) { say([{ who: 'you', text: clean }, { who: 'bb', text: 'got it. rebuilding the tl;dr around that.' }]); fetchTl(clean); return; }
+    this.setState({ tlTopicUser: clean });
+    say([{ who: 'you', text: clean }, { who: 'bb', text: 'got it. the tl;dr is now built around: ' + clean + '.' }]);
+    return;
+  }
+  if (tl) {
+    this.setState({ asked: '' });
+    if (LIVE && API && TL) { liveAsk(clean, { text: 'the tl;dr summary of this assignment. topic: ' + TL.topic + '. ' + TL.nutshell + ' ' + (TL.sections || []).map((x) => x.head + ': ' + (x.items || []).join(' | ')).join(' || '), answer: '', steps: [] }, tlReply); return; }
+    say([{ who: 'you', text: clean }, { who: 'bb', text: tlReply(clean) }]);
+    return;
+  }
   const typing = !!(s.typing && flagNow);
   this.setState({ asked: '', typing: false });
   if (LIVE && typing) { say([{ who: 'you', text: clean }]); rerun(cur, clean); return; }
-  if (!typing && API && LIVE) {
-    say([{ who: 'you', text: clean }, { who: 'bb', text: 'thinking...' }]);
-    API.ask({ question: clean, context: { text: Q.text, answer: Q.ans, steps: Q.steps }, cls: (RUN.request || {}).cls }).then((res) => {
-      const t = ((this.state || {}).thread || []).slice();
-      t[t.length - 1] = { who: 'bb', text: res && res.source === 'model' ? res.answer : (res && res.error ? 'could not answer: ' + res.error : replyFor(clean)) };
-      this.setState({ thread: t });
-      [0, 60, 220].forEach((ms) => later(() => { const el = document.getElementById('bb-thread'); if (el) el.scrollTop = el.scrollHeight; }, ms));
-    });
-    return;
-  }
+  if (!typing && API && LIVE) { liveAsk(clean, { text: Q.text, answer: Q.ans, steps: Q.steps }, replyFor); return; }
   say([{ who: 'you', text: clean }, { who: 'bb', text: typing ? 'got it. once badgerbox is live, #3 gets re-run and re-checked from what you typed.' : replyFor(clean) }]);
 };
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const printSheet = () => {
   const title = LIVE ? (RUN.title || RUN.subject || 'worksheet') : 'Stoichiometry worksheet';
   const klass = LIVE ? ((RUN.meta || {}).classShort || RUN.subject || '') : '10th grade chemistry';
-  const body = QL.map((q, i) => '<section><h2>' + esc(numOf(i) + '. ' + q.text) + '</h2>' + (q.steps || []).map((d) => '<p class="w">' + esc(d.text + ':  ' + d.result) + '</p>').join('') + '<p class="a"><span>' + esc(isFlag(i) && !LIVE ? '65.9 g or 95.8 g' : q.ans) + '</span>' + (isFlag(i) ? ' <em>[!] not sure</em>' : '') + '</p></section>').join('');
-  const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:Cousine,Menlo,Consolas,monospace;color:#000;margin:32px;font-size:12pt;line-height:1.5}header{display:flex;justify-content:space-between;font-weight:700}.n{margin-top:4px;color:#444}section{margin-top:16px;padding-top:12px;border-top:1px solid #000;break-inside:avoid}h2{font-size:12pt;margin:0}.w{margin:0 0 0 3ch;color:#333}.a{margin:6px 0 0 3ch}.a span{border:2px solid #000;padding:0 1ch;font-weight:700}em{font-style:normal;color:#333}</style></head><body><header><span>' + esc(title) + '</span><span>' + esc(klass) + '</span></header><div class="n">name ____________________   date __________   period ____</div>' + body + '<script>window.onload=function(){window.print();}<\/script></body></html>';
+  const body = QL.map((q, i) => '<section><h2>' + esc(numOf(i) + '. ' + q.text) + '</h2>' + (q.steps || []).map((d) => '<p class="w">' + esc(d.text + ':  ' + d.result) + '</p>').join('') + ((q.figure && BP) ? '<div class="g">' + BP.svg(q.figure, 420) + '</div>' : '') + '<p class="a"><span>' + esc(isFlag(i) && !LIVE ? '65.9 g or 95.8 g' : q.ans) + '</span>' + (isFlag(i) ? ' <em>[!] not sure</em>' : '') + '</p></section>').join('');
+  const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:Cousine,Menlo,Consolas,monospace;color:#000;margin:32px;font-size:12pt;line-height:1.5}header{display:flex;justify-content:space-between;font-weight:700}.n{margin-top:4px;color:#444}section{margin-top:16px;padding-top:12px;border-top:1px solid #000;break-inside:avoid}h2{font-size:12pt;margin:0}.w{margin:0 0 0 3ch;color:#333}.a{margin:6px 0 0 3ch}.a span{border:2px solid #000;padding:0 1ch;font-weight:700}.g{margin:6px 0 0 3ch}em{font-style:normal;color:#333}</style></head><body><header><span>' + esc(title) + '</span><span>' + esc(klass) + '</span></header><div class="n">name ____________________   date __________   period ____</div>' + body + '<script>window.onload=function(){window.print();}<\/script></body></html>';
   const w = window.open('', '_blank');
   if (!w) { flash('print'); return; }
   w.document.open(); w.document.write(html); w.document.close();
 };
 const stepAsk = (hasE && open >= 0) ? open + 1 : Math.min(3, Q.steps.length);
+const openTl = () => {
+  if (tl) { this.setState({ tl: false, tlAsk: false }); later(() => this.focusBox(), 80); return; }
+  if (LIVE) {
+    const have = !!RUN.tldr;
+    this.setState({ tl: true, sheet: false, tlState: have ? 'ready' : 'busy' });
+    if (!have) fetchTl('');
+  } else {
+    this.setState({ tl: true, sheet: false, tlState: s.tlState === 'ready' ? 'ready' : 'busy' });
+    if (s.tlState !== 'ready') later(() => { this.setState({ tlState: 'ready' }); if (API) API.saveNote(classLabel, { title: 'stoichiometry worksheet', topic: SAMPLE_TL.topic, nutshell: SAMPLE_TL.nutshell }); }, 1500);
+  }
+  [80, 1700].forEach((ms) => later(() => this.focusBox(), ms));
+};
 const stepsText = Q.steps.map((d, i) => 'step ' + (i + 1) + '  ' + d.text + '  ' + d.result).join('\n') + '\nanswer  ' + Q.ans;
 const pickFixSample = (v) => { this.setState({ fix: v, open: null, retry: '' }); say([{ who: 'bb', text: '#3 re-run with ' + (v === '32' ? '32.0' : '22.0') + ' g and re-checked 2 ways. both match, so it is now [✓].' }]); };
 const retry = () => { if (LIVE) { rerun(cur, Q.text); return; } this.setState({ retry: 'busy' }); later(() => this.setState({ retry: 'done' }), 1600); };
@@ -515,7 +728,43 @@ return {
   qText: numOf(cur) + '. ' + Q.text,
   qChips: QL.map((q, i) => { const on = i === cur && !sheet; const fl = isFlag(i); return { text: '#' + numOf(i) + (fl ? ' [!]' : ' [✓]'), aria: 'question ' + numOf(i) + (fl ? ', not sure' : ', checked'), pressed: on ? 'true' : 'false', bg: on ? accent : 'transparent', fg: on ? '#000000' : (fl ? '#FFFFFF' : '#BDBDBD'), border: on ? accent : (fl ? '#FFFFFF' : '#5A5A5A'), pick: () => goQ(i) }; }),
   qSummary: nFlag ? (N - nFlag) + ' checked · ' + nFlag + ' to look at' : 'all ' + N + ' checked',
-  showWalk: !sheet,
+  showWalk: !sheet && !tl,
+  showTl: tl,
+  tlOpen: tl ? 'true' : 'false',
+  tlLabel: tl ? '< back to steps' : 'tl;dr',
+  onTl: openTl,
+  tlBusy: tl && (s.tlState !== 'ready' || !TL),
+  tlReady: tl && s.tlState === 'ready' && !!TL,
+  tlBusyText: s.tlState === 'error' ? 'could not build the tl;dr: ' + (s.tlErr || '') + '\npress the tl;dr button twice to try again.' : (LIVE ? 'reading your class ................ ' + classLabel + '\nreading the worksheet ............. ' + N + ' question' + (N === 1 ? '' : 's') + '\nworking out what you\'re learning ...\nwriting the tl;dr ...' : 'reading your class ................ 10th grade chem\nreading the worksheet ............. 6 questions\nworking out what you\'re learning ... stoichiometry\nwriting the tl;dr ...'),
+  tlTitle: 'the whole assignment in a nutshell',
+  tlTopic: TL ? 'you\'re learning: ' + TL.topic : '',
+  tlNutshell: TL ? TL.nutshell : '',
+  tlBasis: TL ? (TL.basis || 'worked out from your class and what this assignment asks.') : '',
+  onTlWrong: () => { this.setState({ tlAsk: true }); const ta = document.getElementById('bb-ask'); if (ta) ta.focus(); },
+  tlSections: (TL ? (TL.sections || []) : []).map((sec, k) => ({ head: sec.head, items: (sec.items || []).concat((!LIVE && k === 2 && nFlag) ? ['#3 on this worksheet is still [!] not sure. fix it before you study from it.'] : []).map((t, i) => ({ n: (i + 1) + '.', text: t, color: /\[!\]/.test(t) ? '#FFFFFF' : '#BDBDBD' })) })),
+  tlChips: ['quiz me', 'say it simpler', 'what should i memorize?', 'why does this matter?'].map((c) => ({ text: c, ask: () => ask(c) })),
+  notesLabel: 'saved to notes',
+  onNotes: () => flash('notes'),
+  showGraph: !!G && stepsOn,
+  g: Object.assign({}, G || {}, {
+    onMove: (e) => {
+      if (!G) return;
+      const rc = e.currentTarget.getBoundingClientRect();
+      if (!rc.width) return;
+      const k = BP.nearest(G.marks, (e.clientX - rc.left) / rc.width * BP.VB.w, (e.clientY - rc.top) / rc.height * BP.VB.h);
+      const was = (this.state || {}).hov;
+      if (k !== (was == null ? null : was)) this.setState({ hov: k });
+    },
+    onLeave: () => { if ((this.state || {}).hov != null) this.setState({ hov: null }); },
+    readOn: !!(FIG && FIG.read && Array.isArray(FIG.points) && FIG.points.length),
+    readBorder: readOk ? '#6B6B6B' : '#FFFFFF',
+    readHead: readOk ? '[✓] read off the graph' : 'read off the graph',
+    readSub: readOk ? 'confirmed by you' : 'does this match your worksheet?',
+    rows: (FIG && Array.isArray(FIG.points) ? FIG.points : []).map((q, i) => ({ n: (i + 1) + '.', text: q[0] + (FIG.xUnit ? ' ' + FIG.xUnit : '') + '  →  ' + q[1] + (FIG.yUnit ? ' ' + FIG.yUnit : ''), color: s.edited === i ? '#FFFFFF' : '#BDBDBD', weight: s.edited === i ? '700' : '400' })),
+    btns: (readOk ? [] : [{ text: 'looks right', bg: accent, fg: '#000000', pick: () => this.setState({ readOk: Object.assign({}, s.readOk || {}, { [cur]: true }), fixPt: false }) }]).concat([
+      { text: 'fix a point', bg: 'transparent', fg: '#FFFFFF', pick: () => { this.setState({ fixPt: true }); const ta = document.getElementById('bb-ask'); if (ta) ta.focus(); } }]),
+    readNote: s.fixPt ? 'type the right point in the box below, like (0.30, 0.28), then enter.' : (readOk ? '' : 'if a point is off, the answer is off. badgerbox asks so it never guesses.')
+  }),
   showSheet: sheet,
   sheetOpen: sheet ? 'true' : 'false',
   walkFor: '#' + numOf(cur),
@@ -542,7 +791,7 @@ return {
     { text: s.retry === 'busy' ? 'reading...' : 'try again', bg: 'transparent', fg: '#FFFFFF', pick: retry }
   ],
   flagNote: s.typing ? 'type question ' + numOf(cur) + ' in the box below and press enter.' : 'badgerbox does not guess. this one stays marked on the completed worksheet until you fix it.',
-  askHint: (s.typing && flagNow) ? 'type question ' + numOf(cur) + ' here, then enter' : 'ask anything about #' + numOf(cur),
+  askHint: tl ? (s.tlAsk ? 'what are you learning right now? a few words is fine' : 'ask anything about the material') : (s.fixPt && FIG) ? 'type the point, e.g. (0.30, 0.28)' : (s.typing && flagNow) ? 'type question ' + numOf(cur) + ' here, then enter' : 'ask anything about #' + numOf(cur),
   thread: thread.map((m) => ({ text: (m.who === 'you' ? '> ' : '') + m.text, color: m.who === 'you' ? '#FFFFFF' : '#BDBDBD', border: m.who === 'you' ? '#5A5A5A' : '#FFFFFF' })),
   chips: ['explain it simpler', 'why step ' + stepAsk + '?', 'another example', 'check my answer'].map((c) => ({ text: c, ask: () => ask(c) })),
   copyLabel: s.copied ? 'copied' : (!stepsOn ? 'copy answer' : 'copy steps'),
@@ -554,13 +803,13 @@ return {
     ans: (isFlag(i) && !LIVE) ? '65.9 g or 95.8 g' : q.ans,
     mark: isFlag(i) ? (LIVE ? '[!] not sure' : '[!] not sure · mass in the photo is unclear') : ''
   })),
-  statusMain: s.dl ? '[worksheet] the clean completed copy would download here when badgerbox is live' : s.print ? '[print] allow pop-ups for this site, then press print again' : s.copied ? '[copied] #' + (cur + 1) + ' is on your clipboard' : s.pdf ? '[pdf] would save here when badgerbox is live' : s.retry === 'busy' ? '[checking] working ' + '#' + numOf(cur) + ' out again' : (nFlag ? '[done] ' + (N - nFlag) + ' checked · ' + flagNames + (nFlag === 1 ? ' needs' : ' need') + ' a look' : '[done] all ' + N + ' checked'),
-  statusNote: (s.copied || s.pdf || s.dl || s.print) ? '' : (sheet ? 'preview of the completed worksheet' : 'question ' + (cur + 1) + ' of ' + N + ' · read the steps before you copy anything'),
+  statusMain: s.notes ? '[notes] ' + (API ? API.notes(classLabel).length : 0) + ' tl;dr' + ((API ? API.notes(classLabel).length : 0) === 1 ? '' : 's') + ' saved for ' + classLabel + '. the study guide view is coming.' : (tl && s.tlState === 'busy') ? '[tl;dr] working out what you\'re learning' : s.dl ? '[worksheet] the clean completed copy would download here when badgerbox is live' : s.print ? '[print] allow pop-ups for this site, then press print again' : s.copied ? '[copied] #' + (cur + 1) + ' is on your clipboard' : s.pdf ? '[pdf] would save here when badgerbox is live' : s.retry === 'busy' ? '[checking] working ' + '#' + numOf(cur) + ' out again' : (nFlag ? '[done] ' + (N - nFlag) + ' checked · ' + flagNames + (nFlag === 1 ? ' needs' : ' need') + ' a look' : '[done] all ' + N + ' checked'),
+  statusNote: (s.copied || s.pdf || s.dl || s.print) ? '' : (tl ? 'the whole assignment in a nutshell' : sheet ? 'preview of the completed worksheet' : 'question ' + (cur + 1) + ' of ' + N + ' · read the steps before you copy anything'),
   onCopy: () => { try { navigator.clipboard && navigator.clipboard.writeText(!stepsOn ? Q.ans : stepsText); } catch (err) {} flash('copied', 2500); },
   onPdf: printSheet,
   onDownload: printSheet,
   onPrint: printSheet,
-  onSheet: () => this.setState({ sheet: !sheet }),
+  onSheet: () => this.setState({ sheet: !sheet, tl: false }),
   onAskType: (e) => { this.setState({ asked: e.target.value, askPos: e.target.selectionStart }); syncM('bb-ask-mirror', e.target); },
   onCaret: (e) => { const p = e.target.selectionStart; if (p !== (this.state || {}).askPos) this.setState({ askPos: p }); syncM('bb-ask-mirror', e.target); },
   onTaScroll: (e) => syncM('bb-ask-mirror', e.target),
@@ -570,12 +819,13 @@ return {
   onRefocus: () => { if (!this.drag && !this.dragV) this.focusBox(); },
   onPageKey: (e) => {
     const tag = (e.target && e.target.tagName) || '';
-    if (e.key === 'Escape') { e.preventDefault(); if (sheet) { this.setState({ sheet: false }); return; } back(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); if (sheet || tl) { this.setState({ sheet: false, tl: false, tlAsk: false }); return; } back(); return; }
     const typing = tag === 'TEXTAREA' || tag === 'INPUT';
     const empty = !typing || !String(e.target.value || '').length;
     if (empty && !e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { e.preventDefault(); goQ(cur + (e.key === 'ArrowRight' ? 1 : -1)); return; }
     if (e.altKey && !e.ctrlKey && !e.metaKey) {
-      if (e.code === 'KeyW') { e.preventDefault(); this.setState({ sheet: !sheet }); return; }
+      if (e.code === 'KeyW') { e.preventDefault(); this.setState({ sheet: !sheet, tl: false }); return; }
+      if (e.code === 'KeyT') { e.preventDefault(); openTl(); return; }
       if (e.code === 'KeyN') { e.preventDefault(); back(); return; }
       if (e.code === 'KeyV') { e.preventDefault(); this.setState({ views: PRESETS[(presetIdx + 1) % PRESETS.length] }); return; }
       const d = /^Digit([1-5])$/.exec(e.code || '');

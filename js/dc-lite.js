@@ -138,11 +138,12 @@
   }
 
   function mount() {
-    var xdc = document.querySelector('x-dc');
+    var xdc = document.querySelector('template[data-dc]') || document.querySelector('x-dc');
     var script = document.querySelector('script[type="text/x-dc"]');
     if (!xdc || !script) return;
+    var source = xdc.content || xdc;
 
-    var helmet = xdc.querySelector('helmet');
+    var helmet = source.querySelector('helmet');
     if (helmet) {
       while (helmet.firstChild) {
         var c = helmet.firstChild;
@@ -151,7 +152,7 @@
     }
 
     var tpl = document.createElement('div');
-    while (xdc.firstChild) tpl.appendChild(xdc.firstChild);
+    while (source.firstChild) tpl.appendChild(source.firstChild);
     var root = document.createElement('div');
     root.id = 'dc-mount';
     root.style.display = 'contents';
