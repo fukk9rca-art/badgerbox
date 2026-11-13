@@ -423,6 +423,9 @@ o   o
 </div>
 </sc-if>
 
+<sc-if value="{{ liveDocs }}" hint-placeholder-val="{{ false }}">
+<div style="margin: 4px 0 8px 0; padding: 8px 0; border-top: 1px dashed #5A5A5A; border-bottom: 1px dashed #5A5A5A; color: #BDBDBD">badgerbox finds and counts the questions when you run it. only want some? type a note below, like "just #4".</div>
+</sc-if>
 <sc-if value="{{ showPicker }}" hint-placeholder-val="{{ false }}">
 <div role="group" aria-labelledby="bb-q-h" style="margin: 4px 0 8px 0; padding: 8px 0; border-top: 1px dashed #5A5A5A; border-bottom: 1px dashed #5A5A5A">
 <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0 2ch">
@@ -538,7 +541,7 @@ o   o
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
 class Component extends DCLogic {
 componentDidMount() { this.focusBox(); }
-focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
+focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; if (window.getSelection && String(window.getSelection())) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
 componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
 later(fn, ms) { this.timers = this.timers || []; this.timers.push(setTimeout(fn, ms)); }
 renderVals() {
@@ -595,7 +598,8 @@ const text = String(s.text || '').trim();
 const files = s.files || [];
 const isDoc = (f) => /image|pdf/i.test(f.type || '') || /\.(png|jpe?g|heic|webp|pdf)$/i.test(f.name);
 const docs = files.filter(isDoc);
-const showPicker = docs.length > 0;
+const liveDocs = docs.length > 0 && !!(window.bbApi && window.bbApi.isLive());
+const showPicker = docs.length > 0 && !liveDocs;
 const Q = 6;
 const picked = Array.isArray(s.picked) ? s.picked : [0, 1, 2, 3, 4, 5];
 const needPick = showPicker && picked.length === 0;
@@ -1025,6 +1029,7 @@ return {
     })
   })),
   showPicker: showPicker,
+  liveDocs: liveDocs,
   pickerTitle: Q + ' questions found in ' + (docs.length > 1 ? docs.length + ' files' : (docs[0] ? docs[0].name : '')),
   pickerNote: needPick ? 'pick at least one' : 'doing ' + picked.length + ' of ' + Q,
   questions: Array.from({ length: Q }, (_, i) => {

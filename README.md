@@ -12,6 +12,9 @@ Needs [Node.js](https://nodejs.org) 18 or newer.
 Enter to use the sample answers), then opens badgerbox in your browser. Leave the black window open while
 you use it. To change the key, delete the `.env` file in this folder and start it again.
 
+To get the newest version later, double-click `update-badgerbox.bat`. It downloads the latest files from
+GitHub and leaves your API key, access keys and limits alone.
+
 **Mac / Linux:**
 
 ```

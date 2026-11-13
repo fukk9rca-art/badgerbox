@@ -22,3 +22,6 @@ html:not(.dc-ready) body { visibility: hidden; }
 @media (max-height: 800px) {
   [data-page="enter"] .bb-logo { zoom: 0.5; }
 }
+
+/* Let people select and copy the text inside step rows and other text buttons. */
+.bb-step, .bb-step * { -webkit-user-select: text; user-select: text; }
