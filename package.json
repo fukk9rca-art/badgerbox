@@ -1,0 +1,15 @@
+{
+  "name": "badgerbox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "badgerbox: the whole worksheet from one screenshot, checked",
+  "scripts": {
+    "build": "python3 tools/build.py",
+    "start": "node tools/serve.mjs",
+    "fake": "BADGERBOX_FAKE=1 node tools/serve.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

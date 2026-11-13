@@ -1,25 +1,32 @@
+<!-- generated from screens/States.dc.html by tools/build.py, edit the screen, not this file -->
 <!doctype html>
-<html lang="en">
+<html lang="en" data-page="states">
 <head>
 <meta charset="utf-8">
 <title>badgerbox box states</title>
-<meta name="viewport" content="width=1440">
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>x-dc{display:none}</style>
+<link rel="stylesheet" href="css/site.css">
+<script src="vendor/morphdom-umd.min.js" defer></script>
+<script src="js/bb-api.js" defer></script>
+<script src="js/dc-lite.js" defer></script>
+</head>
+<body>
+<x-dc>
+<helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&amp;display=swap" rel="stylesheet">
 <style>
 body{margin:0;background:#000000;color:#FFFFFF;font-family:Cousine,"DejaVu Sans Mono",Menlo,Consolas,monospace}
 a{color:#FFFFFF}a:hover{color:#BDBDBD}
 </style>
-
-</head>
-<body>
-
-<div style="width: 1440px; height: 1040px; box-sizing: border-box; padding: 40px 64px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: min-content; gap: 32px 48px; background: #000000; color: #FFFFFF; font-family: Cousine, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 16px; line-height: 24px">
+</helmet>
+<div style="width: 100%; min-height: 100vh; box-sizing: border-box; padding: 40px 64px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: min-content; gap: 32px 48px; background: #000000; color: #FFFFFF; font-family: Cousine, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 16px; line-height: 24px">
 
 <div style="grid-column: 1 / -1; display: flex; gap: 2ch; align-items: baseline">
 <span style="font-weight: 700">badgerbox states</span>
-<span style="color: #8C8C8C">what the box looks like in each situation</span><a href="terminal.html" style="margin-left:auto;color:#FFFFFF">[ &lt; back to terminal ]</a>
+<span style="color: #8C8C8C">what the box looks like in each situation</span>
 </div>
 
 <div>
@@ -27,7 +34,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <fieldset style="position: relative; margin: 0; padding: 0 16px 12px 16px; border: 3px solid #FFFFFF">
 <legend style="padding: 0 10px; margin-left: 8px; font-weight: 700; background: #FFFFFF; color: #000000">[ badgerbox ]</legend>
 <div style="display: flex; align-items: center; justify-content: space-between; min-height: 44px"><span style="color: #BDBDBD; min-width: 0">drop a file anywhere, or type, paste or link it below</span><span style="white-space: pre; flex-shrink: 0">[ attach file ]</span></div>
-<div style="display: flex; gap: 1ch; margin-top: 4px"><span style="font-weight: 700">&gt;</span><span>Explain why the French Revolution started in 1789 and not earlier<span aria-hidden="true" style="display: inline-block; width: 1ch; height: 20px; vertical-align: -3px; background: #FFFFFF"></span></span></div>
+<div style="display: flex; gap: 1ch; margin-top: 4px"><span style="font-weight: 700">&gt;</span><span>Explain why the French Revolution started in 1789 and not earlier<span aria-hidden="true" style="display: inline-block; width: 1ch; height: 20px; vertical-align: -3px; background: {{accent}}"></span></span></div>
 </fieldset>
 </div>
 
@@ -62,27 +69,32 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 </div>
 
 <div>
-<div style="color: #8C8C8C; margin-bottom: 8px"># 5 · ran without the tick</div>
-<div style="display: flex; gap: 1ch"><span style="font-weight: 700; white-space: pre">[ ]</span><span>I have my teacher's permission to use badgerbox on this assignment, and I'm not using it to cheat.</span></div>
-<div style="margin-left: 4ch; color: #8C8C8C">an honor pledge. nothing is recorded or sent to anyone.</div>
-<div style="margin-top: 16px; display: flex; gap: 2ch; align-items: center"><span style="height: 44px; line-height: 44px; padding: 0 2ch; background: #FFFFFF; color: #000000; font-weight: 700">[ run ]</span><span style="color: #8C8C8C">or press enter</span></div>
-<div style="margin-top: 16px"><span style="background: #FFFFFF; color: #000000; font-weight: 700; padding: 0 4px">error</span> can't run yet: tick the permission box first</div>
-<div style="margin-top: 8px; color: #8C8C8C">focus jumps to the box. the status line says what's still needed.</div>
+<div style="color: #8C8C8C; margin-bottom: 8px"># 5 · ran with nothing in the box</div>
+<div style="display: flex; gap: 2ch; align-items: center"><span style="height: 44px; line-height: 44px; padding: 0 2ch; background: {{accent}}; color: #000000; font-weight: 700">[ run ]</span><span style="color: #8C8C8C">or press enter</span></div>
+<div style="margin-top: 16px"><span style="background: #FFFFFF; color: #000000; font-weight: 700; padding: 0 4px">error</span> can't run yet: add your assignment first</div>
+<div style="margin-top: 8px; color: #8C8C8C">focus jumps to the text box. the status line says what's still needed.</div>
 </div>
 
 <div>
 <div style="color: #8C8C8C; margin-bottom: 8px"># 6 · dragging a file over the screen</div>
-<div style="position: relative; height: 232px; box-sizing: border-box; border: 8px solid #FFFFFF; background: #000000; display: flex; align-items: center; justify-content: center; overflow: hidden">
+<div style="position: relative; height: 232px; box-sizing: border-box; border: 8px solid {{accent}}; background: #000000; display: flex; align-items: center; justify-content: center; overflow: hidden">
 <div style="position: absolute; inset: 8px; opacity: 0.25; color: #FFFFFF; white-space: pre; font-size: 12px; line-height: 16px; padding: 8px">you@badgerbox
 -------------
 takes    typed or pasted text, .png, .jpg, worksheet photos
 does     works out the subject and difficulty
 gives    the finished work, with every step explained</div>
-<div style="position: relative; padding: 12px 3ch; background: #FFFFFF; color: #000000; font-weight: 700; font-size: 20px; line-height: 28px; white-space: pre">-- let go to drop it in the badgerbox --</div>
+<div style="position: relative; padding: 12px 3ch; background: {{accent}}; color: #000000; font-weight: 700; font-size: 20px; line-height: 28px; white-space: pre">-- let go to drop it in the badgerbox --</div>
 </div>
 </div>
 
 </div>
-
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+renderVals() {
+return { accent: this.props.accent ?? '#FFFFFF' };
+}
+}
+</script>
 </body>
 </html>

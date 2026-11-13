@@ -1,0 +1,24 @@
+/* Site-only adjustments for real browser windows (the design frames are 1440x1040). */
+html, body { background: #000000; }
+html:not(.dc-ready) body { visibility: hidden; }
+
+/* Smaller laptops and Chromebooks: the big ASCII badger would push the box off screen. */
+@media (max-width: 1180px), (max-height: 760px) {
+  .bb-logo { display: none !important; }
+}
+
+/* Short windows: keep the walkthrough steps from pushing the chat box off screen. */
+.bb-walk { max-height: max(120px, calc(100vh - 440px)); }
+
+/* Narrower windows: tighten the tab bar so the settings and past runs buttons stay visible. */
+@media (max-width: 1400px) {
+  .bb-tab { padding: 0 1.2ch !important; }
+}
+
+/* Enter screen on short windows (most Chromebooks): shrink the badger so the key prompt stays on screen. */
+@media (max-height: 940px) {
+  [data-page="enter"] .bb-logo { zoom: 0.72; }
+}
+@media (max-height: 800px) {
+  [data-page="enter"] .bb-logo { zoom: 0.5; }
+}

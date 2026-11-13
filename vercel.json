@@ -1,0 +1,7 @@
+{
+  "cleanUrls": true,
+  "functions": {
+    "api/solve.js": { "maxDuration": 60 },
+    "api/ask.js": { "maxDuration": 30 }
+  }
+}

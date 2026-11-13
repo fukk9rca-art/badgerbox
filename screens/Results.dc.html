@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>badgerbox walkthrough</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000000;color:#FFFFFF;font-family:Cousine,"DejaVu Sans Mono",Menlo,Consolas,monospace}
+a{color:#FFFFFF}a:hover{color:#BDBDBD}
+::selection{background:#FFFFFF;color:#000000}
+.bb-cursor{animation:bb-blink 1s steps(1) infinite}
+@keyframes bb-blink{50%{opacity:0}}
+@media (prefers-reduced-motion: reduce){.bb-cursor{animation:none}}
+.bb-step{cursor:pointer}
+.bb-step:hover{background:#0A0A0A}
+.bb-step:focus-visible{outline:2px solid #FFFFFF;outline-offset:-2px}
+.bb-step[aria-expanded="true"]{background:#0A0A0A}
+.bb-btn:hover{background:#FFFFFF;color:#000000}
+.bb-dl:hover{background:#000000 !important;color:#FFFFFF !important}
+.bb-dl:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-btn:focus-visible,.bb-link:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-prompt textarea{caret-color:transparent}
+.bb-prompt textarea:focus{outline:none}
+.bb-prompt textarea::placeholder{color:transparent}
+.bb-prompt:focus-within{box-shadow:inset 0 0 0 1px #FFFFFF}
+.bb-opt:hover{border-color:#FFFFFF !important;color:#FFFFFF !important}
+.bb-opt[aria-pressed="true"]:hover{color:#000000 !important}
+.bb-opt:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+.bb-thread{scrollbar-color:#FFFFFF #000000}
+.bb-q:hover{border-color:#FFFFFF !important}
+.bb-q:focus-visible,.bb-fix:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+.bb-fix:hover{outline:1px solid #FFFFFF;outline-offset:2px}
+.bb-paper{scrollbar-color:#000000 #FFFFFF}
+.bb-split{cursor:col-resize;touch-action:none}
+.bb-vsplit{cursor:row-resize;touch-action:none}
+.bb-vsplit:hover .bb-vsplit-line,.bb-vsplit:focus-visible .bb-vsplit-line,.bb-vsplit[aria-pressed="true"] .bb-vsplit-line{background:#FFFFFF !important;height:3px !important;top:5px !important}
+.bb-vsplit:hover .bb-vsplit-grip,.bb-vsplit:focus-visible .bb-vsplit-grip,.bb-vsplit[aria-pressed="true"] .bb-vsplit-grip{opacity:1 !important}
+.bb-vsplit:focus-visible{outline:2px solid #FFFFFF;outline-offset:-2px}
+.bb-walk{scrollbar-color:#FFFFFF #000000;scrollbar-width:thin}
+.bb-split:hover .bb-split-line,.bb-split:focus-visible .bb-split-line,.bb-split[aria-pressed="true"] .bb-split-line{background:#FFFFFF !important;width:3px !important;left:4px !important}
+.bb-split:focus-visible{outline:2px solid #FFFFFF;outline-offset:-2px}
+.bb-split:hover .bb-split-grip,.bb-split:focus-visible .bb-split-grip,.bb-split[aria-pressed="true"] .bb-split-grip{opacity:1 !important}
+.bb-paper:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+</style>
+</helmet>
+<div id="bb-root" tabindex="-1" onKeyDown="{{ onPageKey }}" onPointerUp="{{ onRefocus }}" onBlur="{{ onRootOut }}" style="outline: none; position: relative; width: 1440px; height: 1040px; box-sizing: border-box; display: flex; flex-direction: column; background: #000000; color: #FFFFFF; font-family: Cousine, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 16px; line-height: 24px">
+
+<div aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
+<pre aria-hidden="true" style="position: absolute; left: 249px; top: 882px; margin: 0; font-family: inherit; font-size: 9px; line-height: 7px; font-weight: 700; color: #2A2A2A; transform: rotate(-8deg); pointer-events: none;"> ^ ^ ^ ^
+.       .
+ v v v v</pre>
+<pre aria-hidden="true" style="position: absolute; left: 102px; top: 765px; margin: 0; font-family: inherit; font-size: 8px; line-height: 6px; font-weight: 700; color: #444444; transform: rotate(14deg); pointer-events: none;">/ /
+ / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 402px; top: 867px; margin: 0; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; color: #2A2A2A; transform: rotate(-20deg); pointer-events: none;">/ / /
+ / / /
+  / / /</pre>
+<pre aria-hidden="true" style="position: absolute; left: 183px; top: 957px; margin: 0; font-family: inherit; font-size: 11px; line-height: 8px; font-weight: 700; color: #2A2A2A; transform: rotate(-4deg); pointer-events: none;">\ \
+ \ \
+  \ \</pre>
+</div>
+
+<header style="height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 1ch; padding: 0 16px; background: {{accent}}; color: #000000; white-space: nowrap; overflow: hidden">
+<a class="bb-link" href="MonoTerminal.dc.html" style="color: #000000; text-decoration: none; white-space: pre; font-weight: 700"><span aria-hidden="true">[ </span>&lt; back<span aria-hidden="true"> ]</span></a>
+<span aria-hidden="true">──</span>
+<span style="font-weight: 700">badgerbox 0.1</span>
+<span aria-hidden="true">──</span>
+<span>{{ runMeta }}</span>
+<span aria-hidden="true" style="flex-grow: 1; min-width: 0; overflow: hidden">────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
+<a class="bb-link" href="MonoTerminal.dc.html" style="color: #000000; text-decoration: none; white-space: pre"><span aria-hidden="true">[ </span>new assignment<span aria-hidden="true"> ]</span></a>
+</header>
+
+<main style="position: relative; z-index: 1; flex-grow: 1; min-height: 0; display: grid; grid-template-columns: {{ leftCol }} 11px minmax(0, 1fr); overflow: hidden">
+
+<section aria-labelledby="bb-log-h" style="min-width: 0; padding: 24px 24px 24px 32px; overflow: hidden; display: flex; flex-direction: column">
+<h2 id="bb-log-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700; color: #8C8C8C"><span aria-hidden="true">0:</span>log</h2>
+<div style="margin-top: 16px; color: #BDBDBD">
+<div style="white-space: pre">&gt; <span style="color: #FFFFFF; font-weight: 700">{{ logFile }}</span></div>
+<div style="white-space: pre"> </div>
+<div style="white-space: pre">{{ logRead }}</div>
+<div style="white-space: pre">{{ logFound }}</div>
+<div style="white-space: pre">{{ logSubject }}</div>
+<div style="white-space: pre">{{ logClass }}</div>
+<div style="white-space: pre; overflow: hidden; text-overflow: ellipsis">{{ logClassDetail }}</div>
+<div style="white-space: pre">{{ logLevel }}</div>
+<div style="white-space: pre">{{ logModel }}</div>
+<div style="white-space: pre">working through it ............. [############]</div>
+<div style="white-space: pre">checking every answer 2 ways</div>
+<div style="white-space: pre">  <span style="color: #FFFFFF; font-weight: 700">{{ logChecks }}</span></div>
+<div style="white-space: pre"><span style="color: #FFFFFF">{{ logDone }}</span></div>
+</div>
+
+<div style="margin-top: 24px; border: 1px solid #6B6B6B; padding: 12px 16px; color: #BDBDBD">
+<div style="font-weight: 700; color: #FFFFFF">{{ qHead }}</div>
+<div style="margin-top: 4px">{{ qText }}</div>
+</div>
+
+<div style="margin-top: 24px; display: flex; flex-wrap: wrap; gap: 1ch 2ch; align-items: center">
+<button type="button" class="bb-dl" aria-pressed="{{ sheetOpen }}" style="height: 36px; padding: 0 2ch; background: {{accent}}; color: #000000; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre" onClick="{{ onSheet }}">{{ sheetLabel }}</button>
+<button type="button" class="bb-btn" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap" onClick="{{ onCopy }}"><span aria-hidden="true">[ </span>{{ copyLabel }}<span aria-hidden="true"> ]</span></button>
+<button type="button" class="bb-btn" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap" onClick="{{ onPdf }}"><span aria-hidden="true">[ </span>save as pdf<span aria-hidden="true"> ]</span></button>
+</div>
+</section>
+
+<button type="button" class="bb-split" aria-pressed="{{ dragging }}" aria-label="resize the log and walkthrough panels. left and right arrows to move, enter to reset" title="drag to resize · double-click to reset" onPointerDown="{{ onSplitDown }}" onPointerMove="{{ onSplitMove }}" onPointerUp="{{ onSplitUp }}" onPointerCancel="{{ onSplitUp }}" onDoubleClick="{{ onSplitReset }}" onKeyDown="{{ onSplitKey }}" style="position: relative; width: 11px; height: 100%; margin: 0; padding: 0; background: transparent; border: 0; border-radius: 0; color: #FFFFFF">
+<span class="bb-split-line" aria-hidden="true" style="position: absolute; top: 0; bottom: 0; left: 5px; width: 1px; background: #6B6B6B; pointer-events: none"></span>
+<span class="bb-split-grip" aria-hidden="true" style="position: absolute; top: 50%; left: 0; width: 11px; margin-top: -18px; padding: 4px 0; background: #000000; border: 1px solid #FFFFFF; box-sizing: border-box; font-family: inherit; font-size: 10px; line-height: 8px; font-weight: 700; text-align: center; opacity: 0.55; pointer-events: none; white-space: pre">:
+:
+:</span>
+</button>
+
+<section aria-labelledby="bb-steps-h" style="min-width: 0; padding: 24px 40px 24px 32px; overflow: hidden; display: flex; flex-direction: column">
+
+<div role="group" aria-label="questions on this worksheet" style="flex-shrink: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; padding-bottom: 12px; border-bottom: 1px dashed #5A5A5A">
+<span aria-hidden="true" style="color: #8C8C8C; margin-right: 1ch">worksheet</span>
+<sc-for list="{{ qChips }}" as="q" hint-placeholder-count="6">
+<button type="button" class="bb-q" aria-pressed="{{ q.pressed }}" aria-label="{{ q.aria }}" onClick="{{ q.pick }}" style="height: 36px; padding: 0 1ch; background: {{ q.bg }}; color: {{ q.fg }}; border: 1px solid {{ q.border }}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ q.text }}</button>
+</sc-for>
+<span style="margin-left: auto; color: #BDBDBD">{{ qSummary }}</span>
+</div>
+
+<sc-if value="{{ showWalk }}" hint-placeholder-val="{{ true }}">
+<div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; padding-top: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 2ch">
+<h2 id="bb-steps-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700"><span aria-hidden="true" style="color: #8C8C8C">1:</span>walkthrough <span style="color: #BDBDBD">{{ walkFor }}</span></h2>
+<div role="group" aria-label="output" style="display: flex; align-items: center; gap: 1ch">
+<span aria-hidden="true" style="color: #8C8C8C">output</span>
+<sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
+<button type="button" class="bb-opt" aria-pressed="{{ v.pressed }}" onClick="{{ v.pick }}" style="height: 32px; padding: 0 1ch; background: {{ v.bg }}; color: {{ v.fg }}; border: 1px solid {{ v.border }}; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ v.text }}</button>
+</sc-for>
+</div>
+</div>
+<div style="margin-top: 4px; color: #8C8C8C">{{ viewNote }}</div>
+
+<div class="bb-walk" style="margin-top: 12px; flex-shrink: 0; height: {{ walkH }}; min-height: 0; overflow-y: auto; padding: 0 8px 0 8px; margin-left: -8px; margin-right: -8px">
+<sc-if value="{{ showSteps }}" hint-placeholder-val="{{ true }}">
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{ steps }}" as="st" hint-placeholder-count="4">
+<li>
+<button type="button" class="bb-step" onClick="{{ st.toggle }}" aria-expanded="{{ st.open }}" style="display: flex; gap: 2ch; width: 100%; padding: 4px 8px; margin: 0 -8px; background: transparent; color: #FFFFFF; border: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px">
+<span style="width: 7ch; flex-shrink: 0; font-weight: 700; background: {{ st.lbg }}; color: {{ st.lfg }}">{{ st.label }}</span>
+<span style="flex-grow: 1; min-width: 0">{{ st.text }}</span>
+<span style="flex-shrink: 0; text-align: right; white-space: pre; font-weight: 700">{{ st.result }}</span>
+</button>
+<sc-if value="{{ st.isOpen }}" hint-placeholder-val="{{ false }}">
+<div style="margin: 0 0 8px 9ch; padding: 8px 16px; border-left: 1px solid #FFFFFF; color: #BDBDBD; max-width: 64ch">{{ st.why }}
+<div style="margin-top: 4px"><button type="button" class="bb-btn" onClick="{{ st.ask }}" style="height: 32px; margin-left: -4px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>{{ st.askLabel }}<span aria-hidden="true"> ]</span></button></div>
+</div>
+</sc-if>
+</li>
+</sc-for>
+</ol>
+</sc-if>
+
+<sc-if value="{{ showAnswer }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top: 12px; padding: 10px 16px; box-sizing: border-box; background: {{ ansBg }}; color: {{ ansFg }}; border: 2px solid {{accent}}; display: flex; gap: 2ch; align-items: baseline">
+<span style="font-weight: 700; width: 7ch; flex-shrink: 0">answer</span>
+<span style="font-weight: 700">{{ ansText }}</span>
+<span style="margin-left: auto; font-weight: 700; white-space: nowrap">{{ ansTag }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ showCheck }}" hint-placeholder-val="{{ true }}">
+<div style="padding: 8px 16px; border: 1px solid #6B6B6B; border-top: 0; color: #BDBDBD; display: flex; gap: 2ch; align-items: baseline">
+<span style="font-weight: 700; width: 7ch; flex-shrink: 0; color: #FFFFFF">check</span>
+<span>{{ checkText }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ showFlag }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-labelledby="bb-flag-h" style="padding: 10px 16px 12px 16px; border: 2px solid {{accent}}; border-top: 0">
+<div><span id="bb-flag-h" style="background: {{accent}}; color: #000000; font-weight: 700; padding: 0 4px">[!] not sure</span> <span style="color: #BDBDBD">{{ flagText }}</span></div>
+<div style="margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 1ch">
+<span style="color: #8C8C8C">fix it:</span>
+<sc-for list="{{ flagBtns }}" as="f" hint-placeholder-count="4">
+<button type="button" class="bb-fix" onClick="{{ f.pick }}" style="height: 36px; padding: 0 1ch; background: {{ f.bg }}; color: {{ f.fg }}; border: 1px solid #FFFFFF; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ f.text }}</button>
+</sc-for>
+</div>
+<div style="margin-top: 4px; color: #8C8C8C">{{ flagNote }}</div>
+</div>
+</sc-if>
+
+</div>
+<button type="button" class="bb-vsplit" aria-pressed="{{ vDragging }}" aria-label="resize the walkthrough and the questions below it. up and down arrows to move, enter to reset" title="drag to resize · double-click to reset" onPointerDown="{{ onVDown }}" onPointerMove="{{ onVMove }}" onPointerUp="{{ onVUp }}" onPointerCancel="{{ onVUp }}" onDoubleClick="{{ onVReset }}" onKeyDown="{{ onVKey }}" style="position: relative; flex-shrink: 0; display: block; width: 100%; height: 13px; margin: 2px 0 0 0; padding: 0; background: transparent; border: 0; border-radius: 0; color: #FFFFFF">
+<span class="bb-vsplit-line" aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #6B6B6B; pointer-events: none"></span>
+<span class="bb-vsplit-grip" aria-hidden="true" style="position: absolute; top: 0; left: 50%; height: 13px; margin-left: -20px; width: 40px; background: #000000; border: 1px solid #FFFFFF; box-sizing: border-box; font-family: inherit; font-size: 11px; line-height: 9px; font-weight: 700; text-align: center; opacity: 0.55; pointer-events: none; white-space: pre">···</span>
+</button>
+<div id="bb-thread" class="bb-thread" aria-live="polite" aria-label="follow-up questions" style="margin-top: 8px; flex-grow: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{ thread }}" as="m" hint-placeholder-count="0">
+<div style="padding: 4px 16px; border-left: 1px solid {{ m.border }}; color: {{ m.color }}; max-width: 72ch; white-space: pre-wrap">{{ m.text }}</div>
+</sc-for>
+</div>
+<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 1ch">
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+<button type="button" class="bb-opt" onClick="{{ c.ask }}" style="height: 32px; padding: 0 1ch; background: transparent; color: #BDBDBD; border: 1px solid #5A5A5A; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ c.text }}</button>
+</sc-for>
+</div>
+<div class="bb-prompt" style="position: relative; margin-top: 8px; display: flex; align-items: flex-start; gap: 1ch; padding: 10px 12px; border: 1px solid #6B6B6B">
+<span aria-hidden="true" style="font-weight: 700">&gt;</span>
+<label for="bb-ask" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">ask about any step</label>
+<div style="position: relative; flex-grow: 1; min-width: 0">
+<textarea id="bb-ask" rows="1" placeholder=" " onInput="{{ onAskType }}" onKeyDown="{{ onAskKey }}" onKeyUp="{{ onCaret }}" onClick="{{ onCaret }}" onFocus="{{ onCaret }}" onScroll="{{ onTaScroll }}" style="display: block; width: 100%; box-sizing: border-box; max-width: 100%; overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere; scrollbar-gutter: stable; scrollbar-width: thin; min-height: 24px; max-height: 96px; field-sizing: content; margin: 0; padding: 0; border: 0; resize: none; background: transparent; color: #FFFFFF; font-family: inherit; font-size: 16px; line-height: 24px"></textarea>
+<div id="bb-ask-mirror" aria-hidden="true" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; box-sizing: border-box; overflow-y: hidden; scrollbar-gutter: stable; scrollbar-width: thin; margin: 0; padding: 0; visibility: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 16px; line-height: 24px; pointer-events: none">{{ caretBefore }}<span class="bb-cursor" style="visibility: visible; display: inline-block; width: 1ch; height: 20px; vertical-align: -4px; background: {{accent}}"></span></div>
+</div>
+<span style="color: #8C8C8C; white-space: nowrap">{{ askHint }}</span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showSheet }}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; padding-top: 12px">
+<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 2ch">
+<h2 style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700"><span aria-hidden="true" style="color: #8C8C8C">2:</span>completed worksheet <span style="color: #BDBDBD">preview</span></h2>
+<span style="margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 1ch">
+<button type="button" class="bb-dl" onClick="{{ onDownload }}" style="height: 36px; padding: 0 2ch; background: {{accent}}; color: #000000; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">⤓ download</button>
+<button type="button" class="bb-btn" onClick="{{ onPrint }}" style="height: 36px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>print<span aria-hidden="true"> ]</span></button>
+<button type="button" class="bb-btn" onClick="{{ onSheet }}" style="height: 36px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>&lt; back to steps<span aria-hidden="true"> ]</span></button>
+</span>
+</div>
+<div style="margin-top: 4px; color: #8C8C8C">{{ sheetNote }}</div>
+<div class="bb-paper" tabindex="0" aria-label="completed worksheet" style="margin-top: 12px; flex-grow: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 24px 32px 32px 32px; background: #FFFFFF; color: #000000">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 3ch"><span style="font-weight: 700">{{ paperTitle }}</span><span>{{ paperClass }}</span></div>
+<div style="margin-top: 4px; color: #4A4A4A; white-space: pre">name ____________________   date __________   period ____</div>
+<sc-for list="{{ paper }}" as="p" hint-placeholder-count="6">
+<div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #000000">
+<div style="font-weight: 700">{{ p.head }}</div>
+<sc-for list="{{ p.work }}" as="w" hint-placeholder-count="3">
+<div style="padding-left: 3ch; color: #333333">{{ w.line }}</div>
+</sc-for>
+<div style="margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 2ch; padding-left: 3ch"><span style="border: 2px solid #000000; padding: 0 1ch; font-weight: 700">{{ p.ans }}</span><span style="color: #333333">{{ p.mark }}</span></div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+</section>
+
+</main>
+
+<footer style="flex-shrink: 0">
+<div role="status" style="display: flex; align-items: center; gap: 2ch; padding: 8px 16px; border-top: 1px solid #FFFFFF; white-space: nowrap; overflow: hidden">
+<span style="font-weight: 700">{{ statusMain }}</span>
+<span style="color: #BDBDBD">{{ statusNote }}</span>
+</div>
+<div style="height: 32px; display: flex; align-items: center; gap: 3ch; padding: 0 16px; white-space: nowrap; overflow: hidden">
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">←/→</span> question</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+1-5</span> open a step</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+w</span> worksheet</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">drag :</span> resize</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">enter</span> ask</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">esc</span> back</span>
+<span><span style="background: {{accent}}; color: #000000; padding: 0 4px">alt+n</span> new assignment</span>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+componentDidMount() { this.focusBox(); }
+focusBox() { setTimeout(() => { const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ask'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
+componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
+renderVals() {
+const s = this.state || {};
+const accent = this.props.accent ?? '#FFFFFF';
+const later = (fn, ms) => { this.timers = this.timers || []; this.timers.push(setTimeout(fn, ms)); };
+const fix = s.fix || '';
+const big = fix === '32';
+const QS = [
+  { text: 'How many moles are in 25.0 g of water (H₂O)?', ans: '1.39 mol H₂O',
+    check: 'second way: multiply back. 1.387 mol × 18.02 g/mol = 25.0 g, which is the mass you started with.',
+    steps: [
+      { text: 'add up the molar mass of H₂O', result: '2(1.008) + 16.00 = 18.02', why: 'molar mass is the mass of one mole. water has two hydrogens and one oxygen, so add 2 × 1.008 and 16.00 to get 18.02 g/mol.' },
+      { text: 'divide the mass by the molar mass', result: '25.0 ÷ 18.02 = 1.39 mol', why: 'grams ÷ grams-per-mole leaves moles. the data has 3 significant figures, so the answer is rounded to 3.' }
+    ] },
+  { text: 'Balance the equation:  __ Fe + __ O₂ → __ Fe₂O₃', ans: '4Fe + 3O₂ → 2Fe₂O₃',
+    check: 'second way: count atoms on each side. Fe 4 = 4, O 6 = 6. both sides match.',
+    steps: [
+      { text: 'count the atoms on each side', result: 'Fe 1 | 2 · O 2 | 3', why: 'unbalanced, the left has 1 Fe and 2 O, the right has 2 Fe and 3 O. neither element matches yet.' },
+      { text: 'balance oxygen first', result: '3O₂ → 2Fe₂O₃', why: 'oxygen comes in 2s on the left and 3s on the right. the smallest number both fit into is 6, so use 3 O₂ and 2 Fe₂O₃.' },
+      { text: 'then balance iron', result: '4Fe', why: '2 Fe₂O₃ contains 4 iron atoms, so you need 4 Fe on the left. iron goes last because it stands alone and is easy to adjust.' }
+    ] },
+  { text: 'How many grams of CO₂ form when ' + (fix ? (big ? '32.0' : '22.0') : '[22.0 or 32.0]') + ' g of propane (C₃H₈) burns completely?', ans: big ? '95.8 g of CO₂' : '65.9 g of CO₂',
+    check: 'you confirmed the mass is ' + (big ? '32.0' : '22.0') + ' g. re-checked by going through moles of carbon: ' + (big ? '2.18' : '1.50') + ' mol C makes ' + (big ? '2.18' : '1.50') + ' mol CO₂, which is ' + (big ? '95.8' : '65.9') + ' g. both ways match.',
+    steps: [
+      { text: 'balance the combustion equation', result: 'C₃H₈ + 5O₂ → 3CO₂ + 4H₂O', why: 'burning a hydrocarbon in oxygen gives CO₂ and water. 3 carbons make 3 CO₂, 8 hydrogens make 4 H₂O, and that takes 10 oxygen atoms, so 5 O₂.' },
+      { text: 'turn the mass of propane into moles', result: big ? '32.0 ÷ 44.10 = 0.726' : '22.0 ÷ 44.10 = 0.499', why: 'molar mass of C₃H₈ is 3(12.01) + 8(1.008) = 44.10 g/mol. this is the step that uses the mass from the photo, so it is where the two readings split.', flag: true },
+      { text: 'use the 1 : 3 ratio to get moles of CO₂', result: big ? '0.726 × 3 = 2.18' : '0.499 × 3 = 1.50', why: 'the balanced equation says every 1 propane makes 3 CO₂.' },
+      { text: 'turn moles of CO₂ into grams', result: big ? '2.18 × 44.01 = 95.8 g' : '1.50 × 44.01 = 65.9 g', why: 'molar mass of CO₂ is 12.01 + 2(16.00) = 44.01 g/mol. rounded to 3 significant figures.' }
+    ] },
+  { text: '10.0 g of aluminum reacts with 35.0 g of chlorine gas to form aluminum chloride. Which reactant runs out first, and how much AlCl₃ forms?', ans: 'chlorine runs out first, 43.9 g of AlCl₃ forms',
+    check: 'second way: AlCl₃ each reactant could make alone. Al 49.4 g, Cl₂ 43.9 g. the smaller one is the real amount, and it matches step 5.',
+    steps: [
+      { text: 'balance the equation', result: '2Al + 3Cl₂ → 2AlCl₃', why: 'you can only compare reactants once the equation is balanced, because the coefficients tell you how many of each react together: 2 aluminum for every 3 chlorine molecules.' },
+      { text: 'turn each mass into moles', result: 'Al 0.371 · Cl₂ 0.494', why: 'grams of different substances can\'t be compared directly. divide by the molar mass: 10.0 g ÷ 26.98 g/mol for Al, 35.0 g ÷ 70.90 g/mol for Cl₂.' },
+      { text: 'work out how much Cl₂ the Al needs', result: '0.371 × 3/2 = 0.556', why: 'the ratio from step 1 is 3 Cl₂ for every 2 Al, so 0.371 mol of Al would need 0.556 mol of Cl₂. you only have 0.494, so chlorine runs out first.' },
+      { text: 'use the limiting reactant to find the product', result: '0.494 × 2/3 = 0.329', why: 'once chlorine is gone the reaction stops, so the amount of product is set by the chlorine: 3 Cl₂ make 2 AlCl₃.' },
+      { text: 'turn moles of AlCl₃ back into grams', result: '0.329 × 133.34 = 43.9 g', why: 'multiply by the molar mass of AlCl₃ (26.98 + 3 × 35.45 = 133.34 g/mol). round to 3 significant figures because the data had 3.' }
+    ] },
+  { text: 'In #4, only 38.0 g of AlCl₃ was actually collected. What is the percent yield?', ans: '86.6 %',
+    check: 'second way: work backwards. 86.6 % of 43.9 g is 38.0 g, which is the amount collected.',
+    steps: [
+      { text: 'take the theoretical yield from #4', result: '43.9 g', why: 'theoretical yield is the most product the reaction could make. that is the 43.9 g worked out in #4.' },
+      { text: 'divide what was collected by the theoretical yield', result: '38.0 ÷ 43.9 = 0.866', why: 'percent yield compares what you really got with the most you could have got.' },
+      { text: 'multiply by 100', result: '0.866 × 100 = 86.6 %', why: 'turns the fraction into a percent. a yield under 100 % is normal: some product is always lost.' }
+    ] },
+  { text: 'How many liters of H₂ gas at STP form when 6.00 g of magnesium reacts with excess HCl?', ans: '5.53 L of H₂',
+    check: 'second way: the ideal gas law. V = nRT/P = 0.2468 × 0.08206 × 273.15 ÷ 1.00 = 5.53 L. matches the molar volume route.',
+    steps: [
+      { text: 'balance the equation', result: 'Mg + 2HCl → MgCl₂ + H₂', why: 'one magnesium replaces the hydrogen in two HCl, releasing one H₂ molecule.' },
+      { text: 'turn the mass of Mg into moles', result: '6.00 ÷ 24.31 = 0.247', why: 'molar mass of magnesium is 24.31 g/mol. HCl is in excess, so magnesium decides how much H₂ forms.' },
+      { text: 'use the 1 : 1 ratio to get moles of H₂', result: '0.247 mol H₂', why: 'the balanced equation makes 1 H₂ for every 1 Mg.' },
+      { text: 'multiply by the molar volume at STP', result: '0.247 × 22.4 = 5.53 L', why: 'at STP one mole of any gas takes up 22.4 L. your class uses 22.4, so that is what is used here.' }
+    ] }
+];
+const syncM = (id, ta) => setTimeout(() => { const m = document.getElementById(id); const t = ta || document.getElementById(id.replace('-mirror', '')); if (m && t) m.scrollTop = t.scrollTop; }, 0);
+const API = window.bbApi || null;
+const RUN = (API && API.lastRun()) || null;
+const LIVE = !!(RUN && RUN.source === 'model' && Array.isArray(RUN.questions) && RUN.questions.length);
+const okd = s.okd || {};
+const QL = LIVE ? RUN.questions : QS;
+const N = QL.length;
+const pad = (a, b) => a + ' ' + '.'.repeat(Math.max(2, 30 - a.length)) + ' ' + String(b);
+const numOf = (i) => LIVE ? (QL[i].number || i + 1) : i + 1;
+const DEF_W = 500, MIN_W = 320, MAX_W = 880;
+const leftW = (s.leftW != null) ? s.leftW : DEF_W;
+const clampW = (w) => Math.round(Math.min(MAX_W, Math.max(MIN_W, w)));
+const DEF_H = 430, MIN_H = 120, MAX_H = 660;
+const walkH = (s.walkH != null) ? s.walkH : DEF_H;
+const clampH = (h) => Math.round(Math.min(MAX_H, Math.max(MIN_H, h)));
+const isFlag = (i) => LIVE ? (!QL[i].sure && !okd[i]) : (i === 2 && !fix);
+const flagIdx = QL.map((_, i) => i).filter(isFlag);
+const nFlag = flagIdx.length;
+const flagNames = flagIdx.map((i) => '#' + numOf(i)).join(', ');
+const cur = Math.min(N - 1, (s.q != null) ? s.q : (LIVE ? (nFlag ? flagIdx[0] : 0) : 2));
+const Q = QL[cur];
+const flagNow = isFlag(cur);
+const open = (s.open != null) ? s.open : (flagNow ? 1 : -1);
+const asked = String(s.asked || '');
+const VIEWS = ['explained', 'show work', 'final answers'];
+const vs = Array.isArray(s.views) ? s.views : [0, 1, 2];
+const hasE = vs.indexOf(0) !== -1;
+const hasW = vs.indexOf(1) !== -1;
+const hasA = vs.indexOf(2) !== -1;
+const stepsOn = hasE || hasW;
+const toggleView = (i) => {
+  const on = vs.indexOf(i) !== -1;
+  if (on && vs.length === 1) return;
+  this.setState({ views: on ? vs.filter((x) => x !== i) : vs.concat([i]).sort((a, b) => a - b) });
+};
+const PRESETS = [[0, 1, 2], [0, 2], [1, 2], [2], [0]];
+const presetIdx = PRESETS.findIndex((p) => p.join() === vs.join());
+const thread = s.thread || [];
+const sheet = !!s.sheet;
+const back = () => { const a = document.querySelector('header a.bb-link'); if (a) a.click(); };
+const goQ = (i) => this.setState({ q: (i + N) % N, open: null, sheet: false });
+const say = (lines) => {
+  this.setState({ thread: ((this.state || {}).thread || []).concat(lines) });
+  [0, 60, 220].forEach((ms) => later(() => { const el = document.getElementById('bb-thread'); if (el) el.scrollTop = el.scrollHeight; }, ms));
+};
+const flash = (k, ms) => { this.setState({ copied: false, pdf: false, dl: false, print: false, [k]: true }); later(() => this.setState({ [k]: false }), ms || 3000); };
+const replyFor = (q) => {
+  const t = q.toLowerCase();
+  const m = t.match(/step\s*(\d)/);
+  if (m && Q.steps[Number(m[1]) - 1]) return Q.steps[Number(m[1]) - 1].why;
+  if (/check|my answer|did i/.test(t)) return 'type or paste your answer and badgerbox will say which step it went off at.';
+  if (cur === 3 && /simpl|easier|eli5|dumb/.test(t)) return 'short version: chlorine is the ingredient you run out of first. using up all the aluminum would take 0.556 mol of chlorine, but you only have 0.494, so the chlorine decides how much AlCl₃ you get: 43.9 g.';
+  if (cur === 3 && /example|another|practice/.test(t)) return 'same idea, new numbers: 5.0 g Al with 10.0 g Cl₂.\nAl = 5.0 ÷ 26.98 = 0.185 mol, Cl₂ = 10.0 ÷ 70.90 = 0.141 mol.\nthe Al would need 0.185 × 3/2 = 0.278 mol Cl₂ and you have 0.141, so chlorine runs out again.\nproduct: 0.141 × 2/3 × 133.34 = 12.5 g AlCl₃.';
+  if (/mole/.test(t)) return 'moles let you compare different substances by count instead of by weight. one mole of anything is the same number of particles, so the ratios in a balanced equation only work once the amounts are in moles.';
+  return "this is where badgerbox's answer to your question shows up once it's connected to a model.";
+};
+const rerun = (i, text) => {
+  if (!LIVE || !API) return;
+  this.setState({ retry: 'busy' });
+  const req = RUN.request || {};
+  API.solveOne({ tab: req.tab, cls: req.cls, text: text }).then((res) => {
+    const run = API.lastRun();
+    if (!run || !run.questions || !run.questions[i]) return;
+    if (res && res.source === 'model' && res.questions && res.questions[0]) {
+      const nq = Object.assign({}, res.questions[0], { number: run.questions[i].number, text: text || run.questions[i].text });
+      run.questions[i] = nq;
+      API.saveRun(run);
+      this.setState({ retry: '', open: null });
+      say([{ who: 'bb', text: '#' + (nq.number || i + 1) + ' re-run and re-checked 2 ways: ' + (nq.sure ? 'both match, so it is now [\u2713].' : 'still not sure. ' + (nq.flag || '')) }]);
+    } else {
+      this.setState({ retry: '' });
+      say([{ who: 'bb', text: 'could not re-run it: ' + ((res && res.error) || 'no reply from the model') }]);
+    }
+  });
+};
+const ask = (q) => {
+  const clean = String(q || '').trim();
+  if (!clean) return;
+  const typing = !!(s.typing && flagNow);
+  this.setState({ asked: '', typing: false });
+  if (LIVE && typing) { say([{ who: 'you', text: clean }]); rerun(cur, clean); return; }
+  if (!typing && API && LIVE) {
+    say([{ who: 'you', text: clean }, { who: 'bb', text: 'thinking...' }]);
+    API.ask({ question: clean, context: { text: Q.text, answer: Q.ans, steps: Q.steps }, cls: (RUN.request || {}).cls }).then((res) => {
+      const t = ((this.state || {}).thread || []).slice();
+      t[t.length - 1] = { who: 'bb', text: res && res.source === 'model' ? res.answer : (res && res.error ? 'could not answer: ' + res.error : replyFor(clean)) };
+      this.setState({ thread: t });
+      [0, 60, 220].forEach((ms) => later(() => { const el = document.getElementById('bb-thread'); if (el) el.scrollTop = el.scrollHeight; }, ms));
+    });
+    return;
+  }
+  say([{ who: 'you', text: clean }, { who: 'bb', text: typing ? 'got it. once badgerbox is live, #3 gets re-run and re-checked from what you typed.' : replyFor(clean) }]);
+};
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const printSheet = () => {
+  const title = LIVE ? (RUN.title || RUN.subject || 'worksheet') : 'Stoichiometry worksheet';
+  const klass = LIVE ? ((RUN.meta || {}).classShort || RUN.subject || '') : '10th grade chemistry';
+  const body = QL.map((q, i) => '<section><h2>' + esc(numOf(i) + '. ' + q.text) + '</h2>' + (q.steps || []).map((d) => '<p class="w">' + esc(d.text + ':  ' + d.result) + '</p>').join('') + '<p class="a"><span>' + esc(isFlag(i) && !LIVE ? '65.9 g or 95.8 g' : q.ans) + '</span>' + (isFlag(i) ? ' <em>[!] not sure</em>' : '') + '</p></section>').join('');
+  const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:Cousine,Menlo,Consolas,monospace;color:#000;margin:32px;font-size:12pt;line-height:1.5}header{display:flex;justify-content:space-between;font-weight:700}.n{margin-top:4px;color:#444}section{margin-top:16px;padding-top:12px;border-top:1px solid #000;break-inside:avoid}h2{font-size:12pt;margin:0}.w{margin:0 0 0 3ch;color:#333}.a{margin:6px 0 0 3ch}.a span{border:2px solid #000;padding:0 1ch;font-weight:700}em{font-style:normal;color:#333}</style></head><body><header><span>' + esc(title) + '</span><span>' + esc(klass) + '</span></header><div class="n">name ____________________   date __________   period ____</div>' + body + '<script>window.onload=function(){window.print();}<\/script></body></html>';
+  const w = window.open('', '_blank');
+  if (!w) { flash('print'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+};
+const stepAsk = (hasE && open >= 0) ? open + 1 : Math.min(3, Q.steps.length);
+const stepsText = Q.steps.map((d, i) => 'step ' + (i + 1) + '  ' + d.text + '  ' + d.result).join('\n') + '\nanswer  ' + Q.ans;
+const pickFixSample = (v) => { this.setState({ fix: v, open: null, retry: '' }); say([{ who: 'bb', text: '#3 re-run with ' + (v === '32' ? '32.0' : '22.0') + ' g and re-checked 2 ways. both match, so it is now [✓].' }]); };
+const retry = () => { if (LIVE) { rerun(cur, Q.text); return; } this.setState({ retry: 'busy' }); later(() => this.setState({ retry: 'done' }), 1600); };
+const typeOut = () => { this.setState({ typing: true }); const ta = document.getElementById('bb-ask'); if (ta) ta.focus(); };
+return {
+  accent: accent,
+  leftCol: leftW + 'px',
+  walkH: walkH + 'px',
+  vDragging: s.vDragging ? 'true' : 'false',
+  onVDown: (e) => {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    const root = document.getElementById('bb-root');
+    const scale = root && root.offsetHeight ? (root.getBoundingClientRect().height / root.offsetHeight) || 1 : 1;
+    this.dragV = { y: e.clientY, h: walkH, scale: scale };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+    this.setState({ vDragging: true });
+  },
+  onVMove: (e) => {
+    const d = this.dragV;
+    if (!d) return;
+    const h = clampH(d.h + (e.clientY - d.y) / d.scale);
+    if (h !== (this.state || {}).walkH) this.setState({ walkH: h });
+  },
+  onVUp: (e) => {
+    if (!this.dragV) return;
+    this.dragV = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+    this.setState({ vDragging: false });
+  },
+  onVReset: () => this.setState({ walkH: DEF_H }),
+  onVKey: (e) => {
+    const step = e.shiftKey ? 80 : 24;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); this.setState({ walkH: clampH(walkH + (e.key === 'ArrowDown' ? step : -step)) }); return; }
+    if (e.key === 'Home') { e.preventDefault(); e.stopPropagation(); this.setState({ walkH: MIN_H }); return; }
+    if (e.key === 'End') { e.preventDefault(); e.stopPropagation(); this.setState({ walkH: MAX_H }); return; }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); this.setState({ walkH: DEF_H }); }
+  },
+  dragging: s.dragging ? 'true' : 'false',
+  onSplitDown: (e) => {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    const root = document.getElementById('bb-root');
+    const scale = root && root.offsetWidth ? (root.getBoundingClientRect().width / root.offsetWidth) || 1 : 1;
+    this.drag = { x: e.clientX, w: leftW, scale: scale };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+    this.setState({ dragging: true });
+  },
+  onSplitMove: (e) => {
+    const d = this.drag;
+    if (!d) return;
+    const w = clampW(d.w + (e.clientX - d.x) / d.scale);
+    if (w !== (this.state || {}).leftW) this.setState({ leftW: w });
+  },
+  onSplitUp: (e) => {
+    if (!this.drag) return;
+    this.drag = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+    this.setState({ dragging: false });
+  },
+  onSplitReset: () => this.setState({ leftW: DEF_W }),
+  onSplitKey: (e) => {
+    const step = e.shiftKey ? 80 : 24;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); e.stopPropagation(); this.setState({ leftW: clampW(leftW + (e.key === 'ArrowRight' ? step : -step)) }); return; }
+    if (e.key === 'Home') { e.preventDefault(); e.stopPropagation(); this.setState({ leftW: MIN_W }); return; }
+    if (e.key === 'End') { e.preventDefault(); e.stopPropagation(); this.setState({ leftW: MAX_W }); return; }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); this.setState({ leftW: DEF_W }); }
+  },
+  runMeta: (LIVE ? 'run · ' + RUN.subject + ' · ' + RUN.level + ' · ' + RUN.modelLabel : 'run #1 · chemistry · hard · complex model') + ' · ' + (N - nFlag) + ' [✓]' + (nFlag ? ' · ' + nFlag + ' [!]' : '') + ' · ' + (LIVE ? RUN.seconds : 34) + 's',
+  logChecks: nFlag ? (N - nFlag) + ' match · ' + flagNames + ' not sure' : 'all ' + N + ' match',
+  logFile: LIVE ? ((RUN.meta || {}).fileName || 'your assignment') : 'worksheet.jpg',
+  logRead: pad('reading ' + (LIVE ? ((RUN.meta || {}).fileName || 'your assignment') : 'worksheet.jpg').slice(0, 18), 'ok'),
+  logFound: '  ' + N + ' question' + (N === 1 ? '' : 's') + ' found, doing all ' + N,
+  logSubject: pad('finding the subject', LIVE ? String(RUN.subject).slice(0, 22) : 'chemistry'),
+  logClass: pad('matching your class', LIVE ? (((RUN.meta || {}).classShort) || 'none given').slice(0, 22) : '10th grade chem'),
+  logClassDetail: '  ' + (LIVE ? ((RUN.meta || {}).classDetail || '') : 'mole ratios, 3 sig figs'),
+  logLevel: pad('checking how hard it is', LIVE ? RUN.level : 'hard'),
+  logModel: pad('picking a model', LIVE ? 'default' : 'complex'),
+  logDone: 'done in ' + (LIVE ? RUN.seconds : 34) + 's',
+  paperTitle: LIVE ? (RUN.title || RUN.subject || 'worksheet') : 'Stoichiometry worksheet',
+  paperClass: LIVE ? ((RUN.meta || {}).classShort || RUN.subject || '') : '10th grade chemistry',
+  qHead: 'question ' + (cur + 1) + ' of ' + N + (LIVE ? '' : ''),
+  qText: numOf(cur) + '. ' + Q.text,
+  qChips: QL.map((q, i) => { const on = i === cur && !sheet; const fl = isFlag(i); return { text: '#' + numOf(i) + (fl ? ' [!]' : ' [✓]'), aria: 'question ' + numOf(i) + (fl ? ', not sure' : ', checked'), pressed: on ? 'true' : 'false', bg: on ? accent : 'transparent', fg: on ? '#000000' : (fl ? '#FFFFFF' : '#BDBDBD'), border: on ? accent : (fl ? '#FFFFFF' : '#5A5A5A'), pick: () => goQ(i) }; }),
+  qSummary: nFlag ? (N - nFlag) + ' checked · ' + nFlag + ' to look at' : 'all ' + N + ' checked',
+  showWalk: !sheet,
+  showSheet: sheet,
+  sheetOpen: sheet ? 'true' : 'false',
+  walkFor: '#' + numOf(cur),
+  views: VIEWS.map((v, i) => { const on = vs.indexOf(i) !== -1; return { text: (on ? '[x] ' : '[ ] ') + v, pressed: on ? 'true' : 'false', bg: 'transparent', fg: on ? '#FFFFFF' : '#8C8C8C', border: on ? '#FFFFFF' : '#5A5A5A', pick: () => toggleView(i) }; }),
+  viewNote: (hasE ? 'click a step to see why' : hasW ? 'the work, the way you would write it out' : 'just the final answer') + (stepsOn && !hasA ? ' · answer hidden' : ''),
+  showSteps: stepsOn,
+  showAnswer: hasA,
+  ansBg: flagNow ? '#000000' : accent,
+  ansFg: flagNow ? '#FFFFFF' : '#000000',
+  ansText: (flagNow && !LIVE) ? '65.9 g of CO₂ if the mass is 22.0 g · 95.8 g if it is 32.0 g' : Q.ans,
+  ansTag: flagNow ? '[!] not sure' : ((LIVE ? okd[cur] : cur === 2) ? '[✓] confirmed by you' : '[✓] checked 2 ways'),
+  showCheck: hasA && !flagNow,
+  checkText: Q.check,
+  showFlag: flagNow,
+  flagText: LIVE ? (s.retry === 'busy' ? 'working it out again...' : String(Q.flag || 'the two ways gave different answers.')) : s.retry === 'busy' ? 'reading the photo again...' : (s.retry === 'done' ? 'read it again and still can\'t tell. the mass in the photo could be 22.0 g or 32.0 g, so the two passes split at step 2. pick the right one or type the question out.' : 'the photo is blurry here. one pass read the mass as 22.0 g, the other as 32.0 g, so they disagree from step 2 on. both answers are shown above.'),
+  flagBtns: LIVE ? [
+    { text: 'type the question out', bg: accent, fg: '#000000', pick: typeOut },
+    { text: s.retry === 'busy' ? 'working...' : 'try again', bg: 'transparent', fg: '#FFFFFF', pick: retry },
+    { text: 'it\'s right', bg: 'transparent', fg: '#FFFFFF', pick: () => { this.setState({ okd: Object.assign({}, okd, { [cur]: true }) }); say([{ who: 'bb', text: '#' + numOf(cur) + ' marked as right by you.' }]); } }
+  ] : [
+    { text: 'it says 22.0 g', bg: accent, fg: '#000000', pick: () => pickFixSample('22') },
+    { text: 'it says 32.0 g', bg: accent, fg: '#000000', pick: () => pickFixSample('32') },
+    { text: 'type the question out', bg: 'transparent', fg: '#FFFFFF', pick: typeOut },
+    { text: s.retry === 'busy' ? 'reading...' : 'try again', bg: 'transparent', fg: '#FFFFFF', pick: retry }
+  ],
+  flagNote: s.typing ? 'type question ' + numOf(cur) + ' in the box below and press enter.' : 'badgerbox does not guess. this one stays marked on the completed worksheet until you fix it.',
+  askHint: (s.typing && flagNow) ? 'type question ' + numOf(cur) + ' here, then enter' : 'ask anything about #' + numOf(cur),
+  thread: thread.map((m) => ({ text: (m.who === 'you' ? '> ' : '') + m.text, color: m.who === 'you' ? '#FFFFFF' : '#BDBDBD', border: m.who === 'you' ? '#5A5A5A' : '#FFFFFF' })),
+  chips: ['explain it simpler', 'why step ' + stepAsk + '?', 'another example', 'check my answer'].map((c) => ({ text: c, ask: () => ask(c) })),
+  copyLabel: s.copied ? 'copied' : (!stepsOn ? 'copy answer' : 'copy steps'),
+  sheetLabel: sheet ? '< back to steps' : '⤓ completed worksheet',
+  sheetNote: 'a clean copy in the worksheet\'s own order and numbering, with the work shown.' + (nFlag ? ' ' + flagNames + (nFlag === 1 ? ' stays' : ' stay') + ' marked until you fix ' + (nFlag === 1 ? 'it.' : 'them.') : ' every answer is checked.'),
+  paper: QL.map((q, i) => ({
+    head: numOf(i) + '. ' + q.text,
+    work: q.steps.map((d) => ({ line: d.text + ':  ' + d.result })),
+    ans: (isFlag(i) && !LIVE) ? '65.9 g or 95.8 g' : q.ans,
+    mark: isFlag(i) ? (LIVE ? '[!] not sure' : '[!] not sure · mass in the photo is unclear') : ''
+  })),
+  statusMain: s.dl ? '[worksheet] the clean completed copy would download here when badgerbox is live' : s.print ? '[print] allow pop-ups for this site, then press print again' : s.copied ? '[copied] #' + (cur + 1) + ' is on your clipboard' : s.pdf ? '[pdf] would save here when badgerbox is live' : s.retry === 'busy' ? '[checking] working ' + '#' + numOf(cur) + ' out again' : (nFlag ? '[done] ' + (N - nFlag) + ' checked · ' + flagNames + (nFlag === 1 ? ' needs' : ' need') + ' a look' : '[done] all ' + N + ' checked'),
+  statusNote: (s.copied || s.pdf || s.dl || s.print) ? '' : (sheet ? 'preview of the completed worksheet' : 'question ' + (cur + 1) + ' of ' + N + ' · read the steps before you copy anything'),
+  onCopy: () => { try { navigator.clipboard && navigator.clipboard.writeText(!stepsOn ? Q.ans : stepsText); } catch (err) {} flash('copied', 2500); },
+  onPdf: printSheet,
+  onDownload: printSheet,
+  onPrint: printSheet,
+  onSheet: () => this.setState({ sheet: !sheet }),
+  onAskType: (e) => { this.setState({ asked: e.target.value, askPos: e.target.selectionStart }); syncM('bb-ask-mirror', e.target); },
+  onCaret: (e) => { const p = e.target.selectionStart; if (p !== (this.state || {}).askPos) this.setState({ askPos: p }); syncM('bb-ask-mirror', e.target); },
+  onTaScroll: (e) => syncM('bb-ask-mirror', e.target),
+  caretBefore: asked.slice(0, s.askPos != null ? s.askPos : undefined),
+  onAskKey: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (asked.trim()) { ask(asked); e.target.value = ''; } } },
+  onRootOut: () => setTimeout(() => { const a = document.activeElement; if (!a || a === document.body || a.id === 'bb-root') this.focusBox(); }, 0),
+  onRefocus: () => { if (!this.drag && !this.dragV) this.focusBox(); },
+  onPageKey: (e) => {
+    const tag = (e.target && e.target.tagName) || '';
+    if (e.key === 'Escape') { e.preventDefault(); if (sheet) { this.setState({ sheet: false }); return; } back(); return; }
+    const typing = tag === 'TEXTAREA' || tag === 'INPUT';
+    const empty = !typing || !String(e.target.value || '').length;
+    if (empty && !e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) { e.preventDefault(); goQ(cur + (e.key === 'ArrowRight' ? 1 : -1)); return; }
+    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      if (e.code === 'KeyW') { e.preventDefault(); this.setState({ sheet: !sheet }); return; }
+      if (e.code === 'KeyN') { e.preventDefault(); back(); return; }
+      if (e.code === 'KeyV') { e.preventDefault(); this.setState({ views: PRESETS[(presetIdx + 1) % PRESETS.length] }); return; }
+      const d = /^Digit([1-5])$/.exec(e.code || '');
+      if (d) { e.preventDefault(); const i = Number(d[1]) - 1; if (i < Q.steps.length) this.setState({ open: open === i ? -1 : i }); return; }
+    }
+    if (typing) return;
+    if (e.key.length === 1 && e.key !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey) { const ta = document.getElementById('bb-ask'); if (ta) ta.focus(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); goQ(cur + 1); return; }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goQ(cur - 1); return; }
+    if (e.key === 'w' || e.key === 'W') { e.preventDefault(); this.setState({ sheet: !sheet }); return; }
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); back(); return; }
+    if (e.key === 'v' || e.key === 'V') { e.preventDefault(); this.setState({ views: PRESETS[(presetIdx + 1) % PRESETS.length] }); return; }
+    if (e.key >= '1' && e.key <= '5') { e.preventDefault(); const i = Number(e.key) - 1; if (i < Q.steps.length) this.setState({ open: open === i ? -1 : i }); return; }
+    if (e.key === 'Enter' && tag !== 'BUTTON' && tag !== 'A') { e.preventDefault(); const ta = document.getElementById('bb-ask'); if (ta) ta.focus(); }
+  },
+  steps: Q.steps.map((d, i) => {
+    const fl = flagNow && !!d.flag;
+    return {
+      label: 'step ' + (i + 1), text: d.text, result: (fl ? '[!] ' : '') + d.result, why: d.why,
+      lbg: fl ? accent : 'transparent', lfg: fl ? '#000000' : '#BDBDBD',
+      isOpen: hasE && open === i,
+      open: hasE && open === i ? 'true' : 'false',
+      toggle: () => { if (hasE) this.setState({ open: open === i ? -1 : i }); },
+      askLabel: 'ask about step ' + (i + 1),
+      ask: () => ask('why step ' + (i + 1) + '?')
+    };
+  })
+};
+}
+}
+</script>
+</body>
+</html>
