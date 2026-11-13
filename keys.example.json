@@ -1,0 +1,4 @@
+{
+  "8008": { "name": "test key", "runsPerDay": 20 },
+  "change-me-friend-1": { "name": "friend 1", "runsPerDay": 5 }
+}

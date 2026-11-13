@@ -247,15 +247,19 @@ const VALID_KEY = '8008';
 const keyWrong = !!s.keyWrong;
 const check = (raw) => {
   const val = String(raw == null ? '' : raw).trim();
-  if (val === VALID_KEY) {
+  const yes = () => {
     this.setState({ keyWrong: false, granted: true });
     setTimeout(() => { const go = document.getElementById('bb-go'); if (go) go.focus(); }, 0);
-    return;
-  }
-  this.setState({ keyWrong: true, granted: false });
-  const el = document.getElementById('bb-key');
-  if (el) { el.value = ''; el.focus(); }
-  this.setState({ keyVal: '', keyPos: 0 });
+  };
+  const no = () => {
+    this.setState({ keyWrong: true, granted: false });
+    const el = document.getElementById('bb-key');
+    if (el) { el.value = ''; el.focus(); }
+    this.setState({ keyVal: '', keyPos: 0 });
+  };
+  if (!val) return;
+  if (window.bbApi && window.bbApi.checkKey) { window.bbApi.checkKey(val).then((res) => { if (res && res.ok) yes(); else no(); }); return; }
+  if (val === VALID_KEY) yes(); else no();
 };
 return {
   accent: this.props.accent ?? '#FFFFFF',

@@ -1,6 +1,7 @@
 // POST /api/tldr: the whole assignment in a nutshell, built when the student clicks tl;dr.
 // Body: { title, subject, cls: { name, rules }, hint, questions: [{ text, answer }] }
 // Reply: { source: 'model', tldr: { topic, nutshell, basis, sections: [{ head, items }] } } | { source: 'mock' } | { source: 'error', error }
+import { useKey } from './_lib/keys.js';
 import { hasKey, callModel, parseJson, classText, readBody } from './_lib/claude.js';
 
 const SYSTEM = `You write the tl;dr for badgerbox: a short study summary of what one homework assignment is teaching.
@@ -22,6 +23,8 @@ Write in plain lowercase-friendly language. Each item is one sentence. Teach the
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ source: 'error', error: 'use POST' }); return; }
   if (!hasKey()) { res.status(200).json({ source: 'mock' }); return; }
+  const gate = useKey(req, 'ask');
+  if (!gate.ok) { res.status(200).json({ source: 'error', error: gate.error }); return; }
   const body = readBody(req);
   const qs = (body.questions || []).slice(0, 40).map((q, i) => (i + 1) + '. ' + String(q.text || '').slice(0, 1500) + '\n   answer: ' + String(q.answer || '').slice(0, 1500)).join('\n');
   const prompt = [

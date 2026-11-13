@@ -1,6 +1,7 @@
 // POST /api/ask: follow-up questions from the walkthrough's chat box.
 // Body: { question, context: { text, answer, steps }, cls }
 // Reply: { source: 'model', answer } | { source: 'mock' } | { source: 'error', error }
+import { useKey } from './_lib/keys.js';
 import { hasKey, callModel, classText, readBody } from './_lib/claude.js';
 
 const SYSTEM = `You are badgerbox, answering a student's follow-up question about one worked homework problem.
@@ -10,6 +11,8 @@ for one. Refer to steps by number. If they paste their own answer to check, say 
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ source: 'error', error: 'use POST' }); return; }
   if (!hasKey()) { res.status(200).json({ source: 'mock' }); return; }
+  const gate = useKey(req, 'ask');
+  if (!gate.ok) { res.status(200).json({ source: 'error', error: gate.error }); return; }
   const body = readBody(req);
   const ctx = body.context || {};
   const steps = (ctx.steps || []).map((s, i) => 'step ' + (i + 1) + ': ' + s.text + ' -> ' + s.result).join('\n');

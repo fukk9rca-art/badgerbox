@@ -8,13 +8,37 @@ to check, and flags the answers it isn't sure about. Every step is explained.
 
 Needs [Node.js](https://nodejs.org) 18 or newer.
 
+**Windows:** double-click `start-badgerbox.bat`. The first time, it asks for your Claude API key (or press
+Enter to use the sample answers), then opens badgerbox in your browser. Leave the black window open while
+you use it. To change the key, delete the `.env` file in this folder and start it again.
+
+**Mac / Linux:**
+
 ```
-npm start            # http://localhost:3000, fake answers (no model connected)
+npm start            # http://localhost:3000
 npm run fake         # pretends a model is connected, to test the real code path for free
-ANTHROPIC_API_KEY=sk-ant-... npm start     # real model
 ```
 
-Test access key on the enter screen: `8008`.
+Put the key in a file named `.env` in this folder: `ANTHROPIC_API_KEY=sk-ant-...`. Without it, badgerbox
+shows the sample answers. The `.env` file is never uploaded to GitHub.
+
+## Access keys and daily limits
+
+`keys.json` in this folder lists who can get in and how much they can use per day (copy
+`keys.example.json` if it isn't there yet):
+
+```
+{
+  "8008":        { "name": "me",    "runsPerDay": 20 },
+  "sam-4417":    { "name": "sam",   "runsPerDay": 5 }
+}
+```
+
+- The part in quotes on the left is the key that person types on the enter screen.
+- `runsPerDay` is how many worksheets they can run per day. Follow-up questions and tl;dr get ten times that.
+- Limits reset at midnight. Today's counts are in `usage.json`. Restart badgerbox after editing `keys.json`.
+- This only works when badgerbox runs on your computer. Online (Vercel), limits need a database, which
+  isn't built yet. Also set a spending limit on your API key in the Claude Console as a backstop.
 
 ## Put it online (Vercel)
 
@@ -39,6 +63,8 @@ Test access key on the enter screen: `8008`.
 | `api/ask.js` | Answers follow-up questions in the walkthrough chat. |
 | `api/tldr.js` | Builds the tl;dr: what the assignment is teaching, worked out from the class and the work. |
 | `api/status.js` | Tells the pages whether a model is connected. |
+| `api/key.js`, `api/_lib/keys.js` | Access keys and per-key daily limits. |
+| `start-badgerbox.bat` | Double-click starter for Windows. |
 | `css/site.css` | Fixes for real window sizes (Chromebooks, short screens). |
 
 Without `ANTHROPIC_API_KEY` the API answers `{ "source": "mock" }` and the pages show the built-in
@@ -47,7 +73,7 @@ chemistry sample, so the site always works.
 ## Not built yet
 
 - The per-class study guide: tl;dr summaries are saved on the device, but there is no screen to read them yet.
-- Accounts, real access keys, usage limits and billing (`8008` is a stand-in).
+- Real accounts and billing. Keys and daily limits exist (`keys.json`) but are managed by hand and only enforced on your own computer.
 - Model routing by subject and difficulty (one model for now).
 - Past runs are sample data; saved classes and settings reset when the page reloads.
 - Phone layout for the main screen and walkthrough (the landing page already works on phones).

@@ -7,12 +7,14 @@
 (function () {
   'use strict';
   var RUN_KEY = 'bb-run';
+  var KEY_KEY = 'bb-key';
+  function accessKey() { try { return localStorage.getItem(KEY_KEY) || ''; } catch (err) { return ''; } }
   var status = { live: false, model: '', checked: false };
 
   function post(path, body) {
     return fetch(path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-bb-key': accessKey() },
       body: JSON.stringify(body || {})
     }).then(function (r) {
       return r.json().catch(function () { return { source: 'error', error: 'bad reply (' + r.status + ')' }; });
@@ -62,6 +64,15 @@
     status: status,
     isLive: function () { return status.live; },
     readFile: readFile,
+    /* Ask the backend whether an access key is valid. Offline (no backend), only the test key works. */
+    checkKey: function (key) {
+      return post('api/key', { key: key }).then(function (res) {
+        if (res && res.source === 'offline') res = { ok: key === '8008', offline: true };
+        if (res && res.ok) { try { localStorage.setItem(KEY_KEY, key); } catch (err) {} }
+        return res || { ok: false };
+      });
+    },
+    accessKey: accessKey,
     solve: function (payload) {
       var started = Date.now();
       return post('api/solve', payload).then(function (res) {

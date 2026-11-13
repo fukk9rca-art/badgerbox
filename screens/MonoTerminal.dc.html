@@ -700,7 +700,12 @@ const build = (st) => {
   lines.push(pad('picking a model', LV ? 'default' : (LIVE_ON ? 'default' : bTab.model)));
   const wAt = lines.length;
   lines.push('working through it');
-  if (this.apiError) lines.push('  [!] ' + String(this.apiError).slice(0, 60) + ' · showing the sample');
+  if (this.apiError) {
+    const em = String(this.apiError);
+    for (let c = 0; c < em.length && c < 240; c += 62) lines.push((c ? '      ' : '  [!] ') + em.slice(c, c + 62));
+    lines.push('run stopped');
+    return { lines: lines, askAt: askAt, pending: pending, num: num, total: asked.length, wIdx: wAt };
+  }
   if (LV) {
     lines.push('checking every answer 2 ways');
     LV.questions.forEach((q, i) => lines.push('  #' + (q.number || i + 1) + '  ' + (q.sure ? '[\u2713] both ways match' : '[!] not sure · ' + String(q.flag || 'look at it').slice(0, 44))));
@@ -708,6 +713,7 @@ const build = (st) => {
     lines.push('checking every answer 2 ways');
     bPicked.forEach((i) => lines.push('  #' + (i + 1) + '  ' + (i === 2 ? '[!] not sure · the 2 ways disagree at step 2' : '[\u2713] both ways match')));
   } else lines.push(pad('checking the answer 2 ways', '[\u2713] match'));
+  if (LV && LV.limit) lines.push('  runs today: ' + LV.limit.used + ' of ' + LV.limit.limit);
   lines.push('done in ' + (LV && LV.seconds ? LV.seconds : 34) + 's · ' + bOuts.map((i) => OUTPUT.choices[i]).join(' + '));
   return { lines: lines, askAt: askAt, pending: pending, num: num, total: asked.length, wIdx: wAt };
 };
@@ -867,7 +873,7 @@ const cancel = () => {
   this.timers = [];
   this.setState({ tried: false, phase: 0, answers: {}, cancelled: true });
 };
-const doneNow = running && phase >= allLog.length;
+const doneNow = running && phase >= allLog.length && !this.apiError;
 const openWalk = () => { const a = document.getElementById('bb-open'); if (a) a.click(); };
 const addFiles = (list) => {
   const next = files.slice();
@@ -1150,7 +1156,7 @@ return {
   onRootBlur: () => this.later(() => { const a = document.activeElement; if (!a || a === document.body) { const r = document.getElementById('bb-root'); if (r) r.focus({ preventScroll: true }); } }, 0),
   showError: showError,
   running: running,
-  done: running && phase >= allLog.length,
+  done: running && phase >= allLog.length && !this.apiError,
   logLines: logLines,
   errorText: errorText,
   echo: (text.split('\n')[0] || (files[0] ? files[0].name : '')).slice(0, 60),
@@ -1158,7 +1164,7 @@ return {
   tickInvalid: showError && needTick && hasWork ? 'true' : 'false',
   describedText: showError ? 'bb-hint bb-error' : 'bb-hint',
   dragging: !!s.dragging,
-  statusMain: s.sheet ? '[worksheet] a clean, printable completed copy would download here when badgerbox is live' : s.addCls ? '[settings] adding a class would open here when badgerbox is live' : running ? (phase >= allLog.length ? (flagged ? '[done] ' + (nChecked - (LVR ? lvFlags : 1)) + ' checked, ' + (LVR ? lvFlags : 1) + ' to look at' : '[done] every answer checked') : (pendingAsk && phase === askAt ? '[waiting] badgerbox has a question for you' : (this.apiPending ? '[running] the model is working on it, this can take up to a minute' : '[running] working on your assignment'))) : (s.cancelled ? '[cancelled] run stopped' : '[ready] waiting for an assignment'),
+  statusMain: (running && this.apiError && phase >= allLog.length) ? '[stopped] ' + String(this.apiError).slice(0, 110) : s.sheet ? '[worksheet] a clean, printable completed copy would download here when badgerbox is live' : s.addCls ? '[settings] adding a class would open here when badgerbox is live' : running ? (phase >= allLog.length ? (flagged ? '[done] ' + (nChecked - (LVR ? lvFlags : 1)) + ' checked, ' + (LVR ? lvFlags : 1) + ' to look at' : '[done] every answer checked') : (pendingAsk && phase === askAt ? '[waiting] badgerbox has a question for you' : (this.apiPending ? '[running] the model is working on it, this can take up to a minute' : '[running] working on your assignment'))) : (s.cancelled ? '[cancelled] run stopped' : '[ready] waiting for an assignment'),
   statusNeed: running ? '' : (ok ? 'ready to run' : 'still needed: ' + missing.join(', '))
 };
 }

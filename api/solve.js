@@ -4,6 +4,7 @@
 //
 // Two passes: the first finds and works every question, the second solves each
 // one again a different way and compares. Answers that don't match get flagged.
+import { useKey } from './_lib/keys.js';
 import { MODEL, hasKey, callModel, parseJson, fileBlock, classText, readBody } from './_lib/claude.js';
 
 const SOLVE_SYSTEM = `You are badgerbox, a homework walkthrough tool for high school and college students.
@@ -50,6 +51,8 @@ export default async function handler(req, res) {
   const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 3);
   const text = String(body.text || '').slice(0, 20000);
   if (!blocks.length && !text.trim()) { res.status(400).json({ source: 'error', error: 'nothing to solve' }); return; }
+  const gate = useKey(req, 'run');
+  if (!gate.ok) { res.status(200).json({ source: 'error', error: gate.error }); return; }
 
   const answers = body.answers || {};
   const extra = Object.keys(answers)
@@ -108,6 +111,7 @@ export default async function handler(req, res) {
       level: solved.level || 'medium',
       title: solved.title || '',
       modelLabel: MODEL,
+      limit: gate.limit,
       questions
     });
   } catch (err) {
