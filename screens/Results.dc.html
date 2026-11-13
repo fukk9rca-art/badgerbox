@@ -37,6 +37,8 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 .bb-q:focus-visible,.bb-fix:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
 .bb-fix:hover{outline:1px solid #FFFFFF;outline-offset:2px}
 .bb-paper{scrollbar-color:#000000 #FFFFFF}
+.bb-fill{scrollbar-color:#FFFFFF #000000;scrollbar-width:thin}
+.bb-fill-ans:hover{outline:1px dashed #0B2A8A;outline-offset:2px}
 .bb-tl{scrollbar-color:#FFFFFF #000000;scrollbar-width:thin}
 .bb-tlbtn:hover{background:#000000 !important;color:#FFFFFF !important}
 .bb-tlbtn:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
@@ -107,6 +109,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <div style="margin-top: 24px; display: flex; flex-wrap: wrap; gap: 1ch 2ch; align-items: center">
 <button type="button" class="bb-dl" aria-pressed="{{ sheetOpen }}" style="height: 36px; padding: 0 2ch; background: {{accent}}; color: #000000; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre" onClick="{{ onSheet }}">{{ sheetLabel }}</button>
 <button type="button" class="bb-btn" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap" onClick="{{ onCopy }}"><span aria-hidden="true">[ </span>{{ copyLabel }}<span aria-hidden="true"> ]</span></button>
+<button type="button" class="bb-btn" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap" onClick="{{ onCopyAll }}"><span aria-hidden="true">[ </span>{{ copyAllLabel }}<span aria-hidden="true"> ]</span></button>
 <button type="button" class="bb-btn" style="height: 32px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap" onClick="{{ onPdf }}"><span aria-hidden="true">[ </span>save as pdf<span aria-hidden="true"> ]</span></button>
 </div>
 <button type="button" class="bb-tlbtn" aria-pressed="{{ tlOpen }}" aria-label="tl;dr: the whole assignment in a nutshell" onClick="{{ onTl }}" style="display: block; width: 100%; height: 56px; margin-top: 16px; padding: 0 2ch; background: {{accent}}; color: #000000; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 24px; line-height: 32px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; white-space: pre">{{ tlLabel }}</button>
@@ -272,11 +275,27 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <h2 style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700"><span aria-hidden="true" style="color: #8C8C8C">2:</span>completed worksheet <span style="color: #BDBDBD">preview</span></h2>
 <span style="margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 1ch">
 <button type="button" class="bb-dl" onClick="{{ onDownload }}" style="height: 36px; padding: 0 2ch; background: {{accent}}; color: #000000; border: 2px solid {{accent}}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">⤓ download</button>
+<sc-for list="{{ sheetModes }}" as="sm" hint-placeholder-count="0">
+<button type="button" class="bb-opt" aria-pressed="{{ sm.pressed }}" onClick="{{ sm.pick }}" style="height: 36px; padding: 0 1ch; background: {{ sm.bg }}; color: {{ sm.fg }}; border: 1px solid {{ sm.border }}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ sm.text }}</button>
+</sc-for>
 <button type="button" class="bb-btn" onClick="{{ onPrint }}" style="height: 36px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>print<span aria-hidden="true"> ]</span></button>
 <button type="button" class="bb-btn" onClick="{{ onSheet }}" style="height: 36px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>&lt; back to steps<span aria-hidden="true"> ]</span></button>
 </span>
 </div>
 <div style="margin-top: 4px; color: #8C8C8C">{{ sheetNote }}</div>
+<sc-if value="{{ showFilled }}" hint-placeholder-val="{{ false }}">
+<div class="bb-fill" tabindex="0" aria-label="your worksheet with the answers filled in" style="margin-top: 12px; flex-grow: 1; min-height: 0; overflow-y: auto; padding-right: 8px">
+<sc-for list="{{ fillPages }}" as="pg" hint-placeholder-count="0">
+<div class="bb-fill-page" style="position: relative; container-type: inline-size; background: #FFFFFF; margin-bottom: 12px; overflow: hidden">
+<img src="{{ pg.url }}" alt="{{ pg.alt }}" draggable="false" style="display: block; width: 100%; height: auto; -webkit-user-select: none; user-select: none">
+<sc-for list="{{ pg.items }}" as="it" hint-placeholder-count="0">
+<span class="bb-fill-ans" title="drag to move" onPointerDown="{{ it.down }}" onPointerMove="{{ it.move }}" onPointerUp="{{ it.up }}" onPointerCancel="{{ it.up }}" style="position: absolute; left: {{ it.left }}; top: {{ it.top }}; max-width: {{ it.width }}; font: 700 {{ it.size }}/1.25 Arial, Helvetica, sans-serif; color: #0B2A8A; cursor: move; touch-action: none; white-space: pre-wrap; overflow-wrap: anywhere; -webkit-user-select: none; user-select: none">{{ it.text }}</span>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ showClean }}" hint-placeholder-val="{{ true }}">
 <div class="bb-paper" tabindex="0" aria-label="completed worksheet" style="margin-top: 12px; flex-grow: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 24px 32px 32px 32px; background: #FFFFFF; color: #000000">
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 3ch"><span style="font-weight: 700">{{ paperTitle }}</span><span>{{ paperClass }}</span></div>
 <div style="margin-top: 4px; color: #4A4A4A; white-space: pre">name ____________________   date __________   period ____</div>
@@ -290,6 +309,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 </div>
 </sc-for>
 </div>
+</sc-if>
 </div>
 </sc-if>
 
@@ -375,7 +395,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
 class Component extends DCLogic {
 componentDidMount() { this.focusBox(); }
-focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ask'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
+focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; if (window.getSelection && String(window.getSelection())) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ask'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
 componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
 renderVals() {
 const s = this.state || {};
@@ -495,7 +515,7 @@ const say = (lines) => {
   this.setState({ [tKey]: ((this.state || {})[tKey] || []).concat(lines) });
   [0, 60, 220].forEach((ms) => later(() => { const el = document.getElementById('bb-thread'); if (el) el.scrollTop = el.scrollHeight; }, ms));
 };
-const flash = (k, ms) => { this.setState({ copied: false, pdf: false, dl: false, print: false, notes: false, [k]: true }); later(() => this.setState({ [k]: false }), ms || 3000); };
+const flash = (k, ms) => { this.setState({ copied: false, copiedAll: false, pdf: false, dl: false, print: false, notes: false, [k]: true }); later(() => this.setState({ [k]: false }), ms || 3000); };
 const replyFor = (q) => {
   const t = q.toLowerCase();
   const m = t.match(/step\s*(\d)/);
@@ -614,6 +634,72 @@ const ask = (q) => {
   say([{ who: 'you', text: clean }, { who: 'bb', text: typing ? 'got it. once badgerbox is live, #3 gets re-run and re-checked from what you typed.' : replyFor(clean) }]);
 };
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const FILES = (LIVE && API && API.runFiles) ? API.runFiles().filter((f) => /^image\//.test(f.type || '')) : [];
+const moved = s.moved || {};
+const placeOf = (q, i) => { const pl = moved[i] || q.place; return (pl && pl.x != null && pl.y != null) ? pl : null; };
+const canFill = FILES.length > 0 && QL.some((q, i) => !!placeOf(q, i));
+const filledOn = canFill && s.sheetMode !== 'clean';
+const fillScale = s.fillScale || 1;
+const ansLine = (q, i) => q.ans + (isFlag(i) ? ' (?)' : '');
+const fillItems = (pi) => QL.map((q, i) => ({ q: q, i: i, pl: placeOf(q, i) })).filter((x) => x.pl && Math.min(FILES.length, Math.max(1, Number(x.pl.page) || 1)) === pi + 1);
+const startDrag = (i, pl) => (e) => {
+  if (e.button != null && e.button !== 0) return;
+  e.preventDefault();
+  const rc = e.currentTarget.parentNode.getBoundingClientRect();
+  this.dragA = { i: i, x0: e.clientX, y0: e.clientY, px: Number(pl.x), py: Number(pl.y), w: rc.width, h: rc.height, pl: pl };
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+};
+const moveDrag = (e) => {
+  const d = this.dragA; if (!d) return;
+  const nx = Math.min(0.98, Math.max(0, d.px + (e.clientX - d.x0) / d.w)), ny = Math.min(0.98, Math.max(0, d.py + (e.clientY - d.y0) / d.h));
+  this.setState({ moved: Object.assign({}, (this.state || {}).moved || {}, { [d.i]: Object.assign({}, d.pl, { x: nx, y: ny }) }) });
+};
+const endDrag = (e) => {
+  const d = this.dragA; if (!d) return;
+  this.dragA = null;
+  try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+  const mv = ((this.state || {}).moved || {})[d.i];
+  const run = API.lastRun();
+  if (mv && run && run.questions && run.questions[d.i]) { run.questions[d.i].place = mv; API.saveRun(run); }
+};
+const loadImg = (url) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = url; });
+const wrapLines = (g, text, maxW) => {
+  const out = [];
+  String(text).split('\n').forEach((para) => {
+    let line = '';
+    para.split(' ').forEach((w) => { const t = line ? line + ' ' + w : w; if (line && g.measureText(t).width > maxW) { out.push(line); line = w; } else line = t; });
+    out.push(line);
+  });
+  return out;
+};
+const renderPage = (pi) => loadImg(FILES[pi].url).then((im) => {
+  if (!im) return null;
+  const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+  const g = c.getContext('2d');
+  g.drawImage(im, 0, 0);
+  const fs = c.width * 0.021 * fillScale;
+  g.font = '700 ' + fs + 'px Arial, Helvetica, sans-serif'; g.fillStyle = '#0B2A8A'; g.textBaseline = 'top';
+  fillItems(pi).forEach((x) => {
+    const maxW = Math.max(0.15, Math.min(1 - Number(x.pl.x), Number(x.pl.w) || 0.5)) * c.width;
+    wrapLines(g, ansLine(x.q, x.i), maxW).forEach((ln, k) => g.fillText(ln, Number(x.pl.x) * c.width, Number(x.pl.y) * c.height + k * fs * 1.25));
+  });
+  return c;
+});
+const downloadFilled = () => {
+  FILES.forEach((_, pi) => renderPage(pi).then((c) => {
+    if (!c) return;
+    c.toBlob((blob) => { if (!blob) return; const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'completed-worksheet' + (FILES.length > 1 ? '-' + (pi + 1) : '') + '.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png');
+  }));
+  flash('dl', 2500);
+};
+const printFilled = () => {
+  Promise.all(FILES.map((_, pi) => renderPage(pi))).then((cs) => {
+    const imgs = cs.filter(Boolean).map((c) => '<img src="' + c.toDataURL('image/jpeg', 0.92) + '">').join('');
+    const w = window.open('', '_blank');
+    if (!w) { flash('print'); return; }
+    w.document.open(); w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>completed worksheet</title><style>body{margin:0}img{display:block;width:100%;break-after:page}</style></head><body>' + imgs + '<script>window.onload=function(){window.print();}<\/script></body></html>'); w.document.close();
+  });
+};
 const printSheet = () => {
   const title = LIVE ? (RUN.title || RUN.subject || 'worksheet') : 'Stoichiometry worksheet';
   const klass = LIVE ? ((RUN.meta || {}).classShort || RUN.subject || '') : '10th grade chemistry';
@@ -787,21 +873,34 @@ return {
   askHint: tl ? (s.tlAsk ? 'what are you learning right now? a few words is fine' : 'ask anything about the material') : (s.fixPt && FIG) ? 'type the point, e.g. (0.30, 0.28)' : (s.typing && flagNow) ? 'type question ' + numOf(cur) + ' here, then enter' : 'ask anything about #' + numOf(cur),
   thread: thread.map((m) => ({ text: (m.who === 'you' ? '> ' : '') + m.text, color: m.who === 'you' ? '#FFFFFF' : '#BDBDBD', border: m.who === 'you' ? '#5A5A5A' : '#FFFFFF' })),
   chips: ['explain it simpler', 'why step ' + stepAsk + '?', 'another example', 'check my answer'].map((c) => ({ text: c, ask: () => ask(c) })),
+  copyAllLabel: s.copiedAll ? 'copied' : 'copy answers',
+  onCopyAll: () => { const all = QL.map((q, i) => numOf(i) + '. ' + ((isFlag(i) && !LIVE) ? '65.9 g or 95.8 g' : q.ans) + (isFlag(i) ? '  (not sure)' : '')).join('\n'); try { navigator.clipboard && navigator.clipboard.writeText(all); } catch (err) {} flash('copiedAll', 2500); },
   copyLabel: s.copied ? 'copied' : (!stepsOn ? 'copy answer' : 'copy steps'),
   sheetLabel: sheet ? '< back to steps' : '⤓ completed worksheet',
-  sheetNote: 'a clean copy in the worksheet\'s own order and numbering, with the work shown.' + (nFlag ? ' ' + flagNames + (nFlag === 1 ? ' stays' : ' stay') + ' marked until you fix ' + (nFlag === 1 ? 'it.' : 'them.') : ' every answer is checked.'),
+  showFilled: sheet && filledOn,
+  showClean: sheet && !filledOn,
+  sheetModes: canFill ? [
+    { text: 'on your worksheet', on: filledOn, pick: () => this.setState({ sheetMode: 'filled' }) },
+    { text: 'clean copy', on: !filledOn, pick: () => this.setState({ sheetMode: 'clean' }) }
+  ].concat(filledOn ? [{ text: 'A-', on: false, pick: () => this.setState({ fillScale: Math.max(0.6, fillScale - 0.1) }) }, { text: 'A+', on: false, pick: () => this.setState({ fillScale: Math.min(2, fillScale + 0.1) }) }] : [])
+    .map((m) => ({ text: m.text, pressed: m.on ? 'true' : 'false', bg: m.on ? accent : 'transparent', fg: m.on ? '#000000' : '#BDBDBD', border: m.on ? accent : '#5A5A5A', pick: m.pick })) : [],
+  fillPages: filledOn ? FILES.map((f, pi) => ({ url: f.url, alt: 'your worksheet, page ' + (pi + 1) + ', with the answers written in',
+    items: fillItems(pi).map((x) => ({ text: ansLine(x.q, x.i), left: (Number(x.pl.x) * 100).toFixed(2) + '%', top: (Number(x.pl.y) * 100).toFixed(2) + '%',
+      width: (Math.max(0.15, Math.min(1 - Number(x.pl.x), Number(x.pl.w) || 0.5)) * 100).toFixed(1) + '%', size: (2.1 * fillScale).toFixed(2) + 'cqw',
+      down: startDrag(x.i, x.pl), move: moveDrag, up: endDrag })) })) : [],
+  sheetNote: filledOn ? 'your own worksheet with the answers written where they go. drag an answer if it landed in the wrong spot. A- and A+ change the size.' + (nFlag ? ' (?) marks the ones it wasn\'t sure about.' : '') : (LIVE && !canFill && sheet ? 'this is the clean copy. answers can only be put on your own worksheet when you give it as a screenshot or photo. ' : '') + 'a clean copy in the worksheet\'s own order and numbering, with the work shown.' + (nFlag ? ' ' + flagNames + (nFlag === 1 ? ' stays' : ' stay') + ' marked until you fix ' + (nFlag === 1 ? 'it.' : 'them.') : ' every answer is checked.'),
   paper: QL.map((q, i) => ({
     head: numOf(i) + '. ' + q.text,
     work: q.steps.map((d) => ({ line: d.text + ':  ' + d.result })),
     ans: (isFlag(i) && !LIVE) ? '65.9 g or 95.8 g' : q.ans,
     mark: isFlag(i) ? (LIVE ? '[!] not sure' : '[!] not sure · mass in the photo is unclear') : ''
   })),
-  statusMain: s.notes ? '[notes] ' + (API ? API.notes(classLabel).length : 0) + ' tl;dr' + ((API ? API.notes(classLabel).length : 0) === 1 ? '' : 's') + ' saved for ' + classLabel + '. the study guide view is coming.' : (tl && s.tlState === 'busy') ? '[tl;dr] working out what you\'re learning' : s.dl ? '[worksheet] the clean completed copy would download here when badgerbox is live' : s.print ? '[print] allow pop-ups for this site, then press print again' : s.copied ? '[copied] #' + (cur + 1) + ' is on your clipboard' : s.pdf ? '[pdf] would save here when badgerbox is live' : s.retry === 'busy' ? '[checking] working ' + '#' + numOf(cur) + ' out again' : (nFlag ? '[done] ' + (N - nFlag) + ' checked · ' + flagNames + (nFlag === 1 ? ' needs' : ' need') + ' a look' : '[done] all ' + N + ' checked'),
+  statusMain: (s.dl && filledOn) ? '[worksheet] saved to your downloads as completed-worksheet.png' : s.copiedAll ? '[copied] all ' + N + ' answers are on your clipboard' : s.notes ? '[notes] ' + (API ? API.notes(classLabel).length : 0) + ' tl;dr' + ((API ? API.notes(classLabel).length : 0) === 1 ? '' : 's') + ' saved for ' + classLabel + '. the study guide view is coming.' : (tl && s.tlState === 'busy') ? '[tl;dr] working out what you\'re learning' : s.dl ? '[worksheet] the clean completed copy would download here when badgerbox is live' : s.print ? '[print] allow pop-ups for this site, then press print again' : s.copied ? '[copied] #' + (cur + 1) + ' is on your clipboard' : s.pdf ? '[pdf] would save here when badgerbox is live' : s.retry === 'busy' ? '[checking] working ' + '#' + numOf(cur) + ' out again' : (nFlag ? '[done] ' + (N - nFlag) + ' checked · ' + flagNames + (nFlag === 1 ? ' needs' : ' need') + ' a look' : '[done] all ' + N + ' checked'),
   statusNote: (s.copied || s.pdf || s.dl || s.print) ? '' : (tl ? 'the whole assignment in a nutshell' : sheet ? 'preview of the completed worksheet' : 'question ' + (cur + 1) + ' of ' + N + ' · read the steps before you copy anything'),
   onCopy: () => { try { navigator.clipboard && navigator.clipboard.writeText(!stepsOn ? Q.ans : stepsText); } catch (err) {} flash('copied', 2500); },
-  onPdf: printSheet,
-  onDownload: printSheet,
-  onPrint: printSheet,
+  onPdf: () => (filledOn ? printFilled() : printSheet()),
+  onDownload: () => (filledOn ? downloadFilled() : printSheet()),
+  onPrint: () => (filledOn ? printFilled() : printSheet()),
   onSheet: () => this.setState({ sheet: !sheet, tl: false }),
   onAskType: (e) => { this.setState({ asked: e.target.value, askPos: e.target.selectionStart }); syncM('bb-ask-mirror', e.target); },
   onCaret: (e) => { const p = e.target.selectionStart; if (p !== (this.state || {}).askPos) this.setState({ askPos: p }); syncM('bb-ask-mirror', e.target); },
@@ -809,7 +908,7 @@ return {
   caretBefore: asked.slice(0, s.askPos != null ? s.askPos : undefined),
   onAskKey: (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (asked.trim()) { ask(asked); e.target.value = ''; } } },
   onRootOut: () => setTimeout(() => { const a = document.activeElement; if (!a || a === document.body || a.id === 'bb-root') this.focusBox(); }, 0),
-  onRefocus: () => { if (!this.drag && !this.dragV) this.focusBox(); },
+  onRefocus: () => { if (!this.drag && !this.dragV && !this.dragA) this.focusBox(); },
   onPageKey: (e) => {
     const tag = (e.target && e.target.tagName) || '';
     if (e.key === 'Escape') { e.preventDefault(); if (sheet || tl) { this.setState({ sheet: false, tl: false, tlAsk: false }); return; } back(); return; }

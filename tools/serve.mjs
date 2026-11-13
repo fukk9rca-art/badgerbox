@@ -3,11 +3,21 @@
 //   node tools/serve.mjs            -> http://localhost:3000
 //   ANTHROPIC_API_KEY=... node tools/serve.mjs   (real model)
 import http from 'node:http';
+import { exec } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// Settings live in a .env file in the project folder (never uploaded to GitHub):
+//   ANTHROPIC_API_KEY=sk-ant-...
+try {
+  fs.readFileSync(path.join(ROOT, '.env'), 'utf8').split(/\r?\n/).forEach((line) => {
+    const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/.exec(line);
+    if (m && !line.trim().startsWith('#') && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+  });
+} catch (err) { /* no .env file: runs with the sample answers */ }
 const PORT = Number(process.env.PORT || 3000);
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
@@ -35,10 +45,25 @@ const server = http.createServer(async (req, res) => {
   }
   let p = decodeURIComponent(url.pathname);
   if (p.endsWith('/')) p += 'index.html';
+  // never hand out settings, keys or server code
+  if (/(^|\/)\./.test(p) || /^\/(api|tools|node_modules)\//.test(p) || /^\/(keys|usage|package|vercel)[^/]*\.json$/.test(p)) { res.statusCode = 404; res.end('not found'); return; }
+  if (!path.extname(p) && fs.existsSync(path.join(ROOT, p + '.html'))) p += '.html';
   const file = path.join(ROOT, p);
   if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; res.end('not found'); return; }
   res.setHeader('content-type', TYPES[path.extname(file)] || 'application/octet-stream');
   fs.createReadStream(file).pipe(res);
 });
 
-server.listen(PORT, () => console.log('badgerbox on http://localhost:' + PORT));
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') console.log('badgerbox is already running (port ' + PORT + ' is in use). open http://localhost:' + PORT + ' or close the other badgerbox window first.');
+  else console.log('could not start: ' + err.message);
+});
+server.listen(PORT, () => {
+  console.log('badgerbox is running: http://localhost:' + PORT);
+  console.log(process.env.ANTHROPIC_API_KEY ? 'model: connected (real answers)' : 'model: not connected (sample answers). add your key to the .env file to turn it on.');
+  console.log('leave this window open while you use badgerbox. close it to stop.');
+  if (process.env.BADGERBOX_OPEN === '1') {
+    const url = 'http://localhost:' + PORT + '/';
+    exec(process.platform === 'win32' ? 'start "" "' + url + '"' : process.platform === 'darwin' ? 'open "' + url + '"' : 'xdg-open "' + url + '"', () => {});
+  }
+});
