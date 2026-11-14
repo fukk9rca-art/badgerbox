@@ -42,15 +42,30 @@ function writeUsage(u) {
   try { fs.writeFileSync(USAGE_FILE, JSON.stringify(u, null, 1)); } catch (err) { /* read-only disk: keep it in memory */ }
 }
 
+// A request that came in through a share link (a tunnel adds these headers) rather than from this computer.
+export function isRemote(req) {
+  const h = (req && req.headers) || {};
+  return !!(h['cf-connecting-ip'] || h['x-forwarded-for'] || h['cf-ray'] || h['x-real-ip']);
+}
+// Short or example keys are easy to guess, so they only work on this computer, never through a share link.
+export function weakKey(key) { return String(key).length < 10 || /^change-me/i.test(String(key)); }
+
+// Slow down guessing: after 15 wrong keys in 10 minutes, share-link visitors are locked out for 10 minutes.
+let bad = [];
+export function guessLocked() { const t = Date.now(); bad = bad.filter((x) => t - x < 600000); return bad.length >= 15; }
+export function noteBad() { bad.push(Date.now()); }
+
 export function keyOf(req) {
   const h = req.headers || {};
   return String(h['x-bb-key'] || '').trim();
 }
 
 // What a key is allowed, and what it has used today. null if the key isn't valid.
-export function keyInfo(key) {
-  const entry = loadKeys()[key];
-  if (!key || !entry) return null;
+export function keyInfo(key, req) {
+  const remote = isRemote(req);
+  if (remote && guessLocked()) return null;
+  const entry = Object.prototype.hasOwnProperty.call(loadKeys(), key) ? loadKeys()[key] : null;
+  if (!key || !entry || (remote && weakKey(key))) { if (remote && key) noteBad(); return null; }
   const runsPerDay = Math.max(0, Number(entry.runsPerDay) || 0);
   const day = ((readUsage()[today()] || {})[key]) || {};
   return { name: entry.name || '', runsPerDay, asksPerDay: runsPerDay * 10, runs: day.runs || 0, asks: day.asks || 0 };
@@ -59,7 +74,7 @@ export function keyInfo(key) {
 // Check the key and its limit, and count one use. kind: 'run' | 'ask'.
 export function useKey(req, kind) {
   const key = keyOf(req);
-  const info = keyInfo(key);
+  const info = keyInfo(key, req);
   if (!info) return { ok: false, error: 'that access key is not valid. go back to the enter screen and type your key again.' };
   const used = kind === 'run' ? info.runs : info.asks;
   const limit = kind === 'run' ? info.runsPerDay : info.asksPerDay;
