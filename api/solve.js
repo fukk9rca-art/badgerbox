@@ -26,6 +26,11 @@ Rules:
   top-left corner of where the writing should start, as fractions of the image's width and height (0 to 1),
   w = how wide the space is as a fraction of the width. Look carefully at the layout: answers must not sit on
   top of printed text. Use null when the assignment was not an image or there is no sensible spot.
+- Several files. The student may give more than one file. Complete every file marked ASSIGNMENT, and use every
+  file, including the ones marked REFERENCE ONLY, as context for the others. Example: a vocabulary sheet shows
+  the words the class is learning, so use those words, spellings and forms in the other assignment. If a file
+  has pictures to name or blanks to fill, work those out first and reuse them. Add "file": N to each question
+  (the number of the file it belongs to). Image numbers for "place" count across all the images, in order.
 - Word and slide files. When the assignment's paragraphs are tagged [pN] or its slides [slide N], add "anchor" to
   each question: {"p": N} = the paragraph the answer should be written straight after (the question itself, or
   its blank answer line), or {"slide": N} = the slide the question is on. Otherwise null.
@@ -44,7 +49,7 @@ Rules:
 - Reply with JSON only, no prose, in exactly this shape:
 {"subject": "short subject, e.g. chemistry", "level": "easy|medium|hard", "title": "short name for the assignment",
  "questions": [{"number": 1, "text": "the question as written", "answer": "the final answer",
-   "steps": [{"text": "...", "result": "...", "why": "..."}], "unclear": null, "figure": null, "place": null, "anchor": null}]}`;
+   "steps": [{"text": "...", "result": "...", "why": "..."}], "unclear": null, "figure": null, "place": null, "anchor": null, "file": 1}]}`;
 
 const CHECK_SYSTEM = `You are the checker for badgerbox. For each question, solve it yourself from scratch using a
 different method or route than the obvious one (work backwards, substitute the answer in, estimate, use
@@ -57,7 +62,7 @@ export default async function handler(req, res) {
   if (!hasKey()) { res.status(200).json({ source: 'mock' }); return; }
 
   const body = readBody(req);
-  const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 12);
+  const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 20);
   const text = String(body.text || '').slice(0, 20000);
   if (!blocks.length && !text.trim()) { res.status(400).json({ source: 'error', error: 'nothing to solve' }); return; }
   const gate = useKey(req, 'run');
@@ -69,8 +74,14 @@ export default async function handler(req, res) {
     .map((k) => k + ': ' + String(answers[k]).slice(0, 2000));
   const picked = Array.isArray(body.picked) && body.picked.length ? body.picked : null;
 
+  const info = Array.isArray(body.fileInfo) ? body.fileInfo : [];
+  const fileLines = info.map((f) => 'File ' + f.n + ': "' + String(f.name || '').slice(0, 120) + '"' +
+    (f.pages ? ' (image' + (f.pages[1] > f.pages[0] ? 's ' + f.pages[0] + ' to ' + f.pages[1] : ' ' + f.pages[0]) + ')' : ' (given as text)') +
+    (f.role === 'reference' ? ' : REFERENCE ONLY. Read it and use what it says, but do not list or answer its questions.' : ' : ASSIGNMENT. Complete it.'));
   const brief = [
     'Subject tab the student picked: ' + (body.tab || 'auto') + '.',
+    fileLines.length ? 'The files:\n' + fileLines.join('\n') : '',
+    body.more ? 'Other work from this student was already completed. Only answer the questions in the files marked ASSIGNMENT.' : '',
     classText(body.cls),
     picked ? 'Only do these question numbers: ' + picked.join(', ') + '.' : 'Do every question.',
     extra.length ? 'Extra context the student gave:\n' + extra.join('\n') : '',
@@ -108,6 +119,7 @@ export default async function handler(req, res) {
         ans: String(q.answer || ''),
         steps: (q.steps || []).slice(0, 6).map((s) => ({ text: String(s.text || ''), result: String(s.result || ''), why: String(s.why || '') })),
         check: c ? String(c.check || '') : '',
+        file: Number(q.file) || null,
         figure: (q.figure && typeof q.figure === 'object' && q.figure.type) ? q.figure : null,
         anchor: (q.anchor && typeof q.anchor === 'object') ? { p: Number(q.anchor.p) || null, slide: Number(q.anchor.slide) || null } : null,
         place: (q.place && isFinite(Number(q.place.x)) && isFinite(Number(q.place.y))) ? { page: Number(q.place.page) || 1, x: Math.min(1, Math.max(0, Number(q.place.x))), y: Math.min(1, Math.max(0, Number(q.place.y))), w: Math.min(1, Math.max(0.1, Number(q.place.w) || 0.5)) } : null,
