@@ -26,6 +26,9 @@ Rules:
   top-left corner of where the writing should start, as fractions of the image's width and height (0 to 1),
   w = how wide the space is as a fraction of the width. Look carefully at the layout: answers must not sit on
   top of printed text. Use null when the assignment was not an image or there is no sensible spot.
+- Word and slide files. When the assignment's paragraphs are tagged [pN] or its slides [slide N], add "anchor" to
+  each question: {"p": N} = the paragraph the answer should be written straight after (the question itself, or
+  its blank answer line), or {"slide": N} = the slide the question is on. Otherwise null.
 - Graphs. Add a "figure" to a question when the answer is or needs a graph, or when the question includes a
   graph you had to read. Give DATA ONLY, never computed statistics: badgerbox draws it and does the math
   (regression, r squared, bins, quartiles) itself. Shapes:
@@ -41,7 +44,7 @@ Rules:
 - Reply with JSON only, no prose, in exactly this shape:
 {"subject": "short subject, e.g. chemistry", "level": "easy|medium|hard", "title": "short name for the assignment",
  "questions": [{"number": 1, "text": "the question as written", "answer": "the final answer",
-   "steps": [{"text": "...", "result": "...", "why": "..."}], "unclear": null, "figure": null, "place": null}]}`;
+   "steps": [{"text": "...", "result": "...", "why": "..."}], "unclear": null, "figure": null, "place": null, "anchor": null}]}`;
 
 const CHECK_SYSTEM = `You are the checker for badgerbox. For each question, solve it yourself from scratch using a
 different method or route than the obvious one (work backwards, substitute the answer in, estimate, use
@@ -106,6 +109,7 @@ export default async function handler(req, res) {
         steps: (q.steps || []).slice(0, 6).map((s) => ({ text: String(s.text || ''), result: String(s.result || ''), why: String(s.why || '') })),
         check: c ? String(c.check || '') : '',
         figure: (q.figure && typeof q.figure === 'object' && q.figure.type) ? q.figure : null,
+        anchor: (q.anchor && typeof q.anchor === 'object') ? { p: Number(q.anchor.p) || null, slide: Number(q.anchor.slide) || null } : null,
         place: (q.place && isFinite(Number(q.place.x)) && isFinite(Number(q.place.y))) ? { page: Number(q.place.page) || 1, x: Math.min(1, Math.max(0, Number(q.place.x))), y: Math.min(1, Math.max(0, Number(q.place.y))), w: Math.min(1, Math.max(0.1, Number(q.place.w) || 0.5)) } : null,
         sure: agree && !q.unclear,
         flag: flag ? String(flag) : null

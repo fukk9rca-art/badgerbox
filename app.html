@@ -10,6 +10,7 @@
 <script src="vendor/morphdom-umd.min.js" defer></script>
 <script src="js/bb-api.js" defer></script>
 <script src="js/bb-plot.js" defer></script>
+<script src="js/bb-office.js" defer></script>
 <script src="js/bb-fx.js" defer></script>
 <script src="js/dc-lite.js" defer></script>
 </head>
@@ -394,7 +395,7 @@ o   o
 <span aria-hidden="true" style="flex-shrink: 0; font-weight: 700; font-size: 20px">&#9113;</span>
 <span style="display: flex; flex-direction: column; min-width: 0; white-space: nowrap; overflow: hidden"><span style="font-weight: 700">paste a screenshot<span style="font-weight: 400; color: #8C8C8C"> &middot; Ctrl+V</span></span><span style="color: #8C8C8C; overflow: hidden; text-overflow: ellipsis">{{ pasteSub }}</span></span>
 </button>
-<label class="bb-attach" style="position: relative; display: flex; align-items: center; height: 48px; padding: 0 14px; border: 1px solid #5A5A5A; cursor: pointer; white-space: nowrap; flex-shrink: 0"><input type="file" multiple="" accept="image/png,image/jpeg,image/heic,image/webp,application/pdf,text/plain" onChange="{{ onFiles }}" aria-describedby="bb-hint" style="position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap"><span style="white-space: pre"><span aria-hidden="true">[ </span>attach<span aria-hidden="true"> ]</span></span></label>
+<label class="bb-attach" style="position: relative; display: flex; align-items: center; height: 48px; padding: 0 14px; border: 1px solid #5A5A5A; cursor: pointer; white-space: nowrap; flex-shrink: 0"><input type="file" multiple="" accept="image/png,image/jpeg,image/heic,image/webp,application/pdf,text/plain,.docx,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" onChange="{{ onFiles }}" aria-describedby="bb-hint" style="position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap"><span style="white-space: pre"><span aria-hidden="true">[ </span>attach<span aria-hidden="true"> ]</span></span></label>
 </div>
 <div id="bb-hint" style="color: #8C8C8C; margin: 6px 0 0 0; min-width: 0">{{ hint }}</div>
 
@@ -667,7 +668,7 @@ const tabIdx = s.tab || 0;
 const tab = TABS[tabIdx];
 const text = String(s.text || '').trim();
 const files = s.files || [];
-const isDoc = (f) => /image|pdf/i.test(f.type || '') || /\.(png|jpe?g|heic|webp|pdf)$/i.test(f.name);
+const isDoc = (f) => /image|pdf/i.test(f.type || '') || /\.(png|jpe?g|heic|webp|pdf|docx|pptx)$/i.test(f.name);
 const docs = files.filter(isDoc);
 const liveDocs = docs.length > 0 && !!(window.bbApi && window.bbApi.isLive());
 const showPicker = docs.length > 0 && !liveDocs;
@@ -803,7 +804,7 @@ const logLines = allLog.slice(0, phase).map((t, i) => ({
   color: (i === allLog.length - 1 || t.indexOf('[!]') !== -1) ? '#FFFFFF' : '#BDBDBD'
 }));
 let errorText = '';
-if (badFile) errorText = badFile + " isn't a type badgerbox can read. use png, jpg, heic, pdf or plain text";
+if (badFile) errorText = badFile + " isn't a type badgerbox can read. use a screenshot or photo, pdf, .docx, .pptx or plain text";
 else if (!hasWork && needTick) errorText = "can't run yet: add your assignment and tick the permission box";
 else if (!hasWork) errorText = "can't run yet: add your assignment first";
 else if (needPick) errorText = "can't run yet: pick at least one question";
@@ -871,22 +872,26 @@ const startApi = (st) => {
   if (id !== this.runId) return;
   const data = this.fileData || {};
   const sendFiles = [];
+  const officeText = [];
+  const keepOrig = [];
   let fromPdf = false;
   (st.files || []).forEach((f) => {
     const d = data[fileKey(f)];
     if (!d) return;
+    if (d.type === 'docx' || d.type === 'pptx') { officeText.push(d.text); keepOrig.push({ kind: d.type, name: f.name, url: d.url }); return; }
     if (d.pages && d.pages.length) { fromPdf = true; d.pages.forEach((pg) => sendFiles.push(pg)); }
     else sendFiles.push({ type: d.type, url: d.url });
   });
   const payload = {
     tab: t.id,
-    text: String(st.text || ''),
+    text: String(st.text || '') + (officeText.length ? '\n\n' + officeText.join('\n\n') : ''),
+    keep: keepOrig,
     cls: cls,
     answers: ans,
     outputs: (Array.isArray(st.outs) ? st.outs : [0, 1, 2]).map((i) => OUTPUT.choices[i]),
     picked: fs.length && Array.isArray(st.picked) ? st.picked.map((i) => i + 1) : null,
     files: sendFiles,
-    meta: { fromPdf: fromPdf, fileName: fs[0] ? fs[0].name : '', classShort: cl ? cl.short : (ans.class || ''), classDetail: cl ? cl.detail : '', tab: t.id }
+    meta: { origin: keepOrig[0] ? keepOrig[0].kind : (fromPdf ? 'pdf' : (sendFiles.some((x) => /^image\//.test(x.type || '')) ? 'image' : 'text')), giveBack: ['same', 'slides', 'docs', 'pdf'][(st.opt && st.opt.give) || 0], fromPdf: fromPdf, fileName: fs[0] ? fs[0].name : '', classShort: cl ? cl.short : (ans.class || ''), classDetail: cl ? cl.detail : '', tab: t.id }
   };
   this.apiPending = true;
   API.solve(payload).then((res) => {
@@ -980,12 +985,12 @@ const addFiles = (list) => {
   let bad = '';
   let over = false;
   Array.from(list || []).forEach((f) => {
-    if (okTypes.indexOf(f.type) === -1 && !/\.(png|jpe?g|heic|webp|pdf|txt)$/i.test(f.name)) { bad = f.name; return; }
+    if (okTypes.indexOf(f.type) === -1 && !/\.(png|jpe?g|heic|webp|pdf|txt|docx|pptx)$/i.test(f.name)) { bad = f.name; return; }
     if (!next.some((x) => x.name === f.name && x.size === f.size)) { if (next.length >= 3) { over = true; return; } next.push({ name: f.name, size: f.size, type: f.type }); const blob = f.blob || ((typeof Blob !== 'undefined' && f instanceof Blob) ? f : null); if (blob && API) { const k = f.name + ':' + f.size; this.fileJobs = (this.fileJobs || []).concat([API.readFile(blob).then((d) => { if (d) { this.fileData = this.fileData || {}; this.fileData[k] = d; } })]); } }
   });
   this.setState({ files: next, badFile: bad, tried: false, dragging: false, picked: null, fileNote: over ? '3 files max. remove one to add another.' : '' });
 };
-const groups = tab.opts.map((g) => ({ label: g.label, choices: g.choices, k: tab.id + '.' + g.key })).concat([{ label: OUTPUT.label, choices: OUTPUT.choices, k: OUTPUT.key }]);
+const groups = tab.opts.map((g) => ({ label: g.label, choices: g.choices, k: tab.id + '.' + g.key })).concat([{ label: OUTPUT.label, choices: OUTPUT.choices, k: OUTPUT.key }, { label: 'give back', choices: ['same as i gave it', 'slides', 'docs', 'pdf'], k: 'give' }]);
 const bookmarklet = "javascript:(function(){var s=''+(window.getSelection?window.getSelection():'');var t=s.length>20?s:(document.body?document.body.innerText:'').slice(0,6000);window.open('https://badgerbox.app/in#'+encodeURIComponent(t.trim()),'_blank');})();";
 return {
   accent: accent,

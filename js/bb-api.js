@@ -8,6 +8,7 @@
   'use strict';
   var RUN_KEY = 'bb-run';
   var FILES_KEY = 'bb-run-files';
+  var ORIG_KEY = 'bb-run-orig';
   var HIST_KEY = 'bb-history';
   function loadLocal(key, fallback) { try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (err) { return fallback; } }
   function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (err) { return false; } }
@@ -108,6 +109,13 @@
       fr.onload = function () {
         var url = String(fr.result || '');
         var type = file.type || '';
+        var office = window.bbOffice ? window.bbOffice.kindOf(file.name, type) : '';
+        if (office) {
+          window.bbOffice.read(url, office)
+            .then(function (info) { resolve({ type: office, url: url, name: file.name || ('assignment.' + office), text: window.bbOffice.tagged(info, file.name || 'assignment') }); })
+            .catch(function () { resolve(null); });
+          return;
+        }
         if (type === 'application/pdf' || /\.pdf$/i.test(file.name || '')) {
           pdfPages(url).then(function (pages) { resolve({ type: 'application/pdf', url: url, pages: (pages && pages.length) ? pages : null }); });
           return;
@@ -149,7 +157,9 @@
     accessKey: accessKey,
     solve: function (payload) {
       var started = Date.now();
-      return post('api/solve', payload).then(function (res) {
+      var originals = (payload && payload.keep) || [];
+      var body = Object.assign({}, payload); delete body.keep;
+      return post('api/solve', body).then(function (res) {
         res = res || { source: 'error', error: 'no reply' };
         res.seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
         res.meta = (payload && payload.meta) || {};
@@ -160,7 +170,7 @@
           store(RUN_KEY, res);
           // keep the worksheet images for this tab only, so answers can be put back on them
           var imgs = ((payload && payload.files) || []).filter(function (f) { return f && /^image\//.test(f.type || ''); });
-          keep = idbSet(FILES_KEY, imgs);
+          keep = idbSet(FILES_KEY, imgs).then(function () { return idbSet(ORIG_KEY, originals); });
           var qs = res.questions || [];
           var hist = loadLocal(HIST_KEY, []);
           hist.unshift({ id: res.id, at: new Date().toISOString(), tab: (res.meta || {}).tab || '', title: res.title || res.subject || 'assignment',
@@ -191,13 +201,15 @@
     },
     lastRun: function () { return load(RUN_KEY); },
     /* the worksheet page images for the current run (a Promise) */
+    /* the Word or PowerPoint files the student gave, so answers can go back into them (a Promise) */
+    loadRunOrig: function () { return idbGet(ORIG_KEY).then(function (v) { return Array.isArray(v) ? v : []; }); },
     loadRunFiles: function () { return idbGet(FILES_KEY).then(function (v) { return Array.isArray(v) ? v : []; }); },
     /* finished runs kept on this device (without the worksheet images) */
     history: function () { return loadLocal(HIST_KEY, []); },
     openRun: function (id) {
       var h = loadLocal(HIST_KEY, []).filter(function (x) { return x.id === id; })[0];
       if (!h || !h.run) return false;
-      idbSet(FILES_KEY, []);
+      idbSet(FILES_KEY, []); idbSet(ORIG_KEY, []);
       store(RUN_KEY, h.run);
       return true;
     },

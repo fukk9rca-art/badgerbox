@@ -10,6 +10,7 @@
 <script src="vendor/morphdom-umd.min.js" defer></script>
 <script src="js/bb-api.js" defer></script>
 <script src="js/bb-plot.js" defer></script>
+<script src="js/bb-office.js" defer></script>
 <script src="js/bb-fx.js" defer></script>
 <script src="js/dc-lite.js" defer></script>
 </head>
@@ -292,6 +293,12 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <button type="button" class="bb-btn" onClick="{{ onSheet }}" style="height: 36px; padding: 0 4px; background: transparent; color: #FFFFFF; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>&lt; back to steps<span aria-hidden="true"> ]</span></button>
 </span>
 </div>
+<div role="group" aria-label="give it back as" style="margin-top: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch">
+<span aria-hidden="true" style="color: #8C8C8C; margin-right: 1ch">give it back as</span>
+<sc-for list="{{ giveChoices }}" as="gv" hint-placeholder-count="4">
+<button type="button" class="bb-opt" aria-pressed="{{ gv.pressed }}" onClick="{{ gv.pick }}" style="height: 32px; padding: 0 1ch; background: {{ gv.bg }}; color: {{ gv.fg }}; border: 1px solid {{ gv.border }}; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ gv.text }}</button>
+</sc-for>
+</div>
 <div style="margin-top: 4px; color: #8C8C8C">{{ sheetNote }}</div>
 <sc-if value="{{ showFilled }}" hint-placeholder-val="{{ false }}">
 <div class="bb-fill" tabindex="0" aria-label="your worksheet with the answers filled in" style="margin-top: 12px; flex-grow: 1; min-height: 0; overflow-y: auto; padding-right: 8px">
@@ -410,6 +417,7 @@ componentDidMount() {
   try { view = sessionStorage.getItem('bb-view') || ''; sessionStorage.removeItem('bb-view'); } catch (err) {}
   if (view === 'sheet') this.setState({ sheet: true });
   if (window.bbApi && window.bbApi.loadRunFiles) window.bbApi.loadRunFiles().then((f) => { this.runFiles = f; this.forceUpdate(); });
+  if (window.bbApi && window.bbApi.loadRunOrig) window.bbApi.loadRunOrig().then((f) => { this.runOrig = f; this.forceUpdate(); });
 }
 focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; if (window.getSelection && String(window.getSelection())) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ask'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
 componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
@@ -731,8 +739,34 @@ const downloadPdf = () => {
     .then((pages) => { const ok = pages.filter(Boolean); if (ok.length) saveBlob(makePdf(ok), outName('pdf')); });
   flash('dl', 2500);
 };
+const ORIG = (LIVE && this.runOrig && this.runOrig[0]) ? this.runOrig[0] : null;
+const origin = LIVE ? (ORIG ? ORIG.kind : (((RUN.meta || {}).origin) || (FILES.length ? (asPdf ? 'pdf' : 'image') : 'text'))) : 'text';
+const sameAs = { docx: 'docx', pptx: 'pptx', pdf: 'pdf', image: 'png', text: 'print' }[origin] || 'print';
+const give = s.giveAs || ({ slides: 'pptx', docs: 'docx', pdf: 'pdf' }[LIVE ? (RUN.meta || {}).giveBack : ''] || 'same');
+const giveFmt = give === 'same' ? sameAs : give;
+const OFF = window.bbOffice || null;
+const cleanQs = () => QL.map((q, i) => ({ n: numOf(i), text: q.text, ans: (isFlag(i) && !LIVE) ? '65.9 g or 95.8 g' : q.ans, unsure: isFlag(i), steps: q.steps || [] }));
+const officeAnswers = (key) => QL.map((q, i) => ({ at: (q.anchor && q.anchor[key]) || null, text: ((key === 'slide' || !(q.anchor && q.anchor[key])) ? numOf(i) + '. ' : '') + ansLine(q, i) }));
+const downloadAs = (fmt) => {
+  const fail = (err) => { this.setState({ dlErr: String(err && err.message || err) }); later(() => this.setState({ dlErr: '' }), 5000); };
+  if (fmt === 'pptx' && OFF) {
+    let job;
+    if (ORIG && ORIG.kind === 'pptx') job = OFF.fill(ORIG.url, 'pptx', officeAnswers('slide'));
+    else if (FILES.length) job = Promise.all(FILES.map((f) => loadImg(f.url))).then((ims) => OFF.pagesPptx(FILES.map((f, pi) => ({ url: f.url, w: ims[pi] ? ims[pi].naturalWidth : 850, h: ims[pi] ? ims[pi].naturalHeight : 1100, items: fillItems(pi).map((x) => ({ x: Number(x.pl.x), y: Number(x.pl.y), w: Number(x.pl.w) || 0.5, text: ansLine(x.q, x.i) })) })), fillScale));
+    else job = OFF.cleanPptx(LIVE ? (RUN.title || 'worksheet') : 'Stoichiometry worksheet', cleanQs());
+    job.then((blob) => saveBlob(blob, outName('pptx'))).catch(fail);
+    flash('dl', 2500); return;
+  }
+  if (fmt === 'docx' && OFF) {
+    const job = (ORIG && ORIG.kind === 'docx') ? OFF.fill(ORIG.url, 'docx', officeAnswers('p')) : OFF.cleanDocx(LIVE ? (RUN.title || 'worksheet') : 'Stoichiometry worksheet', LIVE ? ((RUN.meta || {}).classShort || '') : '10th grade chemistry', cleanQs());
+    job.then((blob) => saveBlob(blob, outName('docx'))).catch(fail);
+    flash('dl', 2500); return;
+  }
+  if (fmt === 'pdf' && FILES.length) { downloadPdf(); return; }
+  if (fmt === 'png' && FILES.length) { downloadFilled(); return; }
+  printSheet();
+};
 const downloadFilled = () => {
-  if (asPdf) { downloadPdf(); return; }
   FILES.forEach((_, pi) => renderPage(pi).then((c) => {
     if (!c) return;
     c.toBlob((blob) => { if (!blob) return; const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = outName('png', FILES.length > 1 ? pi + 1 : 0); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png');
@@ -926,6 +960,9 @@ return {
   onCopyAll: () => { const all = QL.map((q, i) => numOf(i) + '. ' + ((isFlag(i) && !LIVE) ? '65.9 g or 95.8 g' : q.ans) + (isFlag(i) ? '  (not sure)' : '')).join('\n'); try { navigator.clipboard && navigator.clipboard.writeText(all); } catch (err) {} flash('copiedAll', 2500); },
   copyLabel: s.copied ? 'copied' : (!stepsOn ? 'copy answer' : 'copy steps'),
   sheetLabel: sheet ? '< back to steps' : '⤓ completed worksheet',
+  giveChoices: [['same', 'same as you gave it (' + ({ docx: '.docx', pptx: '.pptx', pdf: '.pdf', png: 'image', print: 'printable copy' }[sameAs]) + ')'], ['pptx', 'google slides (.pptx)'], ['docx', 'google docs (.docx)'], ['pdf', 'pdf']]
+    .concat(FILES.length ? [['png', 'image']] : [])
+    .map((c) => { const on = give === c[0]; return { text: c[1], pressed: on ? 'true' : 'false', bg: on ? accent : 'transparent', fg: on ? '#000000' : '#BDBDBD', border: on ? accent : '#5A5A5A', pick: () => this.setState({ giveAs: c[0] }) }; }),
   showFilled: sheet && filledOn,
   showClean: sheet && !filledOn,
   sheetModes: canFill ? [
@@ -937,18 +974,18 @@ return {
     items: fillItems(pi).map((x) => ({ text: ansLine(x.q, x.i), left: (Number(x.pl.x) * 100).toFixed(2) + '%', top: (Number(x.pl.y) * 100).toFixed(2) + '%',
       width: (Math.max(0.15, Math.min(1 - Number(x.pl.x), Number(x.pl.w) || 0.5)) * 100).toFixed(1) + '%', size: (2.1 * fillScale).toFixed(2) + 'cqw',
       down: startDrag(x.i, x.pl), move: moveDrag, up: endDrag })) })) : [],
-  sheetNote: filledOn ? 'your own worksheet with the answers written where they go. drag an answer if it landed in the wrong spot. A- and A+ change the size.' + (nFlag ? ' (?) marks the ones it wasn\'t sure about.' : '') : (LIVE && !canFill && sheet ? 'this is the clean copy. answers can only be put on your own worksheet when you give it as a screenshot, photo or PDF of up to 10 pages. ' : '') + 'a clean copy in the worksheet\'s own order and numbering, with the work shown.' + (nFlag ? ' ' + flagNames + (nFlag === 1 ? ' stays' : ' stay') + ' marked until you fix ' + (nFlag === 1 ? 'it.' : 'them.') : ' every answer is checked.'),
+  sheetNote: (giveFmt === 'pptx' ? (ORIG && ORIG.kind === 'pptx' ? 'download gives back your own slides, with each answer added in blue at the bottom of its slide. the boxes can be moved in google slides. ' : (FILES.length ? 'download gives slides with your pages as the background and each answer as a text box you can move and edit. ' : 'download gives one slide per question that you can edit. ')) : giveFmt === 'docx' ? (ORIG && ORIG.kind === 'docx' ? 'download gives back your own document, with each answer added in blue right after its question. ' : 'download gives the questions, work and answers as normal text you can edit in google docs. graphs are left out. ') : '') || (filledOn ? 'your own worksheet with the answers written where they go. drag an answer if it landed in the wrong spot. A- and A+ change the size.' + (nFlag ? ' (?) marks the ones it wasn\'t sure about.' : '') : (ORIG ? 'this preview is the clean copy. ' : '') + (LIVE && !canFill && sheet ? 'this is the clean copy. answers can only be put on your own worksheet when you give it as a screenshot, photo or PDF of up to 10 pages. ' : '') + 'a clean copy in the worksheet\'s own order and numbering, with the work shown.' + (nFlag ? ' ' + flagNames + (nFlag === 1 ? ' stays' : ' stay') + ' marked until you fix ' + (nFlag === 1 ? 'it.' : 'them.') : ' every answer is checked.')),
   paper: QL.map((q, i) => ({
     head: numOf(i) + '. ' + q.text,
     work: q.steps.map((d) => ({ line: d.text + ':  ' + d.result })),
     ans: (isFlag(i) && !LIVE) ? '65.9 g or 95.8 g' : q.ans,
     mark: isFlag(i) ? (LIVE ? '[!] not sure' : '[!] not sure · mass in the photo is unclear') : ''
   })),
-  statusMain: s.copiedAns ? '[copied] the answer to #' + numOf(cur) + ' is on your clipboard as plain text' : (s.dl && filledOn) ? '[worksheet] saved to your downloads as ' + outName(asPdf ? 'pdf' : 'png') : s.copiedAll ? '[copied] all ' + N + ' answers are on your clipboard' : s.notes ? '[notes] ' + (API ? API.notes(classLabel).length : 0) + ' tl;dr' + ((API ? API.notes(classLabel).length : 0) === 1 ? '' : 's') + ' saved for ' + classLabel + '. the study guide view is coming.' : (tl && s.tlState === 'busy') ? '[tl;dr] working out what you\'re learning' : s.dl ? '[worksheet] the clean completed copy would download here when badgerbox is live' : s.print ? '[print] allow pop-ups for this site, then press print again' : s.copied ? '[copied] #' + (cur + 1) + ' is on your clipboard' : s.pdf ? '[pdf] would save here when badgerbox is live' : s.retry === 'busy' ? '[checking] working ' + '#' + numOf(cur) + ' out again' : (nFlag ? '[done] ' + (N - nFlag) + ' checked · ' + flagNames + (nFlag === 1 ? ' needs' : ' need') + ' a look' : '[done] all ' + N + ' checked'),
+  statusMain: s.dlErr ? '[error] could not make the file: ' + s.dlErr : (s.dl && (giveFmt === 'pptx' || giveFmt === 'docx')) ? '[worksheet] saved to your downloads as ' + outName(giveFmt) + '. in google ' + (giveFmt === 'pptx' ? 'slides' : 'docs') + ': file > ' + (giveFmt === 'pptx' ? 'import slides' : 'open') + ' > upload' : s.copiedAns ? '[copied] the answer to #' + numOf(cur) + ' is on your clipboard as plain text' : (s.dl && filledOn) ? '[worksheet] saved to your downloads as ' + outName(asPdf ? 'pdf' : 'png') : s.copiedAll ? '[copied] all ' + N + ' answers are on your clipboard' : s.notes ? '[notes] ' + (API ? API.notes(classLabel).length : 0) + ' tl;dr' + ((API ? API.notes(classLabel).length : 0) === 1 ? '' : 's') + ' saved for ' + classLabel + '. the study guide view is coming.' : (tl && s.tlState === 'busy') ? '[tl;dr] working out what you\'re learning' : s.dl ? '[worksheet] the clean completed copy would download here when badgerbox is live' : s.print ? '[print] allow pop-ups for this site, then press print again' : s.copied ? '[copied] #' + (cur + 1) + ' is on your clipboard' : s.pdf ? '[pdf] would save here when badgerbox is live' : s.retry === 'busy' ? '[checking] working ' + '#' + numOf(cur) + ' out again' : (nFlag ? '[done] ' + (N - nFlag) + ' checked · ' + flagNames + (nFlag === 1 ? ' needs' : ' need') + ' a look' : '[done] all ' + N + ' checked'),
   statusNote: (s.copied || s.pdf || s.dl || s.print) ? '' : (tl ? 'the whole assignment in a nutshell' : sheet ? 'preview of the completed worksheet' : 'question ' + (cur + 1) + ' of ' + N + ' · read the steps before you copy anything'),
   onCopy: () => { try { navigator.clipboard && navigator.clipboard.writeText(!stepsOn ? Q.ans : stepsText); } catch (err) {} flash('copied', 2500); },
   onPdf: () => (filledOn ? downloadPdf() : printSheet()),
-  onDownload: () => (filledOn ? downloadFilled() : printSheet()),
+  onDownload: () => downloadAs(giveFmt),
   onPrint: () => (filledOn ? printFilled() : printSheet()),
   onSheet: () => this.setState({ sheet: !sheet, tl: false }),
   onAskType: (e) => { this.setState({ asked: e.target.value, askPos: e.target.selectionStart }); syncM('bb-ask-mirror', e.target); },
