@@ -886,6 +886,7 @@ const startApi = (st) => {
     this.apiPending = false;
     if (res && res.source === 'model') this.live = res;
     else if (res && (res.source === 'error')) this.apiError = res.error || 'the model request failed';
+    else if (res && res.source === 'offline' && window.location.protocol !== 'file:') this.apiError = 'badgerbox is not running. the black window has to stay open: double-click start-badgerbox.bat, wait for it to open, then run again.';
     this.forceUpdate();
   });
   });
