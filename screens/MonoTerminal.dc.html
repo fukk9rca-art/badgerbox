@@ -846,7 +846,18 @@ const startApi = (st) => {
   const cl = (t.id === 'auto' ? [] : tabClasses(st))[classIdx(st)] || null;
   const cls = cl ? { name: cl.name, rules: rulesOf(cl) } : (ans.class ? { name: ans.class, rules: [] } : null);
   const fs = (st.files || []).filter(isDoc);
+  this.apiPending = true;
+  Promise.all(this.fileJobs || []).then(() => {
+  if (id !== this.runId) return;
   const data = this.fileData || {};
+  const sendFiles = [];
+  let fromPdf = false;
+  (st.files || []).forEach((f) => {
+    const d = data[fileKey(f)];
+    if (!d) return;
+    if (d.pages && d.pages.length) { fromPdf = true; d.pages.forEach((pg) => sendFiles.push(pg)); }
+    else sendFiles.push({ type: d.type, url: d.url });
+  });
   const payload = {
     tab: t.id,
     text: String(st.text || ''),
@@ -854,8 +865,8 @@ const startApi = (st) => {
     answers: ans,
     outputs: (Array.isArray(st.outs) ? st.outs : [0, 1, 2]).map((i) => OUTPUT.choices[i]),
     picked: fs.length && Array.isArray(st.picked) ? st.picked.map((i) => i + 1) : null,
-    files: (st.files || []).map((f) => data[fileKey(f)]).filter(Boolean),
-    meta: { fileName: fs[0] ? fs[0].name : '', classShort: cl ? cl.short : (ans.class || ''), classDetail: cl ? cl.detail : '', tab: t.id }
+    files: sendFiles,
+    meta: { fromPdf: fromPdf, fileName: fs[0] ? fs[0].name : '', classShort: cl ? cl.short : (ans.class || ''), classDetail: cl ? cl.detail : '', tab: t.id }
   };
   this.apiPending = true;
   API.solve(payload).then((res) => {
@@ -864,6 +875,7 @@ const startApi = (st) => {
     if (res && res.source === 'model') this.live = res;
     else if (res && (res.source === 'error')) this.apiError = res.error || 'the model request failed';
     this.forceUpdate();
+  });
   });
 };
 const advance = () => {
@@ -947,7 +959,7 @@ const addFiles = (list) => {
   let over = false;
   Array.from(list || []).forEach((f) => {
     if (okTypes.indexOf(f.type) === -1 && !/\.(png|jpe?g|heic|webp|pdf|txt)$/i.test(f.name)) { bad = f.name; return; }
-    if (!next.some((x) => x.name === f.name && x.size === f.size)) { if (next.length >= 3) { over = true; return; } next.push({ name: f.name, size: f.size, type: f.type }); const blob = f.blob || ((typeof Blob !== 'undefined' && f instanceof Blob) ? f : null); if (blob && API) { const k = f.name + ':' + f.size; API.readFile(blob).then((d) => { if (d) { this.fileData = this.fileData || {}; this.fileData[k] = d; } }); } }
+    if (!next.some((x) => x.name === f.name && x.size === f.size)) { if (next.length >= 3) { over = true; return; } next.push({ name: f.name, size: f.size, type: f.type }); const blob = f.blob || ((typeof Blob !== 'undefined' && f instanceof Blob) ? f : null); if (blob && API) { const k = f.name + ':' + f.size; this.fileJobs = (this.fileJobs || []).concat([API.readFile(blob).then((d) => { if (d) { this.fileData = this.fileData || {}; this.fileData[k] = d; } })]); } }
   });
   this.setState({ files: next, badFile: bad, tried: false, dragging: false, picked: null, fileNote: over ? '3 files max. remove one to add another.' : '' });
 };
@@ -1039,7 +1051,7 @@ return {
   checks: LVR ? LVR.questions.map((q, i) => (!q.sure ? { text: '#' + (q.number || i + 1) + ' [!]', aria: 'question ' + (q.number || i + 1) + ', not sure, open its walkthrough', bg: accent, fg: '#000000', border: accent } : { text: '#' + (q.number || i + 1) + ' [\u2713]', aria: 'question ' + (q.number || i + 1) + ', checked, open its walkthrough', bg: 'transparent', fg: '#FFFFFF', border: '#5A5A5A' })) : showPicker ? picked.map((i) => (i === 2 ? { text: '#3 [!]', aria: 'question 3, not sure, open its walkthrough', bg: accent, fg: '#000000', border: accent } : { text: '#' + (i + 1) + ' [\u2713]', aria: 'question ' + (i + 1) + ', checked, open its walkthrough', bg: 'transparent', fg: '#FFFFFF', border: '#5A5A5A' })) : [{ text: 'answer [\u2713]', aria: 'answer checked, open the walkthrough', bg: 'transparent', fg: '#FFFFFF', border: '#5A5A5A' }],
   checkNote: LVR ? (lvFlags ? (nChecked - lvFlags) + ' checked 2 ways and match · ' + lvFlags + ' not sure · click any one to see its steps' : 'all ' + nChecked + ' checked 2 ways and match · click any one to see its steps') : flagged ? (nChecked - 1) + ' checked 2 ways and match · #3 not sure, look at step 2 · click any one to see its steps' : (showPicker ? 'all ' + nChecked + ' checked 2 ways and match · click any one to see its steps' : 'solved 2 ways, both match · click to see the steps'),
   sheetLabel: s.sheet ? 'preparing worksheet...' : '\u2913 completed worksheet',
-  onSheet: () => flash('sheet'),
+  onSheet: () => { if (this.live) { try { sessionStorage.setItem('bb-view', 'sheet'); } catch (err) {} window.location.href = 'walkthrough.html'; return; } flash('sheet'); },
   ctxPlaceholder: tab.id === 'writing' ? 'optional · e.g. 11th grade english, teacher likes short paragraphs' : 'optional · e.g. 10th grade chemistry, we just did moles',
   onCtx: (e) => { this.setState({ ctx: e.target.value }); if (running && pendingAsk && phase === askAt) this.later(advance, 600); },
   onVoice: (e) => this.setState({ voice: e.target.value }),

@@ -38,7 +38,7 @@ function fakeReply(system) {
     { number: 2, text: 'Solve 2x - 1 = 6', answer: 'x = 4', unclear: null, place: { page: 1, x: 0.55, y: 0.4, w: 0.4 }, steps: [
       { text: 'add 1 to both sides', result: '2x = 7', why: 'undo the - 1.' },
       { text: 'divide by 2', result: 'x = 4', why: 'undo the times 2.' }] },
-    { number: 3, text: 'Graph y = 2x - 1 and mark the intercepts', answer: 'a line through (0, -1) and (0.5, 0)', unclear: null,
+    { number: 3, text: 'Graph y = 2x - 1 and mark the intercepts', answer: 'a line through (0, -1) and (0.5, 0)', unclear: null, place: { page: 2, x: 0.1, y: 0.2, w: 0.8 },
       figure: { type: 'function', title: 'y = 2x - 1', expr: '2x - 1', domain: [-4, 4], points: [[0, -1], [0.5, 0]] }, steps: [
       { text: 'find the y-intercept', result: '(0, -1)', why: 'set x to 0.' },
       { text: 'find the x-intercept', result: '(0.5, 0)', why: 'set y to 0 and solve.' }] },
