@@ -3,7 +3,7 @@
  * clicking an "enter" link plays a burst of static, then moves to the next screen. */
 (function () {
   'use strict';
-  var ENTER = /(^|\/)(enter|app)(\.html)?([?#].*)?$/;
+  var ENTER = /(^|\/)(enter|app|walkthrough)(\.html)?([?#].*)?$/;
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
