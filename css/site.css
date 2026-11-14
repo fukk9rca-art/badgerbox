@@ -31,3 +31,50 @@ html:not(.dc-ready) body { visibility: hidden; }
 @media (min-width: 1700px) {
   .bb-side { display: block; }
 }
+
+/* Camera-switch static: a short burst of noise when you enter badgerbox and when a screen cuts in. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  background-color: #000000;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.10) 0 2px, rgba(0,0,0,0) 2px 5px),
+    linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 48%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.55) 52%, rgba(255,255,255,0) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.6 -0.55'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: auto, 100% 34vh, 220px 220px;
+  background-repeat: repeat, no-repeat, repeat;
+  background-position: 0 0, 0 -40vh, 0 0;
+}
+@keyframes bb-cam-in {
+  0%   { opacity: 1;    background-position: 0 0, 0 -30vh, 0 0; }
+  12%  { opacity: 0.85; background-position: 0 3px, 0 8vh, 73px 41px; }
+  24%  { opacity: 1;    background-position: 0 1px, 0 30vh, 151px 97px; }
+  36%  { opacity: 0.45; background-position: 0 4px, 0 52vh, 37px 163px; }
+  48%  { opacity: 0.9;  background-position: 0 2px, 0 71vh, 199px 12px; }
+  60%  { opacity: 0.3;  background-position: 0 0, 0 88vh, 88px 120px; }
+  72%  { opacity: 0.6;  background-position: 0 3px, 0 104vh, 14px 201px; }
+  84%  { opacity: 0.15; background-position: 0 1px, 0 120vh, 120px 60px; }
+  100% { opacity: 0;    background-position: 0 0, 0 130vh, 0 0; }
+}
+@keyframes bb-cam-out {
+  0%   { opacity: 0.35; background-position: 0 0, 0 -30vh, 0 0; }
+  20%  { opacity: 0.9;  background-position: 0 2px, 0 20vh, 131px 77px; }
+  40%  { opacity: 0.5;  background-position: 0 4px, 0 55vh, 43px 150px; }
+  60%  { opacity: 1;    background-position: 0 1px, 0 85vh, 187px 29px; }
+  80%  { opacity: 0.8;  background-position: 0 3px, 0 110vh, 66px 190px; }
+  100% { opacity: 1;    background-position: 0 0, 0 130vh, 0 0; }
+}
+html.dc-ready[data-page="enter"] body::after,
+html.dc-ready[data-page="app"] body::after,
+html.dc-ready[data-page="walkthrough"] body::after { animation: bb-cam-in 560ms steps(1) 1 both; }
+html.bb-leaving body::after { animation: bb-cam-out 300ms steps(1) 1 both !important; }
+@media (prefers-reduced-motion: reduce) {
+  html.dc-ready[data-page="enter"] body::after,
+  html.dc-ready[data-page="app"] body::after,
+  html.dc-ready[data-page="walkthrough"] body::after,
+  html.bb-leaving body::after { animation: none !important; opacity: 0; }
+}
