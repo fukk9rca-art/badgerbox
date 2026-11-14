@@ -5,7 +5,7 @@ import { readBody } from './_lib/claude.js';
 
 export default function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ ok: false, error: 'use POST' }); return; }
-  const info = keyInfo(String(readBody(req).key || '').trim());
+  const info = keyInfo(String(readBody(req).key || '').trim(), req);
   if (!info) { res.status(200).json({ ok: false }); return; }
   res.status(200).json({ ok: true, name: info.name, runsPerDay: info.runsPerDay, runsToday: info.runs });
 }

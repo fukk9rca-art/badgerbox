@@ -37,7 +37,9 @@ const server = http.createServer(async (req, res) => {
     const file = path.join(ROOT, 'api', name + '.js');
     if (!name || !fs.existsSync(file)) { res.statusCode = 404; res.end('not found'); return; }
     let raw = '';
-    for await (const chunk of req) raw += chunk;
+    let tooBig = false;
+    for await (const chunk of req) { if (raw.length > 60e6) { tooBig = true; break; } raw += chunk; }
+    if (tooBig) { shim(res).status(413).json({ source: 'error', error: 'that is too much to send at once' }); return; }
     try { req.body = raw ? JSON.parse(raw) : {}; } catch (err) { req.body = {}; }
     const mod = await import(pathToFileURL(file).href);
     try { await mod.default(req, shim(res)); } catch (err) { shim(res).status(500).json({ source: 'error', error: String(err) }); }
@@ -45,11 +47,14 @@ const server = http.createServer(async (req, res) => {
   }
   let p = decodeURIComponent(url.pathname);
   if (p.endsWith('/')) p += 'index.html';
-  // never hand out settings, keys or server code
-  if (/(^|\/)\./.test(p) || /^\/(api|tools|node_modules)\//.test(p) || /^\/(keys|usage|package|vercel)[^/]*\.json$/.test(p)) { res.statusCode = 404; res.end('not found'); return; }
   if (!path.extname(p) && fs.existsSync(path.join(ROOT, p + '.html'))) p += '.html';
   const file = path.join(ROOT, p);
-  if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; res.end('not found'); return; }
+  // never hand out settings, keys or server code. checked on the real path, so "\\" and ".." tricks can't get around it
+  const parts = path.relative(ROOT, file).split(/[\\/]+/);
+  const blocked = parts[0] === '..' || path.isAbsolute(path.relative(ROOT, file)) || parts.some((s) => s.startsWith('.')) ||
+    ['api', 'tools', 'node_modules', 'screens'].includes(parts[0].toLowerCase()) ||
+    (parts.length === 1 && /^(keys|usage|package|vercel)[^/]*\.json$|\.(bat|md|mjs)$/i.test(parts[0]));
+  if (blocked || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; res.end('not found'); return; }
   res.setHeader('content-type', TYPES[path.extname(file)] || 'application/octet-stream');
   fs.createReadStream(file).pipe(res);
 });

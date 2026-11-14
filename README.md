@@ -38,6 +38,19 @@ shows the sample answers. The `.env` file is never uploaded to GitHub.
   points to the right tab and offers a button that carries the question over. Anything that isn't schoolwork
   gets a one-line no.
 
+## Let friends try it (without putting it online)
+
+1. Double-click `add-friend-key.bat` once per friend. It asks for a name and a daily limit and gives you a key.
+2. Double-click `share-badgerbox.bat`. The first time it offers to install `cloudflared`, a free Cloudflare
+   tool. Then it shows a link ending in `trycloudflare.com`.
+3. Send each friend the link and their key.
+
+badgerbox still runs on your computer: the API key, `keys.json` and the solving code never leave it, and
+friends spend from your API key within their daily limit. The link works only while that window is open,
+and it is a new link every time. Through the link, short keys such as `8008` are refused (they only work
+on your own computer), and 15 wrong keys in 10 minutes locks the link's key check for 10 minutes.
+Anyone who can open the pages can still save what their browser shows.
+
 ## Access keys and daily limits
 
 `keys.json` in this folder lists who can get in and how much they can use per day (copy
@@ -83,6 +96,8 @@ shows the sample answers. The `.env` file is never uploaded to GitHub.
 | `api/status.js` | Tells the pages whether a model is connected. |
 | `api/key.js`, `api/_lib/keys.js` | Access keys and per-key daily limits. |
 | `start-badgerbox.bat` | Double-click starter for Windows. |
+| `share-badgerbox.bat`, `tools/share.mjs` | Starts badgerbox and opens a private link to this computer for friends. |
+| `add-friend-key.bat`, `tools/addkey.mjs` | Makes an access key with a daily limit. |
 | `css/site.css` | Fixes for real window sizes (Chromebooks, short screens). |
 
 Without `ANTHROPIC_API_KEY` the API answers `{ "source": "mock" }` and the pages show the built-in
