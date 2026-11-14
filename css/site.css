@@ -70,8 +70,8 @@ body::after {
 }
 html.dc-ready[data-page="enter"] body::after,
 html.dc-ready[data-page="app"] body::after,
-html.dc-ready[data-page="walkthrough"] body::after { animation: bb-cam-in 560ms steps(1) 1 both; }
-html.bb-leaving body::after { animation: bb-cam-out 300ms steps(1) 1 both !important; }
+html.dc-ready[data-page="walkthrough"] body::after { animation: bb-cam-in 280ms steps(1) 1 both; }
+html.bb-leaving body::after { animation: bb-cam-out 150ms steps(1) 1 both !important; }
 @media (prefers-reduced-motion: reduce) {
   html.dc-ready[data-page="enter"] body::after,
   html.dc-ready[data-page="app"] body::after,
