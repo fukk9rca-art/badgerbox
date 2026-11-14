@@ -26,6 +26,7 @@ HEAD = (
     '<script src="vendor/morphdom-umd.min.js" defer></script>\n'
     '<script src="js/bb-api.js" defer></script>\n'
     '<script src="js/bb-plot.js" defer></script>\n'
+    '<script src="js/bb-fx.js" defer></script>\n'
     '<script src="js/dc-lite.js" defer></script>'
 )
 
