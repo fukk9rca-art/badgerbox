@@ -285,7 +285,7 @@ o   o
 <sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ true }}">
 <ul style="list-style: none; margin: 8px 0 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
 <sc-for list="{{ history }}" as="h" hint-placeholder-count="5">
-<li><button type="button" class="bb-hist" onClick="{{ h.open }}" style="display: grid; grid-template-columns: 7ch 9ch minmax(0, 1fr); gap: 1ch; width: calc(100% + 16px); box-sizing: border-box; padding: 8px; margin: 0 -8px; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer"><span style="color: #8C8C8C">{{ h.when }}</span><span style="color: #BDBDBD">{{ h.tab }}</span><span style="min-width: 0"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #FFFFFF">{{ h.title }}</span><span style="display: block; color: #8C8C8C">{{ h.meta }}</span></span></button></li>
+<li><button type="button" class="bb-hist" onClick="{{ h.open }}" style="display: grid; grid-template-columns: 15ch 9ch minmax(0, 1fr); gap: 1ch; width: calc(100% + 16px); box-sizing: border-box; padding: 8px; margin: 0 -8px; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer"><span style="color: #8C8C8C">{{ h.when }}</span><span style="color: #BDBDBD">{{ h.tab }}</span><span style="min-width: 0"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #FFFFFF">{{ h.title }}</span><span style="display: block; color: #8C8C8C">{{ h.meta }}</span></span></button></li>
 </sc-for>
 </ul>
 <button type="button" class="bb-btn" onClick="{{ onClearHistory }}" style="height: 32px; margin: 16px 0 0 -4px; padding: 0 4px; background: transparent; color: #BDBDBD; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: pre"><span aria-hidden="true">[ </span>clear past runs<span aria-hidden="true"> ]</span></button>
@@ -481,7 +481,7 @@ o   o
 <div id="bb-text-mirror" aria-hidden="true" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; box-sizing: border-box; overflow-y: hidden; scrollbar-gutter: stable; scrollbar-width: thin; margin: 0; padding: 0; visibility: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 16px; line-height: 24px; pointer-events: none">{{ caretBefore }}<span class="bb-cursor" style="visibility: visible; display: inline-block; width: 1ch; height: 20px; vertical-align: -4px; background: {{accent}}"></span></div>
 </div>
 </div>
-<button type="button" class="bb-grow" aria-pressed="{{ boxDragging }}" aria-label="make the box bigger. arrow keys to resize, enter to reset" title="drag to make the box bigger · double-click to reset" onPointerDown="{{ onBoxDown }}" onPointerMove="{{ onBoxMove }}" onPointerUp="{{ onBoxUp }}" onPointerCancel="{{ onBoxUp }}" onDoubleClick="{{ onBoxReset }}" onKeyDown="{{ onBoxKey }}" style="position: absolute; right: -3px; bottom: -3px; width: 22px; height: 22px; margin: 0; padding: 0; background: #000000; color: #FFFFFF; border: 3px solid #FFFFFF; border-radius: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center">
+<button type="button" class="bb-grow" aria-pressed="{{ boxDragging }}" aria-label="make the box bigger. arrow keys to resize, enter to reset" title="drag to make the box bigger · double-click to reset" onPointerDown="{{ onBoxDown }}" onPointerMove="{{ onBoxMove }}" onPointerUp="{{ onBoxUp }}" onPointerCancel="{{ onBoxUp }}" onDoubleClick="{{ onBoxReset }}" onKeyDown="{{ onBoxKey }}" style="position: absolute; right: -3px; bottom: -3px; width: 28px; height: 28px; margin: 0; padding: 0; background: #000000; color: #FFFFFF; border: 3px solid #FFFFFF; border-radius: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center">
 <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" style="display: block; pointer-events: none"><path d="M11 3 L3 11 M11 7 L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="square" fill="none"></path></svg>
 </button>
 </fieldset>
@@ -684,15 +684,17 @@ const needPick = showPicker && picked.length === 0;
 const optVal = (k) => (s.opt && s.opt[k] != null) ? s.opt[k] : 0;
 const setOpt = (k, i) => this.setState({ opt: Object.assign({}, s.opt || {}, { [k]: i }) });
 const back = () => { const a = document.querySelector('header a.bb-link'); if (a) a.click(); };
-const pickTab = (i) => this.setState({ tab: i, tried: false, phase: 0 });
+const hasRun = !!s.tried && (s.phase || 0) > 0 && s.runTab != null;
+const away = hasRun && s.runTab !== tabIdx;
+const pickTab = (i) => this.setState(hasRun ? { tab: i } : { tab: i, tried: false, phase: 0 });
 const okTypes = ['image/png','image/jpeg','image/heic','image/webp','application/pdf','text/plain'];
 const hasLink = /https?:\/\/\S+/i.test(text);
 const hasWork = !!text || files.length > 0;
 const needTick = false;
 const ok = hasWork && !needTick && !needPick;
 const badFile = s.badFile || '';
-const showError = (!!s.tried && !ok) || !!badFile;
-const running = !!s.tried && ok && !badFile;
+const showError = (!!s.tried && !ok && !away) || !!badFile;
+const running = !!s.tried && ok && !badFile && !away;
 const phase = s.phase || 0;
 const pad = (a, b) => a + ' ' + '.'.repeat(Math.max(2, 30 - a.length)) + ' ' + b;
 const outs = Array.isArray(s.outs) ? s.outs : [0, 1, 2];
@@ -739,7 +741,9 @@ const ctx = String(s.ctx || '').trim();
 const voiceWords = String(s.voice || '').trim() ? String(s.voice).trim().split(/\s+/).length : 0;
 const API = window.bbApi || null;
 const LIVE_ON = !!(API && API.isLive());
-const build = (st) => {
+const runView = (st) => (st && st.tried && st.runTab != null && st.runTab !== (st.tab || 0)) ? Object.assign({}, st, { tab: st.runTab }) : st;
+const build = (st0) => {
+  const st = runView(st0);
   const LV = this.live || null;
   const bTab = TABS[st.tab || 0];
   const bText = String(st.text || '').trim();
@@ -799,7 +803,7 @@ const build = (st) => {
   lines.push('done in ' + (LV && LV.seconds ? LV.seconds : 34) + 's · ' + bOuts.map((i) => OUTPUT.choices[i]).join(' + '));
   return { lines: lines, askAt: askAt, pending: pending, num: num, total: asked.length, wIdx: wAt };
 };
-const B = build(s);
+const B = build(away ? Object.assign({}, s, { tried: false }) : s);
 const allLog = B.lines;
 const askAt = B.askAt;
 const pendingAsk = !!B.pending;
@@ -864,7 +868,8 @@ const pickClass = (i, id) => this.setState({ cls: Object.assign({}, (s.cls && ty
 const fmt = (n) => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
 const toBottom = () => [0, 60, 220].forEach((ms) => this.later(() => { const c = document.getElementById('bb-col'); if (c) c.scrollTop = c.scrollHeight; }, ms));
 const fileKey = (f) => f.name + ':' + f.size;
-const startApi = (st) => {
+const startApi = (st0) => {
+  const st = runView(st0);
   if (!API || this.apiStarted) return;
   this.apiStarted = true;
   const id = this.runId;
@@ -928,7 +933,7 @@ const answer = (val) => {
   if (!b.pending) return;
   const v = String(val || '').trim();
   const patch = { answers: Object.assign({}, st.answers || {}, { [b.pending.id]: v }) };
-  const tId = TABS[st.tab || 0].id;
+  const tId = TABS[runView(st).tab || 0].id;
   if (b.pending.id === 'class' && v && tId !== 'auto' && st.saveCls !== false) { patch.classes = classesOf(st).concat([{ tab: tId, short: v.slice(0, 24), name: v, rules: [], detail: 'no work preferences yet \u00b7 add them in settings' }]); patch.answers.classSaved = '1'; }
   this.setState(patch);
   const a = document.getElementById('bb-ans');
@@ -947,7 +952,7 @@ const submit = () => {
     return;
   }
   const cur = this.state || {};
-  if (cur.tried && cur.phase && cur.phase < build(cur).lines.length) return;
+  if (cur.tried && cur.phase && cur.phase < build(cur).lines.length) { if (away) this.setState({ tab: s.runTab }); return; }
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   this.runId = (this.runId || 0) + 1;
   this.runStart = Date.now();
@@ -959,16 +964,19 @@ const submit = () => {
   this.apiPending = false;
   this.live = null;
   this.apiError = '';
-  this.setState({ cancelled: false, tried: true, phase: reduce ? 99 : 1, answers: reduce ? { class: '', voice: '', len: '', passage: '', blurry: '', method: '' } : {} });
-  if (reduce) startApi(Object.assign({}, this.state || {}, { answers: {} }));
+  this.setState({ cancelled: false, tried: true, runTab: (this.state || {}).tab || 0, phase: reduce ? 99 : 1, answers: reduce ? { class: '', voice: '', len: '', passage: '', blurry: '', method: '' } : {} });
+  if (reduce) startApi(Object.assign({}, this.state || {}, { answers: {}, tried: true, runTab: (this.state || {}).tab || 0 }));
   toBottom();
   if (!reduce) this.later(advance, 650);
 };
+const runB = away ? build(s) : null;
+const awayDone = away && phase >= runB.lines.length;
+const awayAsk = away && !awayDone && !!runB.pending && phase === runB.askAt;
 const inProgress = running && phase < allLog.length;
 const elapsed = Math.max(0, Math.round((Date.now() - (this.runStart || Date.now())) / 1000));
 const WORK_MSGS = ['reading it', 'finding every question', 'working each one out', 'solving each one a second way', 'comparing the two answers'];
 const realHist = (API && API.history) ? API.history() : [];
-const fmtWhen = (iso) => { try { const d = new Date(iso); return ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][d.getMonth()] + ' ' + String(d.getDate()).padStart(2, '0'); } catch (err) { return ''; } };
+const fmtWhen = (iso) => { try { const d = new Date(iso); const h = d.getHours(); return ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][d.getMonth()] + ' ' + String(d.getDate()).padStart(2, '0') + ' ' + ((h % 12) || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + (h < 12 ? 'am' : 'pm'); } catch (err) { return ''; } };
 const goWalk = () => { window.location.href = 'walkthrough.html'; };
 const histItems = realHist.length ? realHist.map((h) => ({ when: fmtWhen(h.at), tab: h.tab || 'auto', title: h.title || 'assignment', meta: h.n + ' question' + (h.n === 1 ? '' : 's') + (h.flags ? ' · ' + h.flags + ' [!]' : ''), open: () => { if (API.openRun(h.id)) goWalk(); } }))
   : (LIVE_ON || s.cleared ? [] : HIST.map((h) => Object.assign({}, h, { open: goWalk })));
@@ -1111,7 +1119,7 @@ return {
     const on = i === tabIdx;
     return {
       id: 'bb-tab-' + t.id,
-      text: i + ':' + t.label,
+      text: i + ':' + t.label + ((hasRun && s.runTab === i && i !== tabIdx) ? (awayDone ? ' [✓]' : ' [..]') : ''),
       selected: on ? 'true' : 'false',
       tabindex: on ? '0' : '-1',
       bg: on ? '#000000' : 'transparent',
@@ -1293,8 +1301,8 @@ return {
   tickInvalid: showError && needTick && hasWork ? 'true' : 'false',
   describedText: showError ? 'bb-hint bb-error' : 'bb-hint',
   dragging: !!s.dragging,
-  statusMain: (running && this.apiError && phase >= allLog.length) ? '[stopped] ' + String(this.apiError).slice(0, 110) : s.sheet ? '[worksheet] a clean, printable completed copy would download here when badgerbox is live' : s.addCls ? '[settings] adding a class would open here when badgerbox is live' : running ? (phase >= allLog.length ? (flagged ? '[done] ' + (nChecked - (LVR ? lvFlags : 1)) + ' checked, ' + (LVR ? lvFlags : 1) + ' to look at' : '[done] every answer checked') : (pendingAsk && phase === askAt ? '[waiting] badgerbox has a question for you' : (this.apiPending ? '[running] the model is working on it, this can take up to a minute' : '[running] working on your assignment'))) : (s.cancelled ? '[cancelled] run stopped' : '[ready] waiting for an assignment'),
-  statusNeed: running ? '' : (ok ? 'ready to run' : 'still needed: ' + missing.join(', '))
+  statusMain: away ? (awayDone ? '[done] your ' + TABS[s.runTab].label + ' run is finished. click the ' + TABS[s.runTab].label + ' tab to open it' : awayAsk ? '[waiting] your ' + TABS[s.runTab].label + ' run has a question for you. click the ' + TABS[s.runTab].label + ' tab' : '[working] your ' + TABS[s.runTab].label + ' run is still going. click the ' + TABS[s.runTab].label + ' tab to watch it') : (running && this.apiError && phase >= allLog.length) ? '[stopped] ' + String(this.apiError).slice(0, 110) : s.sheet ? '[worksheet] a clean, printable completed copy would download here when badgerbox is live' : s.addCls ? '[settings] adding a class would open here when badgerbox is live' : running ? (phase >= allLog.length ? (flagged ? '[done] ' + (nChecked - (LVR ? lvFlags : 1)) + ' checked, ' + (LVR ? lvFlags : 1) + ' to look at' : '[done] every answer checked') : (pendingAsk && phase === askAt ? '[waiting] badgerbox has a question for you' : (this.apiPending ? '[running] the model is working on it, this can take up to a minute' : '[running] working on your assignment'))) : (s.cancelled ? '[cancelled] run stopped' : '[ready] waiting for an assignment'),
+  statusNeed: (running || away) ? '' : (ok ? 'ready to run' : 'still needed: ' + missing.join(', '))
 };
 }
 }
