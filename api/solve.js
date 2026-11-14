@@ -54,7 +54,7 @@ export default async function handler(req, res) {
   if (!hasKey()) { res.status(200).json({ source: 'mock' }); return; }
 
   const body = readBody(req);
-  const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 3);
+  const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 12);
   const text = String(body.text || '').slice(0, 20000);
   if (!blocks.length && !text.trim()) { res.status(400).json({ source: 'error', error: 'nothing to solve' }); return; }
   const gate = useKey(req, 'run');

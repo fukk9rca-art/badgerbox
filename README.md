@@ -61,6 +61,7 @@ shows the sample answers. The `.env` file is never uploaded to GitHub.
 | `index.html` `enter.html` `app.html` `walkthrough.html` `states.html` | Generated pages (landing, key + agreement, main screen, walkthrough, box states). |
 | `js/dc-lite.js` | Small runtime that runs the screen format in a normal browser. |
 | `js/bb-api.js` | The pages' link to the backend. |
+| `vendor/pdfjs/` | pdf.js (Apache-2.0), used to turn PDF worksheets into page images. |
 | `js/bb-plot.js` | Draws graphs (scatter + best fit, line, function, bar, histogram, box plot) and does the statistics itself. |
 | `api/solve.js` | Finds and works every question, then a second pass checks each answer a different way. |
 | `api/ask.js` | Answers follow-up questions in the walkthrough chat. |
@@ -79,8 +80,9 @@ chemistry sample, so the site always works.
 - Real accounts and billing. Keys and daily limits exist (`keys.json`) but are managed by hand and only enforced on your own computer.
 - Model routing by subject and difficulty (one model for now).
 - Past runs, classes and settings are saved in the browser on one device only, not to an account.
-- Answers are placed on the student's own worksheet only for screenshots and photos (not PDFs), and the
-  model's placement is approximate, which is why answers can be dragged.
+- Answers are placed on the student's own worksheet for screenshots, photos and PDFs of up to 10 pages.
+  The model's placement is approximate, which is why answers can be dragged. A PDF comes back as a PDF made
+  of page images (the text in it can no longer be selected).
 - Phone layout for the main screen and walkthrough (the landing page already works on phones).
 - The bookmarklet points at the placeholder `badgerbox.app`.
 - `[YOUR PRICE]` on the landing page.
