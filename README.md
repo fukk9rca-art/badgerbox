@@ -62,6 +62,7 @@ shows the sample answers. The `.env` file is never uploaded to GitHub.
 | `js/dc-lite.js` | Small runtime that runs the screen format in a normal browser. |
 | `js/bb-api.js` | The pages' link to the backend. |
 | `vendor/pdfjs/` | pdf.js (Apache-2.0), used to turn PDF worksheets into page images. |
+| `js/bb-office.js`, `vendor/office/` | Reads Word and PowerPoint files and writes answers back into them (JSZip and PptxGenJS, both MIT). |
 | `js/bb-plot.js` | Draws graphs (scatter + best fit, line, function, bar, histogram, box plot) and does the statistics itself. |
 | `api/solve.js` | Finds and works every question, then a second pass checks each answer a different way. |
 | `api/ask.js` | Answers follow-up questions in the walkthrough chat. |
