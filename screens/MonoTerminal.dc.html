@@ -428,6 +428,7 @@ o   o
 <span style="display: inline-flex; align-items: center; gap: 1ch; height: 32px; box-sizing: border-box; padding: 0 0 0 1ch; border: 1px solid #5A5A5A; max-width: 100%">
 <span style="max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ f.name }}</span>
 <span style="color: #8C8C8C; white-space: nowrap">{{ f.meta }}</span>
+<sc-if value="{{ f.multi }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-x" aria-pressed="{{ f.refPressed }}" aria-label="{{ f.roleLabel }}" title="{{ f.roleLabel }}" onClick="{{ f.toggleRef }}" style="height: 30px; padding: 0 1ch; background: {{ f.roleBg }}; color: {{ f.roleFg }}; border: 0; border-left: 1px solid #5A5A5A; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer; white-space: nowrap">{{ f.role }}</button></sc-if>
 <button type="button" class="bb-x" onClick="{{ f.remove }}" aria-label="{{ f.removeLabel }}" style="height: 30px; width: 3ch; padding: 0; background: transparent; color: #BDBDBD; border: 0; border-left: 1px solid #5A5A5A; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">x</button>
 </span>
 </sc-for>
@@ -589,6 +590,11 @@ class Component extends DCLogic {
 componentDidMount() {
   try { const j = JSON.parse(localStorage.getItem('bb-settings') || 'null'); if (j && typeof j === 'object') this.setState(j); } catch (err) {}
   this.loaded = true;
+  try {
+    const pf = JSON.parse(sessionStorage.getItem('bb-prefill') || 'null'); sessionStorage.removeItem('bb-prefill');
+    const ti = pf ? ['auto', 'math', 'writing', 'reading', 'science', 'social', 'language', 'code', 'online'].indexOf(pf.tab) : -1;
+    if (pf && pf.text) { this.setState({ tab: ti < 0 ? 0 : ti, text: String(pf.text), tried: false, phase: 0 }); setTimeout(() => { const ta = document.getElementById('bb-text'); if (ta) ta.value = String(pf.text); }, 0); }
+  } catch (err) {}
   this.focusBox();
 }
 focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; if (window.getSelection && String(window.getSelection())) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
@@ -862,20 +868,15 @@ const startApi = (st) => {
   Promise.all(this.fileJobs || []).then(() => {
   if (id !== this.runId) return;
   const data = this.fileData || {};
-  const sendFiles = [];
-  const officeText = [];
-  const keepOrig = [];
-  let fromPdf = false;
-  (st.files || []).forEach((f) => {
-    const d = data[fileKey(f)];
-    if (!d) return;
-    if (d.type === 'docx' || d.type === 'pptx') { officeText.push(d.text); keepOrig.push({ kind: d.type, name: f.name, url: d.url }); return; }
-    if (d.pages && d.pages.length) { fromPdf = true; d.pages.forEach((pg) => sendFiles.push(pg)); }
-    else sendFiles.push({ type: d.type, url: d.url });
-  });
+  const refs = st.refOnly || {};
+  const flat = API.flatten((st.files || []).map((f, i) => ({ name: f.name, data: data[fileKey(f)], ref: !!refs[fileKey(f)], no: i + 1 })), 0);
+  const sendFiles = flat.files;
+  const keepOrig = flat.keep;
+  const fromPdf = flat.fileInfo.some((f) => f.origin === 'pdf' && f.role !== 'reference');
   const payload = {
     tab: t.id,
-    text: String(st.text || '') + (officeText.length ? '\n\n' + officeText.join('\n\n') : ''),
+    text: String(st.text || '') + (flat.text ? '\n\n' + flat.text : ''),
+    fileInfo: flat.fileInfo,
     keep: keepOrig,
     cls: cls,
     answers: ans,
@@ -1187,12 +1188,19 @@ return {
     name: f.name,
     meta: fmt(f.size),
     removeLabel: 'remove ' + f.name,
-    remove: () => this.setState({ files: files.filter((_, j) => j !== i), badFile: '', tried: false, fileNote: '' })
+    remove: () => this.setState({ files: files.filter((_, j) => j !== i), badFile: '', tried: false, fileNote: '' }),
+    multi: files.length > 1,
+    role: (s.refOnly || {})[f.name + ':' + f.size] ? 'reference only' : 'do it',
+    roleBg: (s.refOnly || {})[f.name + ':' + f.size] ? 'transparent' : accent,
+    roleFg: (s.refOnly || {})[f.name + ':' + f.size] ? '#BDBDBD' : '#000000',
+    refPressed: (s.refOnly || {})[f.name + ':' + f.size] ? 'true' : 'false',
+    roleLabel: (s.refOnly || {})[f.name + ':' + f.size] ? f.name + ' is reference only. click to have it done too' : f.name + ' will be done. click to make it reference only',
+    toggleRef: () => { const k = f.name + ':' + f.size; this.setState({ refOnly: Object.assign({}, s.refOnly || {}, { [k]: !(s.refOnly || {})[k] }) }); }
   })),
   hasLink: hasLink,
   hasFiles: files.length > 0,
   fileCount: 'files ' + files.length + '/3',
-  fileNote: s.fileNote || '',
+  fileNote: s.fileNote || (files.length > 1 ? 'all of them get done, and each one is used as context for the others. click "do it" to make a file reference only.' : ''),
   onFiles: (e) => { addFiles(e.target.files); e.target.value = ''; },
   onDragOver: (e) => { e.preventDefault(); if (!s.dragging) this.setState({ dragging: true }); },
   onDragLeave: (e) => { if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget)) this.setState({ dragging: false }); },

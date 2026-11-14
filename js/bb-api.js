@@ -9,6 +9,8 @@
   var RUN_KEY = 'bb-run';
   var FILES_KEY = 'bb-run-files';
   var ORIG_KEY = 'bb-run-orig';
+  var PAYLOAD_KEY = 'bb-run-payload';
+  var CTX_KEY = 'bb-run-ctx';
   var HIST_KEY = 'bb-history';
   function loadLocal(key, fallback) { try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (err) { return fallback; } }
   function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (err) { return false; } }
@@ -142,7 +144,37 @@
     });
   }
 
+  function isImg(f) { return !!f && /^image\//.test(f.type || ''); }
+
+  /* Turn a list of read files into what gets sent to the backend.
+   * items: [{ name, data (from readFile), ref (reference only), no (file number) }]
+   * startImg: how many images come before these in the same request. */
+  function flatten(items, startImg) {
+    var files = [], text = [], keep = [], info = [], imgs = startImg || 0;
+    (items || []).forEach(function (it) {
+      var d = it.data;
+      if (!d) return;
+      var role = it.ref ? 'reference' : 'assignment';
+      if (d.type === 'docx' || d.type === 'pptx') {
+        text.push('File ' + it.no + (it.ref ? ' (reference only)' : '') + '. ' + d.text);
+        if (!it.ref) keep.push({ kind: d.type, name: it.name, url: d.url, file: it.no });
+        info.push({ n: it.no, name: it.name, role: role, origin: d.type });
+        return;
+      }
+      var list = (d.pages && d.pages.length) ? d.pages : [{ type: d.type, url: d.url }];
+      var first = imgs + 1;
+      list.forEach(function (pg) { files.push({ type: pg.type, url: pg.url, file: it.no, name: it.name, ref: !!it.ref }); if (isImg(pg)) imgs++; });
+      info.push({ n: it.no, name: it.name, role: role, origin: (d.pages && d.pages.length) || d.type === 'application/pdf' ? 'pdf' : (isImg(d) ? 'image' : 'text'), pages: imgs >= first ? [first, imgs] : null });
+    });
+    return { files: files, text: text.join('\n\n'), keep: keep, fileInfo: info };
+  }
+  function maxNo(list) { var m = 0; (list || []).forEach(function (f) { if (Number(f.n) > m) m = Number(f.n); }); return m; }
+  function withFile(qs, fallback, allowed) {
+    return (qs || []).map(function (q) { var n = Number(q.file) || 0; q.file = (allowed ? allowed.indexOf(n) !== -1 : n > 0) ? n : fallback; return q; });
+  }
+
   window.bbApi = {
+    flatten: flatten,
     status: status,
     isLive: function () { return status.live; },
     readFile: readFile,
@@ -167,10 +199,12 @@
         var keep = Promise.resolve();
         if (res.source === 'model') {
           res.id = 'r' + Date.now();
+          res.files = (payload && payload.fileInfo) || [];
+          res.questions = withFile(res.questions, 1);
           store(RUN_KEY, res);
           // keep the worksheet images for this tab only, so answers can be put back on them
           var imgs = ((payload && payload.files) || []).filter(function (f) { return f && /^image\//.test(f.type || ''); });
-          keep = idbSet(FILES_KEY, imgs).then(function () { return idbSet(ORIG_KEY, originals); });
+          keep = idbSet(FILES_KEY, imgs).then(function () { return idbSet(ORIG_KEY, originals); }).then(function () { return idbSet(PAYLOAD_KEY, payload); }).then(function () { return idbSet(CTX_KEY, []); });
           var qs = res.questions || [];
           var hist = loadLocal(HIST_KEY, []);
           hist.unshift({ id: res.id, at: new Date().toISOString(), tab: (res.meta || {}).tab || '', title: res.title || res.subject || 'assignment',
@@ -182,6 +216,70 @@
       });
     },
     solveOne: function (payload) { return post('api/solve', payload); },
+
+    /* Files added in the walkthrough chat as context (a Promise). */
+    loadCtx: function () { return idbGet(CTX_KEY).then(function (v) { return Array.isArray(v) ? v : []; }); },
+    saveCtx: function (list) { return idbSet(CTX_KEY, list || []); },
+
+    /* Do another assignment and add it to the current run. The files already in the run, and any
+     * chat context files, are sent along as reference so they inform the new answers. */
+    solveMore: function (newItems, ctxItems) {
+      return Promise.all([idbGet(FILES_KEY), idbGet(ORIG_KEY), idbGet(PAYLOAD_KEY)]).then(function (v) {
+        var imgs0 = v[0] || [], orig0 = v[1] || [], p0 = v[2] || {};
+        var run = load(RUN_KEY);
+        if (!run) return { source: 'error', error: 'there is no run to add to' };
+        if (!run.files || !run.files.length) run.files = [{ n: 1, name: 'typed assignment', role: 'assignment', origin: 'text' }];
+        var next = maxNo(run.files) + 1, sent0 = p0.files || [], start = sent0.filter(isImg).length;
+        var fresh = flatten((newItems || []).map(function (it, i) { return { name: it.name, data: it.data, ref: false, no: next + i }; }), start);
+        var ctx = flatten((ctxItems || []).map(function (it, i) { return { name: it.name, data: it.data, ref: true, no: next + newItems.length + i }; }), start + fresh.files.filter(isImg).length);
+        var body = {
+          tab: p0.tab, cls: p0.cls, answers: {}, more: true,
+          text: [p0.text ? 'Already done, for reference only:\n' + p0.text : '', fresh.text, ctx.text].filter(Boolean).join('\n\n'),
+          files: sent0.map(function (f) { return Object.assign({}, f, { ref: true }); }).concat(fresh.files, ctx.files),
+          fileInfo: run.files.map(function (f) { return Object.assign({}, f, { role: 'reference' }); }).concat(fresh.fileInfo, ctx.fileInfo)
+        };
+        return post('api/solve', body).then(function (res) {
+          if (!res || res.source !== 'model') return res || { source: 'error', error: 'no reply' };
+          var nos = fresh.fileInfo.map(function (f) { return f.n; });
+          run.questions = run.questions.concat(withFile(res.questions, nos[0], nos));
+          run.files = run.files.concat(fresh.fileInfo);
+          run.tldr = null;
+          store(RUN_KEY, run);
+          p0.files = sent0.concat(fresh.files);
+          p0.fileInfo = (p0.fileInfo && p0.fileInfo.length ? p0.fileInfo : run.files.slice(0, run.files.length - fresh.fileInfo.length)).concat(fresh.fileInfo);
+          p0.keep = (p0.keep || []).concat(fresh.keep);
+          p0.text = [p0.text, fresh.text].filter(Boolean).join('\n\n');
+          return idbSet(FILES_KEY, imgs0.concat(fresh.files.filter(isImg)))
+            .then(function () { return idbSet(ORIG_KEY, orig0.concat(fresh.keep)); })
+            .then(function () { return idbSet(PAYLOAD_KEY, p0); })
+            .then(function () { res.added = res.questions.length; return res; });
+        });
+      });
+    },
+
+    /* Work the whole run again, this time with the chat context files as reference. */
+    redo: function (ctxItems) {
+      return idbGet(PAYLOAD_KEY).then(function (p0) {
+        if (!p0) return { source: 'error', error: 'this run can no longer be redone. start it again from the main screen.' };
+        var run = load(RUN_KEY) || {};
+        var ctx = flatten((ctxItems || []).map(function (it, i) { return { name: it.name, data: it.data, ref: true, no: maxNo(p0.fileInfo || run.files) + 1 + i }; }), (p0.files || []).filter(isImg).length);
+        var body = Object.assign({}, p0, {
+          files: (p0.files || []).concat(ctx.files),
+          fileInfo: (p0.fileInfo || []).concat(ctx.fileInfo),
+          text: [p0.text, ctx.text].filter(Boolean).join('\n\n')
+        });
+        delete body.keep;
+        return post('api/solve', body).then(function (res) {
+          if (!res || res.source !== 'model') return res || { source: 'error', error: 'no reply' };
+          var nos = (run.files || []).map(function (f) { return f.n; });
+          run.questions = withFile(res.questions, nos[0] || 1, nos.length ? nos : null);
+          run.subject = res.subject || run.subject; run.level = res.level || run.level; run.title = res.title || run.title;
+          run.tldr = null;
+          store(RUN_KEY, run);
+          return res;
+        });
+      });
+    },
     ask: function (payload) { return post('api/ask', payload); },
     tldr: function (payload) { return post('api/tldr', payload); },
     /* tl;dr summaries kept per class on this device, to become a study guide. */
@@ -209,7 +307,7 @@
     openRun: function (id) {
       var h = loadLocal(HIST_KEY, []).filter(function (x) { return x.id === id; })[0];
       if (!h || !h.run) return false;
-      idbSet(FILES_KEY, []); idbSet(ORIG_KEY, []);
+      idbSet(FILES_KEY, []); idbSet(ORIG_KEY, []); idbSet(PAYLOAD_KEY, null); idbSet(CTX_KEY, []);
       store(RUN_KEY, h.run);
       return true;
     },

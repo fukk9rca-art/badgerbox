@@ -25,6 +25,19 @@ npm run fake         # pretends a model is connected, to test the real code path
 Put the key in a file named `.env` in this folder: `ANTHROPIC_API_KEY=sk-ant-...`. Without it, badgerbox
 shows the sample answers. The `.env` file is never uploaded to GitHub.
 
+## Several files, and files in the chat
+
+- The main box takes up to 3 files at once. Every file is completed, and each one is used as context for the
+  others (a vocabulary sheet informs the worksheet that uses those words). A file can be switched to
+  **reference only**: it is read but not answered.
+- In the walkthrough chat, `[ + file ]` (or paste, or drop) adds a file. badgerbox asks each time: **use as
+  context** (questions in the chat can read it, and **redo with this context** works the answers again, 1 run)
+  or **do this one too** (it is completed and added to the run, 1 run). With more than one assignment,
+  questions get a letter per file (`#a1`, `#b1`) and each file downloads separately under its own name.
+- The chat stays on the assignment. A real school question about another subject is not answered there; it
+  points to the right tab and offers a button that carries the question over. Anything that isn't schoolwork
+  gets a one-line no.
+
 ## Access keys and daily limits
 
 `keys.json` in this folder lists who can get in and how much they can use per day (copy
@@ -65,7 +78,7 @@ shows the sample answers. The `.env` file is never uploaded to GitHub.
 | `js/bb-office.js`, `vendor/office/` | Reads Word and PowerPoint files and writes answers back into them (JSZip and PptxGenJS, both MIT). |
 | `js/bb-plot.js` | Draws graphs (scatter + best fit, line, function, bar, histogram, box plot) and does the statistics itself. |
 | `api/solve.js` | Finds and works every question, then a second pass checks each answer a different way. |
-| `api/ask.js` | Answers follow-up questions in the walkthrough chat. |
+| `api/ask.js` | Answers follow-up questions in the walkthrough chat, and turns away off-topic ones. |
 | `api/tldr.js` | Builds the tl;dr: what the assignment is teaching, worked out from the class and the work. |
 | `api/status.js` | Tells the pages whether a model is connected. |
 | `api/key.js`, `api/_lib/keys.js` | Access keys and per-key daily limits. |

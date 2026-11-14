@@ -13,7 +13,10 @@ export function hasKey() {
   return FAKE || !!process.env.ANTHROPIC_API_KEY;
 }
 
-function fakeReply(system) {
+function fakeReply(system, content) {
+  const asked = (content || []).map((b) => b.text || '').join(' ');
+  if (/follow-up/.test(system) && /french revolution/i.test(asked)) return JSON.stringify({ kind: 'redirect', tab: 'social', answer: 'that is a history question. this chat is for the algebra assignment, so ask it in the social tab.' });
+  if (/follow-up/.test(system) && /tell me a joke/i.test(asked)) return JSON.stringify({ kind: 'refuse', tab: null, answer: 'badgerbox only helps with the assignment in front of you.' });
   if (/checker/.test(system)) {
     return JSON.stringify({ checks: [
       { number: 1, agree: true, check: 'substituted x = 5 back in: 3(5) + 7 = 22.', note: null },
@@ -50,7 +53,7 @@ function fakeReply(system) {
 }
 
 export async function callModel({ system, content, maxTokens = 8000 }) {
-  if (FAKE) { await new Promise((r) => setTimeout(r, Number(process.env.BADGERBOX_FAKE_DELAY) || 0)); return fakeReply(system); }
+  if (FAKE) { await new Promise((r) => setTimeout(r, Number(process.env.BADGERBOX_FAKE_DELAY) || 0)); return fakeReply(system, content); }
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
