@@ -47,8 +47,9 @@ export function isRemote(req) {
   const h = (req && req.headers) || {};
   return !!(h['cf-connecting-ip'] || h['x-forwarded-for'] || h['cf-ray'] || h['x-real-ip']);
 }
-// Short or example keys are easy to guess, so they only work on this computer, never through a share link.
-export function weakKey(key) { return String(key).length < 10 || /^change-me/i.test(String(key)); }
+// The keys printed in this public repo (8008, change-me-...) only work on this computer, never through a share
+// link. Anything shorter than 4 characters is refused there too.
+export function weakKey(key) { const k = String(key); return k.length < 4 || k === '8008' || /^change-me/i.test(k); }
 
 // Slow down guessing: after 15 wrong keys in 10 minutes, share-link visitors are locked out for 10 minutes.
 let bad = [];

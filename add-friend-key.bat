@@ -12,7 +12,9 @@ set /p "BBNAME=  their first name: "
 set "BBRUNS="
 set /p "BBRUNS=  worksheets per day (press Enter for 5): "
 if "%BBRUNS%"=="" set "BBRUNS=5"
-node tools\addkey.mjs "%BBNAME%" "%BBRUNS%"
+set "BBOWN="
+set /p "BBOWN=  key to give them (press Enter for a random one): "
+node tools\addkey.mjs "%BBNAME%" "%BBRUNS%" "%BBOWN%"
 echo.
 pause
 exit /b

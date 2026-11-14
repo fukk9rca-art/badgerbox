@@ -47,7 +47,7 @@ shows the sample answers. The `.env` file is never uploaded to GitHub.
 
 badgerbox still runs on your computer: the API key, `keys.json` and the solving code never leave it, and
 friends spend from your API key within their daily limit. The link works only while that window is open,
-and it is a new link every time. Through the link, short keys such as `8008` are refused (they only work
+and it is a new link every time. Through the link, the keys printed in this repo (`8008`, `change-me-…`) are refused (they only work
 on your own computer), and 15 wrong keys in 10 minutes locks the link's key check for 10 minutes.
 Anyone who can open the pages can still save what their browser shows.
 

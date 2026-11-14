@@ -1,5 +1,5 @@
 // Makes an access key for a friend and saves it in keys.json.
-//   node tools/addkey.mjs "sam" 5        -> name, worksheets per day
+//   node tools/addkey.mjs "sam" 5 [key]  -> name, worksheets per day, optional key of your own
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -18,8 +18,12 @@ catch (err) { if (fs.existsSync(FILE)) { console.log('\n  keys.json could not be
 const ABC = 'abcdefghjkmnpqrstuvwxyz23456789';
 const rand = (n) => Array.from(crypto.randomBytes(n), (b) => ABC[b % ABC.length]).join('');
 const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 10) || 'friend';
-let key;
-do { key = slug + '-' + rand(4) + '-' + rand(4); } while (keys[key]);
+// a key you choose yourself (4 or more letters or numbers), or a random one
+const want = String(process.argv[4] || '').trim();
+if (want && (!/^[A-Za-z0-9_-]{4,40}$/.test(want) || want === '8008')) { console.log('\n  that key can\'t be used. pick 4 or more letters or numbers (not 8008).'); process.exit(1); }
+if (want && keys[want]) { console.log('\n  the key ' + want + ' is already taken by ' + (keys[want].name || 'someone') + '.'); process.exit(1); }
+let key = want;
+while (!key || keys[key]) key = slug + '-' + rand(4) + '-' + rand(4);
 
 keys[key] = { name: name, runsPerDay: runs };
 fs.writeFileSync(FILE, JSON.stringify(keys, null, 2) + '\n');
