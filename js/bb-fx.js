@@ -12,7 +12,7 @@
     e.preventDefault();
     var go = function () { window.location.href = a.href; };
     document.documentElement.classList.add('bb-leaving');
-    setTimeout(go, 300);
+    setTimeout(go, 150);
   });
   // coming back with the browser's back button should not leave the static on screen
   window.addEventListener('pageshow', function () { document.documentElement.classList.remove('bb-leaving'); });
