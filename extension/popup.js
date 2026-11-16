@@ -24,17 +24,26 @@ function collect() {
     else if ((m = /docs\.google\.com\/spreadsheets\/(?:u\/\d+\/)?d\/([\w-]{20,})/.exec(href))) add('sheet', m[1], label, href);
     else if ((m = /drive\.google\.com\/(?:u\/\d+\/)?file\/d\/([\w-]{20,})/.exec(href)) || (m = /drive\.google\.com\/(?:u\/\d+\/)?open\?(?:[^#]*&)?id=([\w-]{20,})/.exec(href))) add('file', m[1], label, href);
   };
+  const vw = window.innerWidth, vh = window.innerHeight;
+  // Classroom keeps old screens (the stream, other assignments) in the page: only count what is really showing
+  const shown = (el) => {
+    if (!el || el.closest('[aria-hidden="true"]')) return false;
+    if (el.checkVisibility && !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return false;
+    const r = el.getBoundingClientRect();
+    return r.width >= 1 && r.height >= 1 && r.right > 0 && r.left < vw && r.bottom > -vh * 3 && r.top < vh * 6;
+  };
+  const onClassroom = /(^|\.)classroom\.google\.com$/.test(location.hostname);
+  const onAssignment = /\/c\/[^/]+\/(a|m|sa|mc)\/[^/]+/.test(location.pathname);
   scan(location.href, document.title);
-  document.querySelectorAll('a[href]').forEach((a) => scan(a.href, a.getAttribute('aria-label') || a.title || a.innerText));
+  if (!onClassroom || onAssignment) document.querySelectorAll('a[href]').forEach((a) => { if (shown(a)) scan(a.href, a.getAttribute('aria-label') || a.title || a.innerText); });
 
   const picked = String(window.getSelection ? window.getSelection() : '').trim();
   if (picked.length > 20) { out.text = picked.slice(0, 4000); return out; }
   // only an opened Google Classroom assignment has instructions worth reading off the page
-  if (!/(^|\.)classroom\.google\.com$/.test(location.hostname)) return out;
-  if (!/\/c\/[^/]+\/(a|m|sa|mc)\/[^/]+/.test(location.pathname)) { out.note = 'open the assignment itself in Classroom (click it), then press the button again to get its instructions.'; return out; }
+  if (!onClassroom) return out;
+  if (!onAssignment) { out.note = 'open the assignment itself in Classroom (click it), then press the button again. on this page only the screenshot is taken.'; return out; }
   // Classroom keeps old screens (the stream, other tabs) in the page, so read only what is really showing,
   // and skip buttons, links, menus and icons.
-  const vw = window.innerWidth, vh = window.innerHeight;
   const skip = 'button,[role="button"],a,nav,header,[role="navigation"],[role="banner"],[role="menu"],[role="tablist"],[role="dialog"],[aria-hidden="true"],textarea,input,select,script,style,i,svg';
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   const lines = [];
@@ -43,9 +52,7 @@ function collect() {
     const t = n.nodeValue.replace(/\s+/g, ' ').trim();
     const el = n.parentElement;
     if (!t || !el || el.closest(skip)) continue;
-    if (el.checkVisibility && !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
-    const r = el.getBoundingClientRect();
-    if (r.width < 1 || r.height < 1 || r.right < 0 || r.left > vw || r.bottom < -vh * 3 || r.top > vh * 6) continue;
+    if (!shown(el)) continue;
     // text pieces in the same paragraph stay on one line
     const block = el.closest('p,li,div,h1,h2,h3,h4,td,section') || el;
     if (block === lastBlock && lines.length) lines[lines.length - 1] += ' ' + t; else lines.push(t);
@@ -69,7 +76,9 @@ const urlsFor = (l, au) => {
   const slides = 'https://docs.google.com/presentation' + u + '/d/' + l.id + '/export/pptx';
   const sheet = 'https://docs.google.com/spreadsheets' + u + '/d/' + l.id + '/export?format=pdf';
   const file = 'https://drive.google.com/uc?export=download&id=' + l.id + (au ? '&authuser=' + au : '');
-  return l.kind === 'doc' ? [doc] : l.kind === 'slides' ? [slides] : l.kind === 'sheet' ? [sheet] : [file, doc, slides];
+  const list = l.kind === 'doc' ? [doc] : l.kind === 'slides' ? [slides, slides.replace('/export/pptx', '/export?format=pptx')] : l.kind === 'sheet' ? [sheet] : [file, doc, slides];
+  // if the numbered-account address fails, try again without the account number
+  return au ? list.concat(urlsFor(l, null)) : list;
 };
 async function grab(l, pageAu) {
   let last = 'could not download it';
@@ -99,21 +108,34 @@ async function grab(l, pageAu) {
 function render() {
   const rows = [];
   rows.push({ st: state.shot === null ? '[..]' : state.shot ? '[ok]' : '[no]', nm: 'screenshot of this page' + (state.shot === false ? ' (not allowed on this page)' : '') });
-  state.items.forEach((it) => rows.push({ st: it.state === 'busy' ? '[..]' : it.state === 'ok' ? '[ok]' : it.state === 'skip' ? '[--]' : '[no]', nm: (it.file ? it.file.name : it.label || 'attached file') + (it.note ? ' : ' + it.note : '') }));
+  state.items.forEach((it) => rows.push({ it: it.state === 'ok' ? it : null, st: it.state === 'busy' ? '[..]' : it.state === 'ok' ? (it.use ? '[x]' : '[ ]') : '[no]', nm: (it.file ? it.file.name : it.label || 'attached file') + (it.note ? ' : ' + it.note : '') }));
   if (!state.items.length && state.done) rows.push({ st: '', nm: 'no attached files found on this page', dim: true });
   const list = $('list');
   list.textContent = '';
-  rows.forEach((r) => { const d = document.createElement('div'); d.className = 'row' + (r.dim ? ' dim' : ''); const a = document.createElement('span'); a.className = 'st'; a.textContent = r.st; const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nm; d.append(a, b); list.append(d); });
+  rows.forEach((r) => {
+    const d = document.createElement(r.it ? 'button' : 'div');
+    d.className = 'row' + (r.dim || (r.it && !r.it.use) ? ' dim' : '') + (r.it ? ' pick' : '');
+    if (r.it) { d.type = 'button'; d.setAttribute('aria-pressed', r.it.use ? 'true' : 'false'); d.title = r.it.use ? 'click to leave this file out' : 'click to send this file'; d.addEventListener('click', () => toggle(r.it)); }
+    const a = document.createElement('span'); a.className = 'st'; a.textContent = r.st;
+    const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nm;
+    d.append(a, b); list.append(d);
+  });
   $('send').disabled = state.busy > 0 || !state.done || !payloadFiles().length && !$('text').value.trim();
 }
 // the screenshot always goes first; attached files fill the rest, up to 3 files in all
 function payloadFiles() {
-  const ok = state.items.filter((it) => it.state === 'ok');
-  const room = MAX_FILES - (state.shot ? 1 : 0);
+  const ok = state.items.filter((it) => it.state === 'ok' && it.use);
   const files = [];
   if (state.shot) files.push({ name: 'assignment overview.png', type: 'image/png', url: state.shot, ref: ok.length > 0 });
-  ok.slice(0, room).forEach((it) => files.push({ name: it.file.name, type: it.file.type, url: it.file.url, ref: false }));
+  ok.slice(0, room()).forEach((it) => files.push({ name: it.file.name, type: it.file.type, url: it.file.url, ref: false }));
   return files;
+}
+const room = () => MAX_FILES - (state.shot ? 1 : 0);
+function toggle(it) {
+  if (!it.use && state.items.filter((x) => x.state === 'ok' && x.use).length >= room()) { say('badgerbox takes 3 files per run (the screenshot plus ' + room() + '). untick one first.'); return; }
+  it.use = !it.use;
+  say('');
+  render();
 }
 const say = (t) => { $('msg').textContent = t; };
 
@@ -143,10 +165,10 @@ async function start() {
   render();
   await Promise.all(state.items.map((it) => grab(it.link, info.au).then((f) => { it.file = f; it.state = 'ok'; }, (err) => { it.state = 'no'; it.note = err.message; }).then(() => { state.busy--; render(); })));
   const ok = state.items.filter((it) => it.state === 'ok');
-  const room = MAX_FILES - (state.shot ? 1 : 0);
-  ok.slice(room).forEach((it) => { it.state = 'skip'; it.note = 'left out, badgerbox takes 3 files per run'; });
+  ok.forEach((it, i) => { it.use = i < room(); });
   render();
-  if (state.items.some((it) => it.state === 'no')) say('some files could not be downloaded. open the file and press the button there, or screenshot it.');
+  if (ok.length > room()) say('more files than badgerbox takes at once. click a file to tick or untick it.');
+  else if (state.items.some((it) => it.state === 'no')) say('some files could not be downloaded. open the file and press the button there, or screenshot it.');
 }
 
 $('send').addEventListener('click', async () => {
