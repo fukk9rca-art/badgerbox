@@ -70,22 +70,55 @@
     });
   }
 
+  /* Pictures inside the file (a worksheet pasted in as an image), so the model can see them.
+   * part: the xml part ('ppt/slides/slide1.xml'). Returns [{ type, url }] of png/jpeg pictures, skipping icons. */
+  function picturesOf(zip, part) {
+    var dir = part.replace(/[^/]+$/, ''), relsFile = zip.file(dir + '_rels/' + part.slice(dir.length) + '.rels');
+    if (!relsFile) return Promise.resolve([]);
+    return relsFile.async('string').then(function (s) {
+      var rs = xml(s).getElementsByTagName('Relationship'), jobs = [];
+      for (var i = 0; i < rs.length; i++) {
+        if (!/\/image$/.test(rs[i].getAttribute('Type') || '')) continue;
+        var t = rs[i].getAttribute('Target') || '', m = /\.(png|jpe?g)$/i.exec(t);
+        if (!m) continue;
+        // resolve '../media/image1.png' against the part's folder
+        var segs = (t.charAt(0) === '/' ? t.slice(1) : dir + t).split('/'), outSegs = [];
+        segs.forEach(function (x) { if (x === '..') outSegs.pop(); else if (x && x !== '.') outSegs.push(x); });
+        var f = zip.file(outSegs.join('/'));
+        if (!f) continue;
+        (function (f, type) {
+          jobs.push(f.async('base64').then(function (b64) { return (b64.length < 12000 || b64.length > 5000000) ? null : { type: type, url: 'data:' + type + ';base64,' + b64 }; }));
+        })(f, /png/i.test(m[1]) ? 'image/png' : 'image/jpeg');
+      }
+      return Promise.all(jobs).then(function (list) { return list.filter(Boolean); });
+    }).catch(function () { return []; });
+  }
+  /* at most 6 pictures per file, each tagged with where it sits */
+  function gather(zip, parts, word) {
+    return Promise.all(parts.map(function (p) { return picturesOf(zip, p); })).then(function (per) {
+      var out = [];
+      per.forEach(function (list, i) { list.forEach(function (pic) { if (out.length < 6) out.push({ type: pic.type, url: pic.url, at: word ? 0 : i + 1 }); }); });
+      return out;
+    });
+  }
+
   function read(dataUrl, kind) {
     return open(dataUrl).then(function (zip) {
       if (kind === 'docx') {
         return zip.file('word/document.xml').async('string').then(function (s) {
           var ps = xml(s).getElementsByTagNameNS(W_NS, 'p'), parts = [];
           for (var i = 0; i < ps.length; i++) parts.push(textOf(ps[i], 'w'));
-          return { kind: 'docx', parts: parts };
+          return gather(zip, ['word/document.xml'], true).then(function (pics) { return { kind: 'docx', parts: parts, images: pics }; });
         });
       }
       return slidePaths(zip).then(function (info) {
         return Promise.all(info.paths.map(function (p) { return zip.file(p).async('string'); })).then(function (all) {
-          return { kind: 'pptx', parts: all.map(function (s) {
+          var parts = all.map(function (s) {
             var ps = xml(s).getElementsByTagNameNS(A_NS, 'p'), lines = [];
             for (var i = 0; i < ps.length; i++) { var t = textOf(ps[i], 'a'); if (t.trim()) lines.push(t); }
             return lines.join('\n');
-          }) };
+          });
+          return gather(zip, info.paths, false).then(function (pics) { return { kind: 'pptx', parts: parts, images: pics }; });
         });
       });
     });

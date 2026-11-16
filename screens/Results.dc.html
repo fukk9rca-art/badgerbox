@@ -925,7 +925,7 @@ const pdfOf = (pis) => Promise.all(pis.map((pi) => renderPage(pi).then((c) => c 
 const dlTitle = (P) => LIVE ? (MULTI ? String(P.f.name || 'worksheet').replace(/\.[A-Za-z0-9]{1,5}$/, '') : (RUN.title || 'worksheet')) : 'Stoichiometry worksheet';
 const canFile = (P, fmt) => ((fmt === 'pptx' || fmt === 'docx') && !!OFF) || ((fmt === 'pdf' || fmt === 'png') && P.pages.length > 0);
 const partJob = (P, fmt) => {
-  const nm = (ext, n) => outName(ext, n, MULTI ? P.f.name : null);
+  const nm = (ext, n) => outName(ext, n, (LIVE && P.f.name) ? P.f.name : null);
   if (fmt === 'pptx') {
     let job;
     if (P.orig && P.orig.kind === 'pptx') job = OFF.fill(P.orig.url, 'pptx', officeAnswers('slide', P.qi));
@@ -952,7 +952,7 @@ const downloadAs = (fmtIn, force) => {
   flash('dl', 2500);
 };
 const downloadPdf = () => downloadAs('pdf', true);
-const dlWhat = (ext) => MULTI ? 'separate files, one for each assignment' : outName(ext);
+const dlWhat = (ext) => MULTI ? 'separate files, one for each assignment' : outName(ext, 0, (LIVE && PARTS[0] && PARTS[0].f.name) ? PARTS[0].f.name : null);
 const printFilled = () => {
   Promise.all(FILES.map((_, pi) => renderPage(pi))).then((cs) => {
     const imgs = cs.filter(Boolean).map((c) => '<img src="' + c.toDataURL('image/jpeg', 0.92) + '">').join('');
