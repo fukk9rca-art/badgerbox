@@ -152,7 +152,8 @@
     return p;
   }
 
-  /* answers: [{ at: paragraph or slide number (1-based) or null, text }] */
+  /* answers: [{ at: paragraph or slide number (1-based) or null, text }]
+   * For slides an answer may also carry x, y, w (0..1 of the slide) and scale: it is then put exactly there. */
   function fill(dataUrl, kind, answers) {
     return open(dataUrl).then(function (zip) {
       if (kind === 'docx') {
@@ -183,6 +184,20 @@
             var doc = xml(s), tree = doc.getElementsByTagNameNS(P_NS, 'spTree')[0];
             if (!tree) return;
             var h = Math.round(info.cy * 0.075);
+            var placed = list.filter(function (a) { return isFinite(Number(a.x)) && isFinite(Number(a.y)) && a.x != null && a.y != null; });
+            list = list.filter(function (a) { return placed.indexOf(a) === -1; });
+            placed.forEach(function (a, k) {
+              var lines = String(a.text).split('\n');
+              var pt = Math.max(8, (info.cx / 914400) * 72 * 0.021 * (Number(a.scale) || 1));
+              var x = Math.round(info.cx * Math.min(0.97, Math.max(0, Number(a.x)))), y = Math.round(info.cy * Math.min(0.97, Math.max(0, Number(a.y))));
+              var w = Math.round(Math.max(0.15, Math.min(1 - Number(a.x), Number(a.w) || 0.5)) * info.cx);
+              var frag = xml('<p:sp xmlns:p="' + P_NS + '" xmlns:a="' + A_NS + '"><p:nvSpPr><p:cNvPr id="' + (91000 + k) + '" name="badgerbox answer"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>' +
+                '<p:spPr><a:xfrm><a:off x="' + x + '" y="' + y + '"/><a:ext cx="' + w + '" cy="' + Math.round(pt * 12700 * 1.35 * lines.length) + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></p:spPr>' +
+                '<p:txBody><a:bodyPr wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t"><a:spAutoFit/></a:bodyPr><a:lstStyle/>' +
+                lines.map(function (line) { return '<a:p><a:r><a:rPr lang="en-US" sz="' + Math.round(pt * 100) + '" b="1" dirty="0"><a:solidFill><a:srgbClr val="' + INK + '"/></a:solidFill></a:rPr><a:t>' + esc(line) + '</a:t></a:r></a:p>'; }).join('') +
+                '</p:txBody></p:sp>');
+              tree.appendChild(doc.importNode(frag.documentElement, true));
+            });
             list.forEach(function (a, k) {
               var y = Math.round(info.cy * 0.985 - h * (list.length - k));
               var frag = xml('<p:sp xmlns:p="' + P_NS + '" xmlns:a="' + A_NS + '"><p:nvSpPr><p:cNvPr id="' + (90000 + k) + '" name="badgerbox answer ' + (k + 1) + '"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>' +

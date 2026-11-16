@@ -625,7 +625,19 @@ componentDidMount() {
       const text = String(d.text || '').slice(0, 6000);
       this.fileData = {}; this.fileJobs = [];
       this.setState({ tab: 0, files: [], text: text, refOnly: refs, tried: false, phase: 0, badFile: '', fileNote: '' });
-      setTimeout(() => { const ta = document.getElementById('bb-text'); if (ta) ta.value = text; if (this.addFilesFn) this.addFilesFn(made.filter(Boolean)); this.focusBox(); }, 60);
+      setTimeout(() => {
+        const ta = document.getElementById('bb-text'); if (ta) ta.value = text;
+        if (this.addFilesFn) this.addFilesFn(made.filter(Boolean));
+        // a Google Doc or Slides file comes with a PDF of itself: its pages become the worksheet you see
+        made.forEach((f, i) => {
+          if (!f || !/^data:application\/pdf/.test(list[i].pdf || '') || !window.bbApi) return;
+          const k = f.name + ':' + f.size, before = (this.fileJobs || []).slice();
+          this.fileJobs = (this.fileJobs || []).concat([Promise.all(before).then(() => fetch(list[i].pdf)).then((r) => r.blob())
+            .then((b) => window.bbApi.readFile(new File([b], 'pages.pdf', { type: 'application/pdf' })))
+            .then((d) => { if (d && d.pages && d.pages.length && this.fileData && this.fileData[k]) this.fileData[k].pages = d.pages; }).catch(() => {})]);
+        });
+        this.focusBox();
+      }, 60);
     });
   };
   window.addEventListener('message', this.onExt);

@@ -157,7 +157,16 @@
       var role = it.ref ? 'reference' : 'assignment';
       if (d.type === 'docx' || d.type === 'pptx') {
         // pictures inside the file (a worksheet pasted in as an image) go along as images the model can look at
-        var pics = d.images || [], from = imgs + 1;
+        var pics = d.images || [], from = imgs + 1, pgs = (d.pages && d.pages.length) ? d.pages : null;
+        if (pgs) {
+          // real pictures of every slide/page (from the browser extension): shown as the worksheet, and the model reads them
+          pgs.forEach(function (pg) { files.push({ type: pg.type, url: pg.url, file: it.no, name: it.name, ref: !!it.ref }); imgs++; });
+          text.push('File ' + it.no + (it.ref ? ' (reference only)' : '') + '. ' + d.text + '\nPictures of this file are attached too: image' + (pgs.length === 1 ? ' ' + from + ' is' : 's ' + from + ' to ' + imgs + ' are') +
+            (d.type === 'pptx' ? ' its slides in order (image ' + from + ' = slide 1)' : ' its pages in order') + '. Read them, the questions may only be visible there. For every question give BOTH "anchor" and "place" (place.page = the image number, at the blank spot where the answer belongs).');
+          if (!it.ref) keep.push({ kind: d.type, name: it.name, url: d.url, file: it.no });
+          info.push({ n: it.no, name: it.name, role: role, origin: d.type, pages: [from, imgs] });
+          return;
+        }
         pics.forEach(function (pc) { files.push({ type: pc.type, url: pc.url, file: it.no, name: it.name, ref: true }); imgs++; });
         var picNote = pics.length ? '\nThis file also has ' + pics.length + ' picture' + (pics.length === 1 ? '' : 's') + ' in it, attached as image' + (pics.length === 1 ? ' ' + from : 's ' + from + ' to ' + imgs) +
           (d.type === 'pptx' ? ' (from slide' + (pics.length === 1 ? ' ' : 's ') + pics.map(function (pc) { return pc.at; }).join(', ') + ')' : '') +
