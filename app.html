@@ -363,6 +363,7 @@ o   o
 <div style="margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 1ch"><span style="color: #8C8C8C">drag this to your bookmarks bar once:</span><a class="bb-drag" draggable="true" href="{{ bookmarklet }}" onClick="{{ onFastNoop }}" style="display: inline-block; padding: 2px 1ch; border: 1px solid #FFFFFF; color: #FFFFFF; text-decoration: none; font-weight: 700; white-space: pre">&#9113; badgerbox</a><span style="color: #8C8C8C">then click it on any assignment</span></div>
 <pre style="margin: 8px 0 0 0; padding: 8px 1ch; background: #0A0A0A; border: 1px solid #303030; color: #BDBDBD; font-family: inherit; font-size: 13px; line-height: 18px; white-space: pre-wrap; word-break: break-all">{{ bookmarklet }}</pre>
 <div style="margin-top: 8px; color: #8C8C8C">{{ fastNote }}</div>
+<div style="margin-top: 8px; max-width: 72ch"><span style="font-weight: 700">better on your own computer: the badgerbox extension.</span> one button screenshots the assignment, downloads the attached Google Doc, Slides or PDF, and opens it all here. to add it: go to your browser's extensions page, turn on developer mode, press &quot;load unpacked&quot; and pick the <span style="font-weight: 700">extension</span> folder inside your badgerbox folder.</div>
 </div>
 </sc-if>
 <sc-if value="{{ showIntro }}" hint-placeholder-val="{{ true }}">
@@ -613,10 +614,26 @@ componentDidMount() {
     const ti = pf ? ['auto', 'math', 'writing', 'reading', 'science', 'social', 'language', 'code', 'online'].indexOf(pf.tab) : -1;
     if (pf && pf.text) { this.setState({ tab: ti < 0 ? 0 : ti, text: String(pf.text), tried: false, phase: 0 }); setTimeout(() => { const ta = document.getElementById('bb-text'); if (ta) ta.value = String(pf.text); }, 0); }
   } catch (err) {}
+  // the badgerbox browser extension hands over an assignment: files (as data: URLs) and the teacher's instructions
+  this.onExt = (e) => {
+    if (e.source !== window || e.origin !== location.origin || !e.data || !e.data.bbExt) return;
+    const d = e.data.bbExt;
+    const list = (Array.isArray(d.files) ? d.files : []).filter((f) => f && /^data:/.test(f.url || '')).slice(0, 3);
+    Promise.all(list.map((f) => fetch(f.url).then((r) => r.blob()).then((b) => new File([b], String(f.name || 'assignment').slice(0, 120), { type: f.type || b.type })).catch(() => null))).then((made) => {
+      const refs = {};
+      made.forEach((f, i) => { if (f && list[i].ref) refs[f.name + ':' + f.size] = true; });
+      const text = String(d.text || '').slice(0, 6000);
+      this.fileData = {}; this.fileJobs = [];
+      this.setState({ tab: 0, files: [], text: text, refOnly: refs, tried: false, phase: 0, badFile: '', fileNote: '' });
+      setTimeout(() => { const ta = document.getElementById('bb-text'); if (ta) ta.value = text; if (this.addFilesFn) this.addFilesFn(made.filter(Boolean)); this.focusBox(); }, 60);
+    });
+  };
+  window.addEventListener('message', this.onExt);
+  document.documentElement.dataset.bbReady = '1';
   this.focusBox();
 }
 focusBox() { setTimeout(() => { if (document.hasFocus && !document.hasFocus()) return; if (window.getSelection && String(window.getSelection())) return; const a = document.activeElement; const t = a && a.tagName; if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return; const el = document.getElementById('bb-ans') || document.getElementById('bb-text'); if (el) { try { el.focus({ preventScroll: true }); } catch (err) {} } }, 0); }
-componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
+componentWillUnmount() { (this.timers || []).forEach(clearTimeout); if (this.onExt) window.removeEventListener('message', this.onExt); }
 syncRed() {
   // keep the activity box's red flashes in step with the badger's
   try {
@@ -1008,6 +1025,7 @@ const addFiles = (list) => {
   });
   this.setState({ files: next, badFile: bad, tried: false, dragging: false, picked: null, fileNote: over ? '3 files max. remove one to add another.' : '' });
 };
+this.addFilesFn = addFiles;
 const groups = tab.opts.map((g) => ({ label: g.label, choices: g.choices, k: tab.id + '.' + g.key })).concat([{ label: OUTPUT.label, choices: OUTPUT.choices, k: OUTPUT.key }, { label: 'give back', choices: ['same as i gave it', 'slides', 'docs', 'pdf'], k: 'give' }]);
 const bbHome = /^https?:/.test(location.protocol) ? location.origin : 'https://badgerbox.app';
 const bookmarklet = "javascript:(function(){var s=''+(window.getSelection?window.getSelection():'');var t=s.length>20?s:(document.body?document.body.innerText:'');window.open('" + bbHome + "/app.html#in='+encodeURIComponent(t.trim().slice(0,6000)),'_blank');})();";

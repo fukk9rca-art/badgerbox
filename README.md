@@ -51,6 +51,22 @@ and it is a new link every time. Through the link, the keys printed in this repo
 on your own computer), and 15 wrong keys in 10 minutes locks the link's key check for 10 minutes.
 Anyone who can open the pages can still save what their browser shows.
 
+## One-click from Google Classroom (browser extension)
+
+The `extension/` folder is a browser extension for Chrome, Opera GX, Edge and Brave. On an assignment page,
+press its button and it:
+
+1. takes a screenshot of the page (sent as reference),
+2. downloads the attached Google Docs (as .docx), Slides (as .pptx) and Drive PDFs or images,
+3. reads the teacher's instructions and lets you edit them or leave them out,
+4. opens badgerbox with all of it loaded. Press Enter to run.
+
+To add it: open the browser's extensions page (`opera://extensions`, `chrome://extensions`), turn on
+**Developer mode**, press **Load unpacked** and choose the `extension` folder. badgerbox has to be running.
+It sends at most 3 files (the screenshot plus two attachments). It only talks to Google Classroom, Docs and
+Drive and to badgerbox itself (`localhost`, or a share link set under "badgerbox address"). School-managed
+Chromebooks usually block extensions.
+
 ## Access keys and daily limits
 
 `keys.json` in this folder lists who can get in and how much they can use per day (copy
@@ -95,6 +111,7 @@ Anyone who can open the pages can still save what their browser shows.
 | `api/tldr.js` | Builds the tl;dr: what the assignment is teaching, worked out from the class and the work. |
 | `api/status.js` | Tells the pages whether a model is connected. |
 | `api/key.js`, `api/_lib/keys.js` | Access keys and per-key daily limits. |
+| `extension/` | Browser extension: one button sends the open assignment (screenshot, attached files, instructions) to badgerbox. |
 | `start-badgerbox.bat` | Double-click starter for Windows. |
 | `share-badgerbox.bat`, `tools/share.mjs` | Starts badgerbox and opens a private link to this computer for friends. |
 | `add-friend-key.bat`, `tools/addkey.mjs` | Makes an access key with a daily limit. |
