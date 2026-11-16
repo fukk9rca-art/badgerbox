@@ -20,7 +20,7 @@ const read = (buf) => {
     console.log('\nsend that link to your friends, with the access key you made for each one.');
     console.log('- it works only while this window is open and this computer is on.');
     console.log('- the link is new every time you start sharing.');
-    console.log('- short keys like 8008 do not work through the link, only on this computer.');
+    console.log('- the key 8008 does not work through the link, only on this computer.');
     console.log('- close this window to stop sharing.\n');
   }
 };
