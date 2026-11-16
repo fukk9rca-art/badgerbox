@@ -231,6 +231,24 @@
       });
     },
     solveOne: function (payload) { return post('api/solve', payload); },
+    /* The assignment as it was first sent (files and text), for follow-ups that need to see it again. */
+    loadPayload: function () { return idbGet(PAYLOAD_KEY).then(function (p) { return p || null; }, function () { return null; }); },
+    /* Work one question again, with the whole assignment attached as context.
+     * one: { number, text, answer, note (what the student typed), chat } ; ctxItems: files added in the chat. */
+    solveAgain: function (one, ctxItems) {
+      return idbGet(PAYLOAD_KEY).then(function (p0) { return p0 || {}; }, function () { return {}; }).then(function (p0) {
+        var base = (p0.files || []).slice(0, 12).map(function (f) { return { type: f.type, url: f.url, file: f.file, name: f.name, ref: true }; });
+        var cx = flatten((ctxItems || []).map(function (c, i) { return { name: c.name, data: c.data, ref: true, no: maxNo(p0.fileInfo) + i + 1 }; }), base.filter(isImg).length);
+        var run = load(RUN_KEY) || {}, req = run.request || {};
+        return post('api/solve', {
+          tab: p0.tab || req.tab, cls: p0.cls || req.cls, answers: p0.answers, outputs: p0.outputs,
+          files: base.concat(cx.files).slice(0, 18),
+          text: [p0.text || '', cx.text || ''].filter(Boolean).join('\n\n'),
+          fileInfo: (p0.fileInfo || []).map(function (f) { return { n: f.n, name: f.name, role: 'reference', origin: f.origin, pages: f.pages }; }).concat(cx.fileInfo),
+          one: one
+        });
+      });
+    },
 
     /* Files added in the walkthrough chat as context (a Promise). */
     loadCtx: function () { return idbGet(CTX_KEY).then(function (v) { return Array.isArray(v) ? v : []; }); },

@@ -64,7 +64,8 @@ export default async function handler(req, res) {
   const body = readBody(req);
   const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 20);
   const text = String(body.text || '').slice(0, 20000);
-  if (!blocks.length && !text.trim()) { res.status(400).json({ source: 'error', error: 'nothing to solve' }); return; }
+  const one = (body.one && typeof body.one === 'object') ? body.one : null;
+  if (!blocks.length && !text.trim() && !one) { res.status(400).json({ source: 'error', error: 'nothing to solve' }); return; }
   const gate = useKey(req, 'run');
   if (!gate.ok) { res.status(200).json({ source: 'error', error: gate.error }); return; }
 
@@ -83,7 +84,14 @@ export default async function handler(req, res) {
     fileLines.length ? 'The files:\n' + fileLines.join('\n') : '',
     body.more ? 'Other work from this student was already completed. Only answer the questions in the files marked ASSIGNMENT.' : '',
     classText(body.cls),
-    picked ? 'Only do these question numbers: ' + picked.join(', ') + '.' : 'Do every question.',
+    one ? [
+      'ONE QUESTION IS BEING DONE AGAIN. The whole assignment is attached above only so you can understand it. Do not answer the other questions.',
+      'The question (number ' + String(one.number || '').slice(0, 12) + '), as badgerbox read it: ' + String(one.text || '').slice(0, 3000),
+      one.answer ? 'The answer given before (it may be wrong): ' + String(one.answer).slice(0, 2000) : '',
+      one.note ? 'The student now says: "' + String(one.note).slice(0, 3000) + '". This may be the question typed out in full, a correction to how it was read, a missing detail, or how they want it done. Work out which from the assignment and the conversation, and use it. If it is short or vague, read it against the assignment. Never reply that nothing was attached.' : 'Work it out again from scratch, reading the assignment carefully. If the earlier answer was right, you may reach it again.',
+      one.chat ? 'The conversation about this assignment so far:\n' + String(one.chat).slice(0, 6000) : '',
+      'Return exactly one question in "questions": this one, with "text" as the question should read, and the same "number".'
+    ].filter(Boolean).join('\n') : (picked ? 'Only do these question numbers: ' + picked.join(', ') + '.' : 'Do every question.'),
     extra.length ? 'Extra context the student gave:\n' + extra.join('\n') : '',
     text ? 'The student typed:\n' + text : ''
   ].filter(Boolean).join('\n\n');
@@ -93,7 +101,7 @@ export default async function handler(req, res) {
       system: SOLVE_SYSTEM,
       content: blocks.concat([{ type: 'text', text: brief }])
     }));
-    const qs = Array.isArray(solved.questions) ? solved.questions : [];
+    const qs = (Array.isArray(solved.questions) ? solved.questions : []).slice(0, one ? 1 : 200);
     if (!qs.length) throw new Error('no questions found in the assignment');
 
     let checks = [];
