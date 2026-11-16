@@ -29,12 +29,30 @@ function collect() {
 
   const picked = String(window.getSelection ? window.getSelection() : '').trim();
   if (picked.length > 20) { out.text = picked.slice(0, 4000); return out; }
-  // only Google Classroom has instructions worth reading off the page
+  // only an opened Google Classroom assignment has instructions worth reading off the page
   if (!/(^|\.)classroom\.google\.com$/.test(location.hostname)) return out;
-  const root = document.querySelector('[role="main"]') || document.querySelector('main') || document.body;
-  const lines = String(root ? root.innerText : '').split(/\n+/).map((l) => l.trim()).filter(Boolean);
-  const stop = lines.findIndex((l) => /^(class comments|your work|private comments|add class comment|add or create|mark as done|turn in|hand in)\b/i.test(l));
-  out.text = (stop === -1 ? lines : lines.slice(0, stop)).join('\n').slice(0, 4000);
+  if (!/\/c\/[^/]+\/(a|m|sa|mc)\/[^/]+/.test(location.pathname)) { out.note = 'open the assignment itself in Classroom (click it), then press the button again to get its instructions.'; return out; }
+  // Classroom keeps old screens (the stream, other tabs) in the page, so read only what is really showing,
+  // and skip buttons, links, menus and icons.
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const skip = 'button,[role="button"],a,nav,header,[role="navigation"],[role="banner"],[role="menu"],[role="tablist"],[role="dialog"],[aria-hidden="true"],textarea,input,select,script,style,i,svg';
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const lines = [];
+  let lastBlock = null;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const t = n.nodeValue.replace(/\s+/g, ' ').trim();
+    const el = n.parentElement;
+    if (!t || !el || el.closest(skip)) continue;
+    if (el.checkVisibility && !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1 || r.right < 0 || r.left > vw || r.bottom < -vh * 3 || r.top > vh * 6) continue;
+    // text pieces in the same paragraph stay on one line
+    const block = el.closest('p,li,div,h1,h2,h3,h4,td,section') || el;
+    if (block === lastBlock && lines.length) lines[lines.length - 1] += ' ' + t; else lines.push(t);
+    lastBlock = block;
+  }
+  const stop = lines.findIndex((l) => /^(class comments|\d+ class comments?|your work|private comments|add class comment|add a class comment|add or create|mark as done|turn in|hand in|student work|instructions$)/i.test(l) && !/^instructions$/i.test(l));
+  out.text = (stop === -1 ? lines : lines.slice(0, stop)).filter((l) => !/^(instructions|student work|more options|edit|assigned|missing|turned in)$/i.test(l)).join('\n').slice(0, 4000);
   return out;
 }
 
@@ -117,6 +135,7 @@ async function start() {
   catch (err) { say('badgerbox can\'t read this page, so only the screenshot is sent.'); }
   $('text').value = info.text || '';
   $('useText').checked = !!info.text;
+  if (info.note) say(info.note);
 
   state.items = info.links.slice(0, 6).map((l) => ({ label: l.label, state: 'busy', link: l }));
   state.done = true;
