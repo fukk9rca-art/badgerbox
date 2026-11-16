@@ -98,7 +98,17 @@ async function grab(l, pageAu) {
       try { name = m ? decodeURIComponent(m[1]) : ''; } catch (err) { name = m ? m[1] : ''; }
       name = (name || l.label || 'assignment').replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'assignment';
       if (!new RegExp('\\.' + ext + '$', 'i').test(name)) name = name.replace(/\.[A-Za-z0-9]{1,5}$/, '') + '.' + ext;
-      return { name: name, type: type, url: await toDataUrl(blob) };
+      const got = { name: name, type: type, url: await toDataUrl(blob) };
+      // a PDF of the same Google file, so badgerbox can show the real slides or pages
+      if ((ext === 'pptx' || ext === 'docx') && /^https:\/\/docs\.google\.com\//.test(url)) {
+        try {
+          const pdfUrl = ext === 'pptx' ? url.replace(/\/export(\/pptx|\?format=pptx)$/, '/export/pdf') : url.replace(/format=docx$/, 'format=pdf');
+          const pr = await fetch(pdfUrl, { credentials: 'include' });
+          const pb = pr.ok && /application\/pdf/i.test(pr.headers.get('content-type') || '') ? await pr.blob() : null;
+          if (pb && pb.size <= MAX_BYTES) got.pdf = await toDataUrl(pb);
+        } catch (err) { /* no preview pages; the file itself still goes */ }
+      }
+      return got;
     } catch (err) { last = 'could not reach Google'; }
   }
   throw new Error(last);
@@ -127,7 +137,7 @@ function payloadFiles() {
   const ok = state.items.filter((it) => it.state === 'ok' && it.use);
   const files = [];
   if (state.shot) files.push({ name: 'assignment overview.png', type: 'image/png', url: state.shot, ref: ok.length > 0 });
-  ok.slice(0, room()).forEach((it) => files.push({ name: it.file.name, type: it.file.type, url: it.file.url, ref: false }));
+  ok.slice(0, room()).forEach((it) => files.push({ name: it.file.name, type: it.file.type, url: it.file.url, pdf: it.file.pdf || null, ref: false }));
   return files;
 }
 const room = () => MAX_FILES - (state.shot ? 1 : 0);
