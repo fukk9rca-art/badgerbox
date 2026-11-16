@@ -114,7 +114,7 @@
         var office = window.bbOffice ? window.bbOffice.kindOf(file.name, type) : '';
         if (office) {
           window.bbOffice.read(url, office)
-            .then(function (info) { resolve({ type: office, url: url, name: file.name || ('assignment.' + office), text: window.bbOffice.tagged(info, file.name || 'assignment') }); })
+            .then(function (info) { resolve({ type: office, url: url, name: file.name || ('assignment.' + office), text: window.bbOffice.tagged(info, file.name || 'assignment'), images: info.images || [] }); })
             .catch(function () { resolve(null); });
           return;
         }
@@ -156,7 +156,13 @@
       if (!d) return;
       var role = it.ref ? 'reference' : 'assignment';
       if (d.type === 'docx' || d.type === 'pptx') {
-        text.push('File ' + it.no + (it.ref ? ' (reference only)' : '') + '. ' + d.text);
+        // pictures inside the file (a worksheet pasted in as an image) go along as images the model can look at
+        var pics = d.images || [], from = imgs + 1;
+        pics.forEach(function (pc) { files.push({ type: pc.type, url: pc.url, file: it.no, name: it.name, ref: true }); imgs++; });
+        var picNote = pics.length ? '\nThis file also has ' + pics.length + ' picture' + (pics.length === 1 ? '' : 's') + ' in it, attached as image' + (pics.length === 1 ? ' ' + from : 's ' + from + ' to ' + imgs) +
+          (d.type === 'pptx' ? ' (from slide' + (pics.length === 1 ? ' ' : 's ') + pics.map(function (pc) { return pc.at; }).join(', ') + ')' : '') +
+          '. Read them: the questions may be in the pictures. Still give "anchor" for where each answer goes; do not give "place" for these images.' : '';
+        text.push('File ' + it.no + (it.ref ? ' (reference only)' : '') + '. ' + d.text + picNote);
         if (!it.ref) keep.push({ kind: d.type, name: it.name, url: d.url, file: it.no });
         info.push({ n: it.no, name: it.name, role: role, origin: d.type });
         return;

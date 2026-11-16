@@ -840,7 +840,7 @@ const logLines = allLog.slice(0, phase).map((t, i) => ({
   color: (i === allLog.length - 1 || t.indexOf('[!]') !== -1) ? '#FFFFFF' : '#BDBDBD'
 }));
 let errorText = '';
-if (badFile) errorText = badFile + " isn't a type badgerbox can read. use a screenshot or photo, pdf, .docx, .pptx or plain text";
+if (badFile) errorText = s.badOpen ? "badgerbox could not open " + badFile + ", so it was left out. save it as a pdf or take a screenshot of it instead" : badFile + " isn't a type badgerbox can read. use a screenshot or photo, pdf, .docx, .pptx or plain text";
 else if (!hasWork && needTick) errorText = "can't run yet: add your assignment and tick the permission box";
 else if (!hasWork) errorText = "can't run yet: add your assignment first";
 else if (needPick) errorText = "can't run yet: pick at least one question";
@@ -923,7 +923,7 @@ const startApi = (st0) => {
     outputs: (Array.isArray(st.outs) ? st.outs : [0, 1, 2]).map((i) => OUTPUT.choices[i]),
     picked: fs.length && Array.isArray(st.picked) ? st.picked.map((i) => i + 1) : null,
     files: sendFiles,
-    meta: { origin: keepOrig[0] ? keepOrig[0].kind : (fromPdf ? 'pdf' : (sendFiles.some((x) => /^image\//.test(x.type || '')) ? 'image' : 'text')), giveBack: ['same', 'slides', 'docs', 'pdf'][(st.opt && st.opt.give) || 0], fromPdf: fromPdf, fileName: fs[0] ? fs[0].name : '', classShort: cl ? cl.short : (ans.class || ''), classDetail: cl ? cl.detail : '', tab: t.id }
+    meta: { origin: keepOrig[0] ? keepOrig[0].kind : (fromPdf ? 'pdf' : (sendFiles.some((x) => /^image\//.test(x.type || '')) ? 'image' : 'text')), giveBack: ['same', 'slides', 'docs', 'pdf'][(st.opt && st.opt.give) || 0], fromPdf: fromPdf, fileName: (fs.filter((x) => !refs[fileKey(x)])[0] || fs[0] || {}).name || '', fileName0: fs[0] ? fs[0].name : '', classShort: cl ? cl.short : (ans.class || ''), classDetail: cl ? cl.detail : '', tab: t.id }
   };
   this.apiPending = true;
   API.solve(payload).then((res) => {
@@ -1021,9 +1021,9 @@ const addFiles = (list) => {
   let over = false;
   Array.from(list || []).forEach((f) => {
     if (okTypes.indexOf(f.type) === -1 && !/\.(png|jpe?g|heic|webp|pdf|txt|docx|pptx)$/i.test(f.name)) { bad = f.name; return; }
-    if (!next.some((x) => x.name === f.name && x.size === f.size)) { if (next.length >= 3) { over = true; return; } next.push({ name: f.name, size: f.size, type: f.type }); const blob = f.blob || ((typeof Blob !== 'undefined' && f instanceof Blob) ? f : null); if (blob && API) { const k = f.name + ':' + f.size; this.fileJobs = (this.fileJobs || []).concat([API.readFile(blob).then((d) => { if (d) { this.fileData = this.fileData || {}; this.fileData[k] = d; } })]); } }
+    if (!next.some((x) => x.name === f.name && x.size === f.size)) { if (next.length >= 3) { over = true; return; } next.push({ name: f.name, size: f.size, type: f.type }); const blob = f.blob || ((typeof Blob !== 'undefined' && f instanceof Blob) ? f : null); if (blob && API) { const k = f.name + ':' + f.size; this.fileJobs = (this.fileJobs || []).concat([API.readFile(blob).then((d) => { if (d) { this.fileData = this.fileData || {}; this.fileData[k] = d; } else { const stf = this.state || {}; this.setState({ files: (stf.files || []).filter((x) => x.name + ':' + x.size !== k), badFile: f.name, badOpen: true }); } })]); } }
   });
-  this.setState({ files: next, badFile: bad, tried: false, dragging: false, picked: null, fileNote: over ? '3 files max. remove one to add another.' : '' });
+  this.setState({ files: next, badFile: bad, badOpen: false, tried: false, dragging: false, picked: null, fileNote: over ? '3 files max. remove one to add another.' : '' });
 };
 this.addFilesFn = addFiles;
 const groups = tab.opts.map((g) => ({ label: g.label, choices: g.choices, k: tab.id + '.' + g.key })).concat([{ label: OUTPUT.label, choices: OUTPUT.choices, k: OUTPUT.key }, { label: 'give back', choices: ['same as i gave it', 'slides', 'docs', 'pdf'], k: 'give' }]);
