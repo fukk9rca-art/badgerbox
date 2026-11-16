@@ -1,0 +1,145 @@
+// Collects the assignment from the page you are on: a screenshot, the attached files and the
+// teacher's instructions. Then asks the background script to open badgerbox with them.
+const $ = (id) => document.getElementById(id);
+const MAX_FILES = 3;            // badgerbox takes 3 files per run
+const MAX_BYTES = 15 * 1024 * 1024;
+const state = { shot: null, items: [], busy: 0 };
+
+// ---- runs inside the assignment page
+function collect() {
+  const out = { title: document.title || '', text: '', links: [], au: null };
+  const seen = {};
+  const au = /\/u\/(\d+)\//.exec(location.pathname);
+  out.au = au ? au[1] : null;
+  const add = (kind, id, label, href) => {
+    if (!id || seen[id]) return;
+    seen[id] = 1;
+    const a = /[?&]authuser=(\d+)/.exec(href || '');
+    out.links.push({ kind: kind, id: id, au: a ? a[1] : null, label: String(label || '').replace(/^Attachment:\s*/i, '').replace(/\s+/g, ' ').trim().slice(0, 80) });
+  };
+  const scan = (href, label) => {
+    let m;
+    if ((m = /docs\.google\.com\/document\/(?:u\/\d+\/)?d\/([\w-]{20,})/.exec(href))) add('doc', m[1], label, href);
+    else if ((m = /docs\.google\.com\/presentation\/(?:u\/\d+\/)?d\/([\w-]{20,})/.exec(href))) add('slides', m[1], label, href);
+    else if ((m = /docs\.google\.com\/spreadsheets\/(?:u\/\d+\/)?d\/([\w-]{20,})/.exec(href))) add('sheet', m[1], label, href);
+    else if ((m = /drive\.google\.com\/(?:u\/\d+\/)?file\/d\/([\w-]{20,})/.exec(href)) || (m = /drive\.google\.com\/(?:u\/\d+\/)?open\?(?:[^#]*&)?id=([\w-]{20,})/.exec(href))) add('file', m[1], label, href);
+  };
+  scan(location.href, document.title);
+  document.querySelectorAll('a[href]').forEach((a) => scan(a.href, a.getAttribute('aria-label') || a.title || a.innerText));
+
+  const picked = String(window.getSelection ? window.getSelection() : '').trim();
+  if (picked.length > 20) { out.text = picked.slice(0, 4000); return out; }
+  // only Google Classroom has instructions worth reading off the page
+  if (!/(^|\.)classroom\.google\.com$/.test(location.hostname)) return out;
+  const root = document.querySelector('[role="main"]') || document.querySelector('main') || document.body;
+  const lines = String(root ? root.innerText : '').split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  const stop = lines.findIndex((l) => /^(class comments|your work|private comments|add class comment|add or create|mark as done|turn in|hand in)\b/i.test(l));
+  out.text = (stop === -1 ? lines : lines.slice(0, stop)).join('\n').slice(0, 4000);
+  return out;
+}
+
+// ---- downloads
+const KINDS = {
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+  'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'text/plain': 'txt'
+};
+const toDataUrl = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('could not read the file')); r.readAsDataURL(blob); });
+const urlsFor = (l, au) => {
+  const u = au ? '/u/' + au : '';
+  const doc = 'https://docs.google.com/document' + u + '/d/' + l.id + '/export?format=docx';
+  const slides = 'https://docs.google.com/presentation' + u + '/d/' + l.id + '/export/pptx';
+  const sheet = 'https://docs.google.com/spreadsheets' + u + '/d/' + l.id + '/export?format=pdf';
+  const file = 'https://drive.google.com/uc?export=download&id=' + l.id + (au ? '&authuser=' + au : '');
+  return l.kind === 'doc' ? [doc] : l.kind === 'slides' ? [slides] : l.kind === 'sheet' ? [sheet] : [file, doc, slides];
+};
+async function grab(l, pageAu) {
+  let last = 'could not download it';
+  for (const url of urlsFor(l, l.au || pageAu)) {
+    try {
+      const r = await fetch(url, { credentials: 'include' });
+      const type = String(r.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+      if (!r.ok) { last = r.status === 403 || r.status === 401 ? 'no permission to download it' : 'could not download it (' + r.status + ')'; continue; }
+      if (type === 'text/html') { last = 'Google asked to sign in, or the file is too big'; continue; }
+      const ext = KINDS[type];
+      if (!ext) { last = 'badgerbox can\'t read this kind of file'; continue; }
+      const blob = await r.blob();
+      if (blob.size > MAX_BYTES) { last = 'the file is bigger than 15 MB'; continue; }
+      const cd = r.headers.get('content-disposition') || '';
+      const m = /filename\*=UTF-8''([^;]+)/i.exec(cd) || /filename="?([^";]+)"?/i.exec(cd);
+      let name = '';
+      try { name = m ? decodeURIComponent(m[1]) : ''; } catch (err) { name = m ? m[1] : ''; }
+      name = (name || l.label || 'assignment').replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'assignment';
+      if (!new RegExp('\\.' + ext + '$', 'i').test(name)) name = name.replace(/\.[A-Za-z0-9]{1,5}$/, '') + '.' + ext;
+      return { name: name, type: type, url: await toDataUrl(blob) };
+    } catch (err) { last = 'could not reach Google'; }
+  }
+  throw new Error(last);
+}
+
+// ---- the popup
+function render() {
+  const rows = [];
+  rows.push({ st: state.shot === null ? '[..]' : state.shot ? '[ok]' : '[no]', nm: 'screenshot of this page' + (state.shot === false ? ' (not allowed on this page)' : '') });
+  state.items.forEach((it) => rows.push({ st: it.state === 'busy' ? '[..]' : it.state === 'ok' ? '[ok]' : it.state === 'skip' ? '[--]' : '[no]', nm: (it.file ? it.file.name : it.label || 'attached file') + (it.note ? ' : ' + it.note : '') }));
+  if (!state.items.length && state.done) rows.push({ st: '', nm: 'no attached files found on this page', dim: true });
+  const list = $('list');
+  list.textContent = '';
+  rows.forEach((r) => { const d = document.createElement('div'); d.className = 'row' + (r.dim ? ' dim' : ''); const a = document.createElement('span'); a.className = 'st'; a.textContent = r.st; const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nm; d.append(a, b); list.append(d); });
+  $('send').disabled = state.busy > 0 || !state.done || !payloadFiles().length && !$('text').value.trim();
+}
+// the screenshot always goes first; attached files fill the rest, up to 3 files in all
+function payloadFiles() {
+  const ok = state.items.filter((it) => it.state === 'ok');
+  const room = MAX_FILES - (state.shot ? 1 : 0);
+  const files = [];
+  if (state.shot) files.push({ name: 'assignment overview.png', type: 'image/png', url: state.shot, ref: ok.length > 0 });
+  ok.slice(0, room).forEach((it) => files.push({ name: it.file.name, type: it.file.type, url: it.file.url, ref: false }));
+  return files;
+}
+const say = (t) => { $('msg').textContent = t; };
+
+async function start() {
+  const store = await chrome.storage.local.get({ home: 'http://localhost:3000' });
+  $('homeIn').value = store.home;
+  const q = new URLSearchParams(location.search);
+  let tab;
+  if (q.get('tab')) tab = await chrome.tabs.get(Number(q.get('tab')));         // used by the tests
+  else tab = (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
+  if (!tab || !/^https?:/.test(tab.url || '')) { state.shot = false; state.done = true; render(); say('open your assignment page first, then press the badgerbox button.'); return; }
+  try { $('where').textContent = new URL(tab.url).hostname; } catch (err) {}
+  render();
+
+  chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' }).then((url) => { state.shot = url || false; if (url) { $('shot').src = url; $('shot').hidden = false; } render(); }, (err) => { state.shot = false; console.warn('badgerbox: no screenshot: ' + (err && err.message)); render(); });
+
+  let info = { text: '', links: [], au: null };
+  try { const res = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: collect }); if (res && res[0] && res[0].result) info = res[0].result; }
+  catch (err) { say('badgerbox can\'t read this page, so only the screenshot is sent.'); }
+  $('text').value = info.text || '';
+  $('useText').checked = !!info.text;
+
+  state.items = info.links.slice(0, 6).map((l) => ({ label: l.label, state: 'busy', link: l }));
+  state.done = true;
+  state.busy = state.items.length;
+  render();
+  await Promise.all(state.items.map((it) => grab(it.link, info.au).then((f) => { it.file = f; it.state = 'ok'; }, (err) => { it.state = 'no'; it.note = err.message; }).then(() => { state.busy--; render(); })));
+  const ok = state.items.filter((it) => it.state === 'ok');
+  const room = MAX_FILES - (state.shot ? 1 : 0);
+  ok.slice(room).forEach((it) => { it.state = 'skip'; it.note = 'left out, badgerbox takes 3 files per run'; });
+  render();
+  if (state.items.some((it) => it.state === 'no')) say('some files could not be downloaded. open the file and press the button there, or screenshot it.');
+}
+
+$('send').addEventListener('click', async () => {
+  const home = $('homeIn').value.trim().replace(/\/+$/, '') || 'http://localhost:3000';
+  if (!/^(http:\/\/(localhost|127\.0\.0\.1)(:\d+)?|https:\/\/[a-z0-9-]+\.trycloudflare\.com)$/i.test(home)) { $('home').hidden = false; say('that address is not a badgerbox address. use http://localhost:3000 or your share link.'); return; }
+  await chrome.storage.local.set({ home: home });
+  $('send').disabled = true;
+  say('opening badgerbox...');
+  const res = await chrome.runtime.sendMessage({ bbSend: { home: home, files: payloadFiles(), text: $('useText').checked ? $('text').value.trim().slice(0, 6000) : '' } });
+  if (res && res.ok) window.close();
+  else { say('could not send: ' + ((res && res.error) || 'no reply') + '. start badgerbox first.'); $('send').disabled = false; }
+});
+$('set').addEventListener('click', () => { $('home').hidden = !$('home').hidden; });
+$('text').addEventListener('input', () => { $('useText').checked = !!$('text').value.trim(); render(); });
+start();

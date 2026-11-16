@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>badgerbox</title>
+<style>
+*{box-sizing:border-box;border-radius:0}
+[hidden]{display:none!important}
+body{margin:0;width:420px;background:#000;color:#fff;font:14px/20px Consolas,"Courier New",monospace;padding:12px}
+h1{margin:0 0 8px;font-size:14px;line-height:20px}
+.dim{color:#8c8c8c}
+.row{display:flex;gap:8px;align-items:flex-start;padding:2px 0}
+.row .st{flex:0 0 5ch;font-weight:700}
+.row .nm{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+hr{border:0;border-top:1px dashed #5a5a5a;margin:10px 0}
+label{display:flex;gap:8px;align-items:center;cursor:pointer}
+input[type=checkbox]{appearance:none;width:16px;height:16px;border:1px solid #fff;background:#000;margin:0;flex:0 0 auto;cursor:pointer}
+input[type=checkbox]:checked{background:#fff;box-shadow:inset 0 0 0 3px #000}
+textarea,input[type=text]{width:100%;background:#000;color:#fff;border:1px solid #5a5a5a;font:inherit;padding:4px 6px}
+textarea{height:96px;resize:vertical;margin-top:6px}
+textarea:focus,input:focus,button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+button{font:inherit;font-weight:700;background:#fff;color:#000;border:1px solid #fff;padding:6px 12px;cursor:pointer}
+button:disabled{background:#000;color:#8c8c8c;border-color:#5a5a5a;cursor:default}
+button.plain{background:transparent;color:#fff;border:0;padding:0;font-weight:400;text-decoration:underline}
+#bar{display:flex;gap:12px;align-items:center;margin-top:10px}
+#msg{margin-top:8px;min-height:20px}
+img{display:block;max-width:100%;max-height:90px;border:1px solid #5a5a5a;margin-top:4px}
+</style>
+</head>
+<body>
+<h1>[ badgerbox ] <span class="dim" id="where"></span></h1>
+<div id="list" aria-live="polite"></div>
+<img id="shot" alt="screenshot of this page" hidden>
+<hr>
+<label><input type="checkbox" id="useText"><span>add the teacher's instructions</span></label>
+<textarea id="text" aria-label="instructions to send with the assignment" placeholder="no instructions found on this page. type or paste them here if you want."></textarea>
+<div id="bar"><button id="send" disabled>send to badgerbox</button><button class="plain" id="set">badgerbox address</button></div>
+<div id="home" hidden style="margin-top:8px"><input type="text" id="homeIn" aria-label="badgerbox address" spellcheck="false"><div class="dim">where badgerbox runs. on your own computer: http://localhost:3000</div></div>
+<div id="msg" class="dim" role="status"></div>
+<script src="popup.js"></script>
+</body>
+</html>

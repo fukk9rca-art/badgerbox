@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "badgerbox",
+  "version": "0.1.0",
+  "description": "One click on an assignment: takes a screenshot, downloads the attached files and opens them in badgerbox.",
+  "action": { "default_title": "send this assignment to badgerbox", "default_popup": "popup.html", "default_icon": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" } },
+  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://classroom.google.com/*",
+    "https://docs.google.com/*",
+    "https://drive.google.com/*",
+    "https://drive.usercontent.google.com/*",
+    "https://*.googleusercontent.com/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://*.trycloudflare.com/*"
+  ]
+}
