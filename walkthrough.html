@@ -258,7 +258,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <div style="margin-top: 12px; padding: 10px 16px; box-sizing: border-box; background: {{ ansBg }}; color: {{ ansFg }}; border: 2px solid {{accent}}; display: flex; gap: 2ch; align-items: baseline">
 <span style="font-weight: 700; width: 7ch; flex-shrink: 0">answer</span>
 <span style="font-weight: 700; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap">{{ ansText }}</span>
-<span style="margin-left: auto; display: flex; align-items: baseline; gap: 2ch; flex-shrink: 0"><button type="button" class="bb-copy" onClick="{{ onCopyAns }}" aria-label="copy this answer as plain text" style="height: 28px; padding: 0 1ch; background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ copyAnsLabel }}</button><span style="font-weight: 700; white-space: nowrap">{{ ansTag }}</span></span>
+<span style="margin-left: auto; display: flex; align-items: baseline; gap: 2ch; flex-shrink: 0"><button type="button" class="bb-copy" onClick="{{ onCopyAns }}" aria-label="copy this answer as plain text" style="height: 28px; padding: 0 1ch; background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ copyAnsLabel }}</button><sc-if value="{{ canRetry }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-copy" onClick="{{ onRetryQ }}" aria-label="work this question out again" title="work this question out again with the whole assignment as context. uses 1 run" style="height: 28px; padding: 0 1ch; background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ retryLabel }}</button></sc-if><sc-if value="{{ canUndoQ }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-copy" onClick="{{ onUndoQ }}" aria-label="go back to the answer from before the retry" title="go back to the answer from before" style="height: 28px; padding: 0 1ch; background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">undo</button></sc-if><span style="font-weight: 700; white-space: nowrap">{{ ansTag }}</span></span>
 </div>
 </sc-if>
 
@@ -629,24 +629,39 @@ const replyFor = (q) => {
   if (/mole/.test(t)) return 'moles let you compare different substances by count instead of by weight. one mole of anything is the same number of particles, so the ratios in a balanced equation only work once the amounts are in moles.';
   return "this is where badgerbox's answer to your question shows up once it's connected to a model.";
 };
-const rerun = (i, text, shown) => {
+const chatLog = (n) => ((this.state || {})[tKey] || []).filter((m) => m && m.text && m.text !== 'thinking...').slice(-(n || 12)).map((m) => (m.who === 'you' ? 'student: ' : 'badgerbox: ') + String(m.text).slice(0, 700)).join('\n');
+// opt: { note: what the student typed about it, newText: the question rewritten by the student }
+const rerun = (i, opt) => {
   if (!LIVE || !API) return;
+  opt = opt || {};
   this.setState({ retry: 'busy' });
-  const req = RUN.request || {};
-  API.solveOne({ tab: req.tab, cls: req.cls, text: text }).then((res) => {
+  const q0 = QL[i];
+  API.solveAgain({ number: numOf(i), text: opt.newText || q0.text, answer: q0.ans, note: opt.note || '', chat: chatLog(10) }, this.ctx || []).then((res) => {
     const run = API.lastRun();
     if (!run || !run.questions || !run.questions[i]) return;
     if (res && res.source === 'model' && res.questions && res.questions[0]) {
-      const nq = Object.assign({}, res.questions[0], { number: run.questions[i].number, file: run.questions[i].file, place: run.questions[i].place || res.questions[0].place || null, anchor: run.questions[i].anchor || res.questions[0].anchor || null, text: shown || text || run.questions[i].text });
+      const old = run.questions[i];
+      const nq = Object.assign({}, res.questions[0], { number: old.number, file: old.file, place: old.place || res.questions[0].place || null, anchor: old.anchor || res.questions[0].anchor || null, text: opt.newText || res.questions[0].text || old.text });
+      this.prevQ = Object.assign({}, this.prevQ || {}, { [i]: old });
       run.questions[i] = nq;
       API.saveRun(run);
-      this.setState({ retry: '', open: null });
-      say([{ who: 'bb', text: '#' + numOf(i) + ' re-run and re-checked 2 ways: ' + (nq.sure ? 'both match, so it is now [\u2713].' : 'still not sure. ' + (nq.flag || '')) }]);
+      this.setState({ retry: '', open: null, undoTick: ((this.state || {}).undoTick || 0) + 1 });
+      say([{ who: 'bb', text: '#' + numOf(i) + ' worked out again and re-checked 2 ways: ' + (nq.sure ? 'both match, so it is [✓].' : 'still not sure. ' + (nq.flag || '')) + (String(nq.ans) === String(old.ans) ? ' same answer as before.' : ' the answer changed. press undo to go back to the old one.') }]);
     } else {
       this.setState({ retry: '' });
       say([{ who: 'bb', text: 'could not re-run it: ' + ((res && res.error) || 'no reply from the model') }]);
     }
   });
+};
+const undoRun = (i) => {
+  const old = (this.prevQ || {})[i]; const run = API && API.lastRun();
+  if (!old || !run || !run.questions || !run.questions[i]) return;
+  const now = run.questions[i];
+  run.questions[i] = old;
+  API.saveRun(run);
+  this.prevQ = Object.assign({}, this.prevQ, { [i]: now });
+  this.setState({ open: null, undoTick: ((this.state || {}).undoTick || 0) + 1 });
+  say([{ who: 'bb', text: '#' + numOf(i) + ' is back to the version before. press undo again to switch back.' }]);
 };
 const tlReply = (q) => {
   const t = q.toLowerCase();
@@ -663,13 +678,18 @@ const liveAsk = (clean, context, fallback) => {
   say([{ who: 'you', text: clean }, { who: 'bb', text: 'thinking...' }]);
   this.setState({ asking: ((this.state || {}).asking || 0) + 1 });
   const cx = ctxSend();
-  API.ask({ question: clean, context: context, cls: (RUN.request || {}).cls, files: cx.files, contextText: cx.contextText,
+  const history = chatLog(12);
+  API.loadPayload().then((p0) => {
+  const base = ((p0 && p0.files) || []).slice(0, 6).map((f) => ({ type: f.type, url: f.url }));
+  API.ask({ question: clean, context: context, cls: (RUN.request || {}).cls, files: base.concat(cx.files).slice(0, 10), contextText: cx.contextText, hasCtx: cx.files.length > 0,
+    assignmentText: (p0 && p0.text) || '', history: history,
     subject: RUN.subject, tab: (RUN.request || {}).tab,
     others: QL.map((q, i) => '#' + numOf(i) + ' ' + q.text + ' => ' + q.ans).join('\n') }).then((res) => {
     const t = ((this.state || {})[tKey] || []).slice();
     t[t.length - 1] = { who: 'bb', text: res && res.source === 'model' ? res.answer : (res && res.error ? 'could not answer: ' + res.error : fallback(clean)) };
     this.setState({ [tKey]: t, asking: Math.max(0, ((this.state || {}).asking || 0) - 1), redir: (res && res.kind === 'redirect' && res.tab) ? { tab: res.tab, text: clean } : null });
     scrollThread();
+  });
   });
 };
 const pend = s.pend || [];
@@ -746,6 +766,7 @@ const delQ = () => {
   run.tldr = null;
   API.saveRun(run);
   this.undoQ = { q: gone, at: cur, label: label };
+  this.prevQ = {};
   this.setState(Object.assign(reKey(cur, -1), { q: Math.max(0, Math.min(cur, run.questions.length - 1)), open: null, editQ: false, undoOn: true, tlState: '' }));
   say([{ who: 'bb', text: label + ' deleted. it is gone from the walkthrough, the completed worksheet and the downloads. press "undo delete" to bring it back.' }]);
 };
@@ -765,7 +786,7 @@ const saveQ = () => {
   this.setState({ editQ: false });
   if (t === String(Q.text).trim()) return;
   say([{ who: 'bb', text: 'question #' + numOf(cur) + ' changed. working it out again...' }]);
-  rerun(cur, t, t);
+  rerun(cur, { newText: t });
 };
 const busyKind = s.busy || (s.asking ? 'ask' : '') || (s.retry === 'busy' ? 'retry' : '') || ((!!s.tl && !s.sheet && s.tlState === 'busy') ? 'tl' : '') || (s.reading ? 'read' : '');
 const SAMPLE_TL = {
@@ -835,7 +856,7 @@ const ask = (q) => {
   }
   const typing = !!(s.typing && flagNow);
   this.setState({ asked: '', typing: false });
-  if (LIVE && typing) { say([{ who: 'you', text: clean }]); rerun(cur, clean); return; }
+  if (LIVE && typing) { say([{ who: 'you', text: clean }]); rerun(cur, { note: clean }); return; }
   if (!typing && API && LIVE) { liveAsk(clean, { text: Q.text, answer: Q.ans, steps: Q.steps }, replyFor); return; }
   say([{ who: 'you', text: clean }, { who: 'bb', text: typing ? 'got it. once badgerbox is live, #3 gets re-run and re-checked from what you typed.' : replyFor(clean) }]);
 };
@@ -1000,7 +1021,7 @@ const openTl = () => {
 };
 const stepsText = Q.steps.map((d, i) => 'step ' + (i + 1) + '  ' + d.text + '  ' + d.result).join('\n') + '\nanswer  ' + Q.ans;
 const pickFixSample = (v) => { this.setState({ fix: v, open: null, retry: '' }); say([{ who: 'bb', text: '#3 re-run with ' + (v === '32' ? '32.0' : '22.0') + ' g and re-checked 2 ways. both match, so it is now [✓].' }]); };
-const retry = () => { if (LIVE) { rerun(cur, Q.text); return; } this.setState({ retry: 'busy' }); later(() => this.setState({ retry: 'done' }), 1600); };
+const retry = () => { if (LIVE) { rerun(cur); return; } this.setState({ retry: 'busy' }); later(() => this.setState({ retry: 'done' }), 1600); };
 const typeOut = () => { this.setState({ typing: true }); const ta = document.getElementById('bb-ask'); if (ta) ta.focus(); };
 return {
   accent: accent,
@@ -1150,6 +1171,11 @@ return {
   thread: thread.map((m) => ({ text: (m.who === 'you' ? '> ' : '') + m.text, color: m.who === 'you' ? '#FFFFFF' : '#BDBDBD', border: m.who === 'you' ? '#5A5A5A' : '#FFFFFF' })),
   chips: ['explain it simpler', 'why step ' + stepAsk + '?', 'another example', 'check my answer'].map((c) => ({ text: c, ask: () => ask(c) })),
   copyAnsLabel: s.copiedAns ? 'copied' : 'copy',
+  canRetry: LIVE,
+  retryLabel: s.retry === 'busy' ? 'working...' : 'retry',
+  onRetryQ: () => { if (s.retry !== 'busy' && !s.busy) retry(); },
+  canUndoQ: LIVE && !!(this.prevQ || {})[cur] && s.retry !== 'busy',
+  onUndoQ: () => undoRun(cur),
   onCopyAns: () => { const t = (flagNow && !LIVE) ? '65.9 g of CO₂ if the mass is 22.0 g, 95.8 g if it is 32.0 g' : Q.ans; try { navigator.clipboard && navigator.clipboard.writeText(String(t)); } catch (err) {} flash('copiedAns', 2000); },
   copyAllLabel: s.copiedAll ? 'copied' : 'copy answers',
   onCopyAll: () => { const all = QL.map((q, i) => numOf(i) + '. ' + ((isFlag(i) && !LIVE) ? '65.9 g or 95.8 g' : q.ans) + (isFlag(i) ? '  (not sure)' : '')).join('\n'); try { navigator.clipboard && navigator.clipboard.writeText(all); } catch (err) {} flash('copiedAll', 2500); },

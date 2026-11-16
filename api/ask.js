@@ -8,6 +8,10 @@ const SYSTEM = `You are badgerbox, answering a student's follow-up question abou
 Answer in plain lowercase-friendly language, 1 to 5 short sentences, or a short worked example if they ask
 for one. Refer to steps by number. If they paste their own answer to check, say which step it went off at.
 
+The assignment itself (its pictures and text) and the conversation so far are given to you. Use them to work out
+what the student means, even when the message is short ("why that one?", "use the other word"). Never say that
+no worksheet, file or question was attached: if something is truly missing, ask one specific question about it.
+
 This chat is only for the assignment in front of the student. Before answering, sort the message:
 - "answer": it is about this problem, another question on the assignment, the assignment's subject or the
   skills it practises, the tl;dr, or the files the student attached. Small talk that leads back to the work
@@ -32,7 +36,7 @@ export default async function handler(req, res) {
   if (!gate.ok) { res.status(200).json({ source: 'error', error: gate.error }); return; }
   const body = readBody(req);
   const ctx = body.context || {};
-  const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 8);
+  const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 10);
   const steps = (ctx.steps || []).map((s, i) => 'step ' + (i + 1) + ': ' + s.text + ' -> ' + s.result).join('\n');
   const prompt = [
     'The assignment\'s subject: ' + String(body.subject || 'not given').slice(0, 80) + '. Its badgerbox tab: ' + String(body.tab || 'auto').slice(0, 20) + '.',
@@ -41,8 +45,10 @@ export default async function handler(req, res) {
     'The worked answer: ' + String(ctx.answer || ''),
     steps ? 'The steps:\n' + steps : '',
     body.others ? 'The rest of the assignment, for context:\n' + String(body.others).slice(0, 12000) : '',
+    body.assignmentText ? 'The assignment as the student gave it (text):\n' + String(body.assignmentText).slice(0, 12000) : '',
+    body.history ? 'The conversation so far (oldest first):\n' + String(body.history).slice(0, 8000) : '',
     body.contextText ? 'Reference material the student added:\n' + String(body.contextText).slice(0, 20000) : '',
-    blocks.length ? 'The student also attached ' + blocks.length + ' reference file' + (blocks.length === 1 ? '' : 's') + ' (above). Use them.' : '',
+    blocks.length ? 'Attached above: ' + blocks.length + ' picture' + (blocks.length === 1 ? '' : 's') + ' or file' + (blocks.length === 1 ? '' : 's') + ' (the assignment' + (body.contextText || body.hasCtx ? ', then anything the student added in the chat' : '') + '). Use them.' : '',
     'The student asks: ' + String(body.question || '').slice(0, 4000)
   ].filter(Boolean).join('\n\n');
   try {
