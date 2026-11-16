@@ -350,10 +350,10 @@ o   o
 <sc-if value="{{ autoShown }}" hint-placeholder-val="{{ false }}">
 <div id="bb-auto-panel" style="margin-top: 12px; padding: 12px 2ch; border: 2px solid {{accent}}; color: #BDBDBD">
 <div style="color: #FFFFFF; font-weight: 700">&#9889; auto mode &middot; one click from Google Classroom</div>
-<div style="margin-top: 4px; max-width: 72ch">turns the homework open on your screen into a badgerbox run with one click &mdash; no screenshot, no copy-paste. it reads the text on the page (Google Classroom, Google Docs), so a photo worksheet still uses paste.</div>
+<div style="margin-top: 4px; max-width: 72ch">turns the homework open on your screen into a badgerbox run with one click &mdash; no screenshot, no copy-paste. it reads the text on the page (Google Classroom, most websites), or just the part you highlighted. Google Docs and photo worksheets still need a screenshot.</div>
 <div style="margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 1ch"><span style="color: #8C8C8C">drag this to your bookmarks bar once:</span><a class="bb-drag" draggable="true" href="{{ bookmarklet }}" onClick="{{ onFastNoop }}" style="display: inline-block; padding: 2px 1ch; border: 1px solid #FFFFFF; color: #FFFFFF; text-decoration: none; font-weight: 700; white-space: pre">&#9113; badgerbox</a><span style="color: #8C8C8C">then click it on any assignment</span></div>
 <pre style="margin: 8px 0 0 0; padding: 8px 1ch; background: #0A0A0A; border: 1px solid #303030; color: #BDBDBD; font-family: inherit; font-size: 13px; line-height: 18px; white-space: pre-wrap; word-break: break-all">{{ bookmarklet }}</pre>
-<div style="margin-top: 8px; color: #8C8C8C">heads up: some school Chromebooks turn off bookmarklets. if it does nothing, use paste instead. (badgerbox.app is a placeholder address until the site is live.)</div>
+<div style="margin-top: 8px; color: #8C8C8C">{{ fastNote }}</div>
 </div>
 </sc-if>
 <sc-if value="{{ showIntro }}" hint-placeholder-val="{{ true }}">
@@ -590,6 +590,15 @@ class Component extends DCLogic {
 componentDidMount() {
   try { const j = JSON.parse(localStorage.getItem('bb-settings') || 'null'); if (j && typeof j === 'object') this.setState(j); } catch (err) {}
   this.loaded = true;
+  try {
+    // text sent in by the bookmark: app.html#in=<the page's text>
+    const hm = /^#in=(.*)$/s.exec(location.hash || '');
+    if (hm) {
+      const sent = decodeURIComponent(hm[1]).slice(0, 6000).trim();
+      history.replaceState(null, '', location.pathname + location.search);
+      if (sent) sessionStorage.setItem('bb-prefill', JSON.stringify({ tab: 'auto', text: sent }));
+    }
+  } catch (err) {}
   try {
     const pf = JSON.parse(sessionStorage.getItem('bb-prefill') || 'null'); sessionStorage.removeItem('bb-prefill');
     const ti = pf ? ['auto', 'math', 'writing', 'reading', 'science', 'social', 'language', 'code', 'online'].indexOf(pf.tab) : -1;
@@ -991,7 +1000,8 @@ const addFiles = (list) => {
   this.setState({ files: next, badFile: bad, tried: false, dragging: false, picked: null, fileNote: over ? '3 files max. remove one to add another.' : '' });
 };
 const groups = tab.opts.map((g) => ({ label: g.label, choices: g.choices, k: tab.id + '.' + g.key })).concat([{ label: OUTPUT.label, choices: OUTPUT.choices, k: OUTPUT.key }, { label: 'give back', choices: ['same as i gave it', 'slides', 'docs', 'pdf'], k: 'give' }]);
-const bookmarklet = "javascript:(function(){var s=''+(window.getSelection?window.getSelection():'');var t=s.length>20?s:(document.body?document.body.innerText:'').slice(0,6000);window.open('https://badgerbox.app/in#'+encodeURIComponent(t.trim()),'_blank');})();";
+const bbHome = /^https?:/.test(location.protocol) ? location.origin : 'https://badgerbox.app';
+const bookmarklet = "javascript:(function(){var s=''+(window.getSelection?window.getSelection():'');var t=s.length>20?s:(document.body?document.body.innerText:'');window.open('" + bbHome + "/app.html#in='+encodeURIComponent(t.trim().slice(0,6000)),'_blank');})();";
 return {
   accent: accent,
   tabId: tab.id,
@@ -1017,6 +1027,7 @@ return {
   onToggleFast: () => this.setState({ fast: !s.fast }),
   onFastNoop: (e) => { e.preventDefault(); },
   bookmarklet: bookmarklet,
+  fastNote: 'show your bookmarks bar first (Ctrl+Shift+B). the bookmark opens badgerbox at ' + bbHome.replace(/^https?:\/\//, '') + (/localhost|127\.0\.0\.1/.test(bbHome) ? ', so it works on this computer while badgerbox is running.' : /trycloudflare/.test(bbHome) ? '. a share link changes every time, so drag it again when you get a new link.' : '.') + ' some school Chromebooks turn bookmarks like this off: if nothing happens, use paste.',
   isWriting: tab.id === 'writing',
   showSettings: showSettings,
   settingsOpen: showSettings ? 'true' : 'false',

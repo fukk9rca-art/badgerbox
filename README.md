@@ -113,5 +113,6 @@ chemistry sample, so the site always works.
   The model's placement is approximate, which is why answers can be dragged. A PDF comes back as a PDF made
   of page images (the text in it can no longer be selected).
 - Phone layout for the main screen and walkthrough (the landing page already works on phones).
-- The bookmarklet points at the placeholder `badgerbox.app`.
+- The auto mode bookmark opens badgerbox at whatever address you dragged it from (`localhost:3000` on your own
+  computer). It cannot read Google Docs, which draws its text as a picture.
 - `[YOUR PRICE]` on the landing page.
