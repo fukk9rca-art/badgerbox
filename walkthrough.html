@@ -697,7 +697,7 @@ const liveAsk = (clean, context, fallback) => {
   const base = ((p0 && p0.files) || []).slice(0, 6).map((f) => ({ type: f.type, url: f.url }));
   API.ask({ question: clean, context: context, cls: (RUN.request || {}).cls, files: base.concat(cx.files).slice(0, 10), contextText: cx.contextText, hasCtx: cx.files.length > 0,
     assignmentText: (p0 && p0.text) || '', history: history,
-    subject: RUN.subject, tab: (RUN.request || {}).tab,
+    subject: RUN.subject, tab: (RUN.request || {}).tab, myVoice: !!(RUN.request || {}).myVoice,
     others: QL.map((q, i) => '#' + numOf(i) + ' ' + q.text + ' => ' + q.ans).join('\n') }).then((res) => {
     const t = ((this.state || {})[tKey] || []).slice();
     t[t.length - 1] = { who: 'bb', text: res && res.source === 'model' ? res.answer : (res && res.error ? 'could not answer: ' + res.error : fallback(clean)) };

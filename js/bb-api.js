@@ -208,6 +208,7 @@
     status: status,
     isLive: function () { return status.live; },
     serverStale: function () { return !!status.stale; },
+    voiceTabs: function () { return status.voiceTabs || null; },
     readFile: readFile,
     /* Ask the backend whether an access key is valid. Offline (no backend), only the test key works. */
     checkKey: function (key) {
@@ -226,7 +227,7 @@
         res = res || { source: 'error', error: 'no reply' };
         res.seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
         res.meta = (payload && payload.meta) || {};
-        res.request = { tab: payload && payload.tab, cls: payload && payload.cls };
+        res.request = { tab: payload && payload.tab, cls: payload && payload.cls, myVoice: !!(payload && payload.myVoice) };
         var keep = Promise.resolve();
         if (res.source === 'model') {
           res.id = 'r' + Date.now();
@@ -258,7 +259,7 @@
         var cx = flatten((ctxItems || []).map(function (c, i) { return { name: c.name, data: c.data, ref: true, no: maxNo(p0.fileInfo) + i + 1 }; }), base.filter(isImg).length);
         var run = load(RUN_KEY) || {}, req = run.request || {};
         return post('api/solve', {
-          tab: p0.tab || req.tab, cls: p0.cls || req.cls, answers: p0.answers, outputs: p0.outputs,
+          tab: p0.tab || req.tab, cls: p0.cls || req.cls, answers: p0.answers, outputs: p0.outputs, options: p0.options, voice: p0.voice, myVoice: !!(p0.myVoice || req.myVoice),
           files: base.concat(cx.files).slice(0, 18),
           text: [p0.text || '', cx.text || ''].filter(Boolean).join('\n\n'),
           fileInfo: (p0.fileInfo || []).map(function (f) { return { n: f.n, name: f.name, role: 'reference', origin: f.origin, pages: f.pages }; }).concat(cx.fileInfo),
@@ -389,6 +390,7 @@
   fetch('api/status').then(function (r) { return r.json(); }).then(function (j) {
     status.live = !!(j && j.live);
     status.model = (j && j.model) || '';
+    status.voiceTabs = (j && Array.isArray(j.voiceTabs)) ? j.voiceTabs : null;
     status.checked = true;
     // the pages are always the newest files, but a server started before an update still runs old code
     status.stale = !!j && !(Number(j.v) >= NEED_V);
