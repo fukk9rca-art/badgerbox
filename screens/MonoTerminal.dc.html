@@ -827,7 +827,6 @@ const build = (st0) => {
   const bAuto = bTab.id === 'auto';
   const bClasses = bAuto ? [] : tabClasses(st);
   if (bAuto || !bClasses.length || ans.class) qs.push({ id: 'class', text: bAuto ? 'what class is this for? used for this run only.' : 'what class is this for? it works the way that class does.', eg: ASK_EG[bTab.id] });
-  if (essay) qs.push({ id: 'draft', text: 'what do you want to say? paste your rough draft or your ideas (bullet points are fine). it builds from yours.', eg: 'paste your draft or ideas here, or press enter to skip' });
   if (essay && bVoice === 0) qs.push({ id: 'voice', text: 'want it to sound like you? paste a few sentences you wrote.', eg: 'e.g. paste a paragraph from an old essay' });
   if (essay && bTab.id !== 'writing') qs.push({ id: 'len', text: 'how long should it be? (a paragraph, a page, a word count)', eg: 'e.g. 5 paragraphs, about 600 words' });
   if (bTab.id === 'reading' && !bDocs.length && bText.length < 200) qs.push({ id: 'passage', text: 'paste the passage these questions are about.', eg: 'e.g. paste the whole passage here' });
@@ -846,7 +845,6 @@ const build = (st0) => {
     num = i + 1;
     if (a == null) { pending = asked[i]; break; }
     if (asked[i].id === 'class') lines.push(!a ? '  skipped \u00b7 using its best guess' : (ans.classSaved ? '  saved "' + String(a).slice(0, 24) + '" to the ' + bTab.id + ' tab \u00b7 won\'t ask again' : '  using "' + String(a).slice(0, 28) + '" for this run \u00b7 not saved'));
-    else if (asked[i].id === 'draft') lines.push(a ? '  building from your ' + (String(a).split(/\s+/).length > 60 ? 'draft' : 'ideas') + ' (' + String(a).split(/\s+/).length + ' words)' : '  no draft or ideas given \u00b7 writing from the prompt');
     else lines.push(a ? '  you said: ' + String(a).slice(0, 44) : '  skipped, using its best guess');
   }
   const askAt = lines.length;
@@ -1040,7 +1038,7 @@ const submit = () => {
   this.apiPending = false;
   this.live = null;
   this.apiError = '';
-  this.setState({ cancelled: false, tried: true, runTab: (this.state || {}).tab || 0, phase: reduce ? 99 : 1, answers: reduce ? { class: '', draft: '', voice: '', len: '', passage: '', blurry: '', method: '' } : {} });
+  this.setState({ cancelled: false, tried: true, runTab: (this.state || {}).tab || 0, phase: reduce ? 99 : 1, answers: reduce ? { class: '', voice: '', len: '', passage: '', blurry: '', method: '' } : {} });
   if (reduce) startApi(Object.assign({}, this.state || {}, { answers: {}, tried: true, runTab: (this.state || {}).tab || 0 }));
   toBottom();
   if (!reduce) this.later(advance, 650);

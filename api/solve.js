@@ -75,7 +75,7 @@ export default async function handler(req, res) {
   const answers = body.answers || {};
   const extra = Object.keys(answers)
     .filter((k) => answers[k] && k !== 'classSaved')
-    .map((k) => k + ': ' + String(answers[k]).slice(0, k === 'draft' ? 14000 : 2000));
+    .map((k) => k + ': ' + String(answers[k]).slice(0, 6000));
   const options = (body.options && typeof body.options === 'object') ? Object.keys(body.options).slice(0, 8).map((k) => String(k).slice(0, 30) + ': ' + String(body.options[k]).slice(0, 60)) : [];
   const voice = String(body.voice || '').trim().slice(0, 6000);
   const picked = Array.isArray(body.picked) && body.picked.length ? body.picked : null;

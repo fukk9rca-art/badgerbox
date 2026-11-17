@@ -25,7 +25,7 @@ export function loadSkills() {
   const dir = DIRS.find((d) => { try { return fs.statSync(d).isDirectory(); } catch (err) { return false; } });
   if (!dir) return [];
   try {
-    const files = fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => path.join(dir, e.name, 'SKILL.md')).filter((f) => fs.existsSync(f));
+    const files = fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory() && !/^[_.]/.test(e.name)).map((e) => path.join(dir, e.name, 'SKILL.md')).filter((f) => fs.existsSync(f));
     const stamp = files.map((f) => f + ':' + fs.statSync(f).mtimeMs).join('|');
     if (stamp !== cache.stamp) cache = { stamp, list: files.map(parse) };
     return cache.list;
