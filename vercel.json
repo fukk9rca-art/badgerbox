@@ -12,6 +12,9 @@
     "api/tldr.js": {
       "maxDuration": 30,
       "includeFiles": "skills/**"
+    },
+    "api/place.js": {
+      "maxDuration": 60
     }
   }
 }

@@ -83,7 +83,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <header style="height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 1ch; padding: 0 16px; background: {{accent}}; color: #000000; white-space: nowrap; overflow: hidden">
 <a class="bb-link" href="MonoTerminal.dc.html" style="color: #000000; text-decoration: none; white-space: pre; font-weight: 700"><span aria-hidden="true">[ </span>&lt; back<span aria-hidden="true"> ]</span></a>
 <span aria-hidden="true">──</span>
-<span style="font-weight: 700">badgerbox 0.1.23</span>
+<span style="font-weight: 700">badgerbox 0.1.29</span>
 <span aria-hidden="true">──</span>
 <span>{{ runMeta }}</span>
 <span aria-hidden="true" style="flex-grow: 1; min-width: 0; overflow: hidden">────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
@@ -886,7 +886,44 @@ if (LIVE && API && !this.dragA) {
   if (sig !== this.uiSig) { this.uiSig = sig; const run = API.lastRun(); if (run) { run.ui = ui; API.saveRun(run); } }
 }
 const ansLine = (q, i) => q.ans + (isFlag(i) ? ' (?)' : '');
-const fillItems = (pi) => QL.map((q, i) => ({ q: q, i: i, pl: placeOf(q, i) })).filter((x) => x.pl && Math.min(ALLIMG.length, Math.max(1, Number(x.pl.page) || 1)) === FILES[pi].gi + 1);
+const rawItems = (pi) => QL.map((q, i) => ({ q: q, i: i, pl: placeOf(q, i) })).filter((x) => x.pl && Math.min(ALLIMG.length, Math.max(1, Number(x.pl.page) || 1)) === FILES[pi].gi + 1);
+// page shape (width / height), learned as each page picture loads
+this.dims = this.dims || {};
+const aspectOf = (pi) => { const u = FILES[pi].url; if (this.dims[u] == null) { this.dims[u] = 0; loadImgDim(u).then((r) => { this.dims[u] = r || 0.773; this.forceUpdate(); }); } return this.dims[u] || 0.773; };
+const loadImgDim = (url) => new Promise((res) => { const im = new Image(); im.onload = () => res(im.naturalWidth / Math.max(1, im.naturalHeight)); im.onerror = () => res(0); im.src = url; });
+// Where each answer really goes on a page. The spot comes from the model (or from where the student dragged
+// it); this makes it readable: wide enough to sit on one line when the page has room, never off the page,
+// and never on top of another answer. Answers the student dragged stay exactly where they put them.
+const fillItems = (pi) => {
+  const items = rawItems(pi);
+  if (!items.length) return items;
+  const asp = aspectOf(pi);
+  const em = 0.021 * fillScale;                 // letter height, as a share of the page width
+  const charW = em * 0.56, lineH = em * 1.25 * asp;   // lineH as a share of the page height
+  const boxes = items.map((x) => {
+    const fixed = !!moved[x.i];
+    const lines = ansLine(x.q, x.i).split('\n');
+    const longest = lines.reduce((m, l) => Math.max(m, l.length), 1);
+    const want = Math.min(0.94, longest * charW + em);          // width that fits the text on one line
+    let px = Math.min(0.96, Math.max(0.01, Number(x.pl.x) || 0));
+    let w = Math.max(Number(x.pl.w) || 0, want, 0.15);
+    if (px + w > 0.98) { if (!fixed) px = Math.max(0.02, 0.98 - w); w = Math.max(0.15, 0.98 - px); }
+    const rows = lines.reduce((n, l) => n + Math.max(1, Math.ceil((l.length * charW) / Math.max(0.05, w - em * 0.5))), 0);
+    return { x: x, fixed: fixed, px: px, py: Math.min(0.97, Math.max(0.005, Number(x.pl.y) || 0)), w: w, h: rows * lineH };
+  });
+  const hits = (a, b) => a.px < b.px + b.w && b.px < a.px + a.w && a.py < b.py + b.h + lineH * 0.15 && b.py < a.py + a.h + lineH * 0.15;
+  const done = boxes.filter((b) => b.fixed);
+  boxes.filter((b) => !b.fixed).sort((a, b) => a.py - b.py || a.px - b.px).forEach((b) => {
+    for (let guard = 0; guard < 60; guard++) {
+      const o = done.find((d) => hits(b, d));
+      if (!o) break;
+      b.py = o.py + o.h + lineH * 0.2;          // slide down to just under the answer in the way
+    }
+    if (b.py + b.h > 0.995) b.py = Math.max(0.005, 0.995 - b.h);
+    done.push(b);
+  });
+  return boxes.map((b) => ({ q: b.x.q, i: b.x.i, pl: Object.assign({}, b.x.pl, { x: b.px, y: b.py, w: b.w }) }));
+};
 const startDrag = (i, pl) => (e) => {
   if (e.button != null && e.button !== 0) return;
   e.preventDefault();

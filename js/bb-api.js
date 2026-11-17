@@ -17,7 +17,7 @@
   var KEY_KEY = 'bb-key';
   function accessKey() { try { return localStorage.getItem(KEY_KEY) || ''; } catch (err) { return ''; } }
   var status = { live: false, model: '', checked: false, stale: false };
-  var NEED_V = 24;
+  var NEED_V = 25;
 
   function post(path, body) {
     return fetch(path, {
@@ -70,6 +70,58 @@
       all.filter(function (x) { return live.indexOf(x) === -1 && x !== id; }).forEach(function (x) { idbSet(KEEP + x, null); });
       saveLocal('bb-keep-ids', all.filter(function (x, i) { return (live.indexOf(x) !== -1 || x === id) && all.indexOf(x) === i; }));
     }).catch(function () {});
+  }
+  /* A copy of a worksheet picture with a ruler grid over it, so the model can read exact positions off it. */
+  function gridImage(url) {
+    return new Promise(function (resolve) {
+      var im = new Image();
+      im.onload = function () {
+        try {
+          var W = Math.min(1500, im.naturalWidth), H = Math.round(W * im.naturalHeight / im.naturalWidth);
+          var c = document.createElement('canvas'); c.width = W; c.height = H;
+          var g = c.getContext('2d');
+          g.drawImage(im, 0, 0, W, H);
+          var fs = Math.max(11, Math.round(W * 0.012));
+          g.font = 'bold ' + fs + 'px Arial, sans-serif'; g.textBaseline = 'top';
+          for (var k = 0; k <= 20; k++) {
+            var major = k % 2 === 0, x = Math.round(W * k / 20), y = Math.round(H * k / 20);
+            g.strokeStyle = major ? 'rgba(220,0,0,0.55)' : 'rgba(220,0,0,0.22)'; g.lineWidth = major ? 1.5 : 1;
+            g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke();
+            g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
+            if (!major) continue;
+            var label = (k / 20).toFixed(1), tw = g.measureText(label).width + 4;
+            [[Math.min(W - tw, Math.max(0, x - tw / 2)), 0], [Math.min(W - tw, Math.max(0, x - tw / 2)), H - fs - 2], [0, Math.min(H - fs - 2, Math.max(0, y - fs / 2))], [W - tw, Math.min(H - fs - 2, Math.max(0, y - fs / 2))]].forEach(function (pt) {
+              g.fillStyle = 'rgba(255,255,255,0.9)'; g.fillRect(pt[0], pt[1], tw, fs + 2);
+              g.fillStyle = '#C00000'; g.fillText(label, pt[0] + 2, pt[1] + 1);
+            });
+          }
+          resolve(c.toDataURL('image/jpeg', 0.8));
+        } catch (err) { resolve(null); }
+      };
+      im.onerror = function () { resolve(null); };
+      im.src = url;
+    });
+  }
+  /* A second look, only at where the answers go: the model gets the pages with a ruler grid and returns a
+   * spot for each answer. Its spots replace the first guess. If anything fails the first guess is kept. */
+  function placeAnswers(res, imgs) {
+    var shown = [];
+    (imgs || []).forEach(function (f, gi) { if (f && !f.ref) shown.push({ n: gi + 1, url: f.url }); });
+    shown = shown.slice(0, 8);
+    var qs = res.questions || [];
+    if (!shown.length || !qs.length) return Promise.resolve();
+    var timeout = new Promise(function (r) { setTimeout(function () { r(null); }, 90000); });
+    var job = Promise.all(shown.map(function (p) { return gridImage(p.url).then(function (u) { return u ? { n: p.n, type: 'image/jpeg', url: u } : null; }); })).then(function (pages) {
+      pages = pages.filter(Boolean);
+      if (!pages.length) return null;
+      return post('api/place', { pages: pages, items: qs.map(function (q, i) { return { i: i, number: q.number, text: q.text, answer: q.ans, page: q.place && q.place.page }; }) });
+    }).then(function (out) {
+      if (!out || out.source !== 'model' || !Array.isArray(out.places)) return;
+      var n = 0;
+      out.places.forEach(function (p) { if (qs[p.i]) { qs[p.i].place = { page: p.page, x: p.x, y: p.y, w: p.w }; n++; } });
+      res.placed = n;
+    }).catch(function () {});
+    return Promise.race([job, timeout]);
   }
   function idbGet(key) {
     return idb().then(function (db) {
@@ -236,7 +288,7 @@
           store(RUN_KEY, res);
           // keep the worksheet images for this tab only, so answers can be put back on them
           var imgs = ((payload && payload.files) || []).filter(function (f) { return f && /^image\//.test(f.type || ''); });
-          keep = idbSet(FILES_KEY, imgs).then(function () { return idbSet(ORIG_KEY, originals); }).then(function () { return idbSet(PAYLOAD_KEY, payload); }).then(function () { return idbSet(CTX_KEY, []); })
+          keep = placeAnswers(res, imgs).then(function () { window.bbApi.saveRun(res); return idbSet(FILES_KEY, imgs); }).then(function () { return idbSet(ORIG_KEY, originals); }).then(function () { return idbSet(PAYLOAD_KEY, payload); }).then(function () { return idbSet(CTX_KEY, []); })
             .then(function () { return snap(res.id); });
           var qs = res.questions || [];
           var hist = loadLocal(HIST_KEY, []);
