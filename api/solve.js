@@ -5,6 +5,7 @@
 // Two passes: the first finds and works every question, the second solves each
 // one again a different way and compares. Answers that don't match get flagged.
 import { useKey } from './_lib/keys.js';
+import { skillText } from './_lib/skills.js';
 import { MODEL, hasKey, callJson, fileBlock, classText, readBody } from './_lib/claude.js';
 
 const SOLVE_SYSTEM = `You are badgerbox, a homework walkthrough tool for high school and college students.
@@ -74,7 +75,9 @@ export default async function handler(req, res) {
   const answers = body.answers || {};
   const extra = Object.keys(answers)
     .filter((k) => answers[k] && k !== 'classSaved')
-    .map((k) => k + ': ' + String(answers[k]).slice(0, 2000));
+    .map((k) => k + ': ' + String(answers[k]).slice(0, 6000));
+  const options = (body.options && typeof body.options === 'object') ? Object.keys(body.options).slice(0, 8).map((k) => String(k).slice(0, 30) + ': ' + String(body.options[k]).slice(0, 60)) : [];
+  const voice = String(body.voice || '').trim().slice(0, 6000);
   const picked = Array.isArray(body.picked) && body.picked.length ? body.picked : null;
 
   const info = Array.isArray(body.fileInfo) ? body.fileInfo : [];
@@ -94,13 +97,15 @@ export default async function handler(req, res) {
       one.chat ? 'The conversation about this assignment so far:\n' + String(one.chat).slice(0, 6000) : '',
       'Return exactly one question in "questions": this one, with "text" as the question should read, and the same "number".'
     ].filter(Boolean).join('\n') : (picked ? 'Only do these question numbers: ' + picked.join(', ') + '.' : 'Do every question.'),
+    options.length ? 'What the student picked for this run: ' + options.join('; ') + '.' : '',
     extra.length ? 'Extra context the student gave:\n' + extra.join('\n') : '',
+    voice ? 'A sample of the student\'s own writing (for their voice only, never copy from it):\n' + voice : '',
     text ? 'The student typed:\n' + text : ''
   ].filter(Boolean).join('\n\n');
 
   try {
     const solved = await callJson({
-      system: SOLVE_SYSTEM,
+      system: SOLVE_SYSTEM + skillText(body.tab),
       content: blocks.concat([{ type: 'text', text: brief }]),
       maxTokens: 16000
     });

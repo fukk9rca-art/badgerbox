@@ -2,6 +2,7 @@
 // Body: { question, context: { text, answer, steps }, cls }
 // Reply: { source: 'model', answer } | { source: 'mock' } | { source: 'error', error }
 import { useKey } from './_lib/keys.js';
+import { skillText } from './_lib/skills.js';
 import { hasKey, callModel, classText, readBody, fileBlock, parseJson } from './_lib/claude.js';
 
 const SYSTEM = `You are badgerbox, answering a student's follow-up question about one worked homework problem.
@@ -52,7 +53,7 @@ export default async function handler(req, res) {
     'The student asks: ' + String(body.question || '').slice(0, 4000)
   ].filter(Boolean).join('\n\n');
   try {
-    const answer = await callModel({ system: SYSTEM, content: blocks.concat([{ type: 'text', text: prompt }]), maxTokens: 1500 });
+    const answer = await callModel({ system: SYSTEM + skillText(body.tab), content: blocks.concat([{ type: 'text', text: prompt }]), maxTokens: 1500 });
     let out = { kind: 'answer', tab: null, answer: answer.trim() };
     try {
       const j = parseJson(answer);

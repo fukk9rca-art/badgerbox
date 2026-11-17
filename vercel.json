@@ -1,8 +1,17 @@
 {
   "cleanUrls": true,
   "functions": {
-    "api/solve.js": { "maxDuration": 60 },
-    "api/ask.js": { "maxDuration": 30 },
-    "api/tldr.js": { "maxDuration": 30 }
+    "api/solve.js": {
+      "maxDuration": 60,
+      "includeFiles": "skills/**"
+    },
+    "api/ask.js": {
+      "maxDuration": 30,
+      "includeFiles": "skills/**"
+    },
+    "api/tldr.js": {
+      "maxDuration": 30,
+      "includeFiles": "skills/**"
+    }
   }
 }

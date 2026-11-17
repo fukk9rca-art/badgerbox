@@ -67,6 +67,11 @@ It sends at most 3 files (the screenshot plus two attachments). It only talks to
 Drive and to badgerbox itself (`localhost`, or a share link set under "badgerbox address"). School-managed
 Chromebooks usually block extensions.
 
+## Skills
+
+The `skills/` folder holds instruction files that badgerbox adds to what it tells the AI, per subject tab.
+It ships empty apart from an example. See `skills/README.md` for how to add one.
+
 ## Access keys and daily limits
 
 `keys.json` in this folder lists who can get in and how much they can use per day (copy
@@ -112,6 +117,7 @@ Chromebooks usually block extensions.
 | `api/status.js` | Tells the pages whether a model is connected. |
 | `api/key.js`, `api/_lib/keys.js` | Access keys and per-key daily limits. |
 | `extension/` | Browser extension: one button sends the open assignment (screenshot, attached files, instructions) to badgerbox. |
+| `skills/`, `api/_lib/skills.js` | Your own instruction files per subject tab, and the code that loads them. |
 | `start-badgerbox.bat` | Double-click starter for Windows. |
 | `share-badgerbox.bat`, `tools/share.mjs` | Starts badgerbox and opens a private link to this computer for friends. |
 | `add-friend-key.bat`, `tools/addkey.mjs` | Makes an access key with a daily limit. |
