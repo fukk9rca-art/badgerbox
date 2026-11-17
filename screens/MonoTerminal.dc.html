@@ -68,6 +68,10 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 .bb-work-red{animation:bb-red 2.1s steps(1) infinite}
 .bb-work-scan{animation:bb-sweep 2.4s linear infinite}
 @media (prefers-reduced-motion: reduce){.bb-work-a,.bb-work-b,.bb-eq,.bb-work-scan,.bb-work-red{animation:none}}
+@keyframes bb-fold{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.bb-fold{animation:bb-fold 160ms steps(6) both}
+@media (prefers-reduced-motion: reduce){.bb-fold{animation:none}}
+#bb-todo-in:focus{outline:2px solid #FFFFFF;outline-offset:0}
 .bb-side-btn:hover{background:#161616 !important}
 .bb-side-btn:focus-visible{outline:2px solid #FFFFFF;outline-offset:-2px}
 @media (prefers-reduced-motion: reduce){.bb-logo{animation:none}}
@@ -541,24 +545,58 @@ o   o
 </sc-if>
 </form>
 </div>
-<aside class="bb-side" aria-label="past runs" style="flex: 0 0 36ch; min-width: 0; align-self: stretch; overflow-y: auto; padding-bottom: 24px">
-<div style="border: 1px solid #5A5A5A; background: #0B0B0B">
-<button type="button" class="bb-side-btn" aria-expanded="{{ sideOpen }}" onClick="{{ onToggleSide }}" style="display: flex; align-items: center; gap: 1ch; width: 100%; min-height: 44px; box-sizing: border-box; padding: 6px 1ch; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">
-<span style="font-weight: 700">past runs</span>
-<span style="color: #8C8C8C">{{ sideCount }}</span>
-<span aria-hidden="true" style="margin-left: auto; width: 2ch; text-align: center; font-weight: 700">{{ sideCaret }}</span>
-</button>
-<sc-if value="{{ sideShown }}" hint-placeholder-val="{{ false }}">
-<div style="padding: 4px 1ch 8px 1ch; border-top: 1px dashed #5A5A5A">
-<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
-<sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
-<li><button type="button" class="bb-side-btn" onClick="{{ h.open }}" style="display: block; width: 100%; box-sizing: border-box; padding: 6px 4px; background: transparent; color: #FFFFFF; border: 0; border-bottom: 1px solid #262626; border-radius: 0; text-align: left; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ h.title }}</span><span style="display: block; color: #8C8C8C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ h.when }} · {{ h.tab }} · {{ h.meta }}</span></button></li>
+<aside class="bb-side" aria-label="to do list and past runs" style="position: relative; flex: 0 0 38ch; min-width: 0; align-self: stretch; overflow: hidden; padding-bottom: 24px">
+<section aria-labelledby="bb-todo-h" style="display: flex; flex-direction: column; max-height: 100%; box-sizing: border-box; border: 1px solid #FFFFFF; background: #0B0B0B">
+<div style="display: flex; align-items: center; gap: 1ch; min-height: 44px; padding: 0 1ch; border-bottom: 1px solid #5A5A5A">
+<h2 id="bb-todo-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">to do</h2>
+<span style="color: #8C8C8C">{{ todoCount }}</span>
+<button type="button" class="bb-side-btn" aria-expanded="{{ sideOpen }}" aria-controls="bb-past" onClick="{{ onToggleSide }}" style="margin-left: auto; min-height: 32px; padding: 0 1ch; white-space: pre; border: 1px solid #5A5A5A !important; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">past runs {{ sideCount }} &gt;</button>
+</div>
+<div style="display: flex; align-items: center; gap: 1ch; padding: 8px 1ch; border-bottom: 1px dashed #5A5A5A">
+<span aria-hidden="true" style="color: #8C8C8C">+</span>
+<input id="bb-todo-in" type="text" maxlength="140" autocomplete="off" spellcheck="false" aria-label="add something to do" placeholder="add an assignment, then enter" onKeyDown="{{ onTodoKey }}" style="flex: 1 1 auto; min-width: 0; height: 32px; box-sizing: border-box; padding: 0 4px; background: #000000; color: #FFFFFF; border: 1px solid #5A5A5A; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px">
+</div>
+<ul style="list-style: none; margin: 0; padding: 0 1ch; overflow-y: auto; flex: 1 1 auto; min-height: 0">
+<sc-for list="{{ todos }}" as="t" hint-placeholder-count="3">
+<li style="display: flex; align-items: flex-start; gap: 1ch; padding: 6px 0; border-bottom: 1px solid #262626">
+<button type="button" class="bb-side-btn" role="checkbox" aria-checked="{{ t.checked }}" aria-label="{{ t.aria }}" onClick="{{ t.toggle }}" style="flex-shrink: 0; padding: 0; white-space: pre; font-weight: 700; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">{{ t.box }}</button>
+<span style="flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; color: {{ t.fg }}; text-decoration: {{ t.deco }}">{{ t.text }}</span>
+<button type="button" class="bb-side-btn" aria-label="{{ t.dropAria }}" onClick="{{ t.drop }}" style="flex-shrink: 0; padding: 0 4px; color: #8C8C8C !important; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">x</button>
+</li>
 </sc-for>
 </ul>
-<div style="color: #8C8C8C; padding: 4px">{{ sideNote }}</div>
-</div>
+<div style="display: flex; align-items: center; gap: 1ch; padding: 6px 1ch; color: #8C8C8C">
+<span style="flex: 1 1 auto; min-width: 0">{{ todoNote }}</span>
+<sc-if value="{{ todoHasDone }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="bb-side-btn" onClick="{{ onTodoClear }}" style="padding: 0 4px; white-space: pre; color: #BDBDBD !important; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">[ clear done ]</button>
 </sc-if>
 </div>
+</section>
+<sc-if value="{{ sideShown }}" hint-placeholder-val="{{ false }}">
+<section id="bb-past" class="bb-fold" aria-labelledby="bb-past-h" style="position: absolute; left: 0; right: 0; top: 0; bottom: 24px; display: flex; flex-direction: column; box-sizing: border-box; border: 1px solid #FFFFFF; background: #0B0B0B">
+<div style="display: flex; align-items: center; gap: 1ch; min-height: 44px; padding: 0 1ch; border-bottom: 1px solid #5A5A5A">
+<button type="button" class="bb-side-btn" onClick="{{ onToggleSide }}" aria-label="close past runs and go back to the to do list" style="min-height: 32px; padding: 0 1ch; white-space: pre; border: 1px solid #5A5A5A !important; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">&lt; to do</button>
+<h2 id="bb-past-h" style="margin: 0; font-size: 16px; line-height: 24px; font-weight: 700">past runs</h2>
+<span style="color: #8C8C8C">{{ sideCount }}</span>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0 1ch; overflow-y: auto; flex: 1 1 auto; min-height: 0">
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+<li style="display: flex; align-items: stretch; border-bottom: 1px solid #262626">
+<button type="button" class="bb-side-btn" onClick="{{ h.open }}" style="display: block; flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: 6px 4px; text-align: left; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ h.title }}</span><span style="display: block; color: #8C8C8C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ h.when }} · {{ h.tab }} · {{ h.meta }}</span></button>
+<sc-if value="{{ h.canDrop }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="bb-side-btn" aria-label="{{ h.dropAria }}" title="remove this run" onClick="{{ h.drop }}" style="flex-shrink: 0; padding: 0 1ch; color: #8C8C8C !important; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">x</button>
+</sc-if>
+</li>
+</sc-for>
+</ul>
+<div style="display: flex; align-items: center; gap: 1ch; padding: 6px 1ch; color: #8C8C8C">
+<span style="flex: 1 1 auto; min-width: 0">{{ sideNote }}</span>
+<sc-if value="{{ sideHas }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="bb-side-btn" onClick="{{ onSideClear }}" style="padding: 0 4px; white-space: pre; color: #BDBDBD !important; background: transparent; color: #FFFFFF; border: 0; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; cursor: pointer">{{ sideClearLabel }}</button>
+</sc-if>
+</div>
+</section>
+</sc-if>
 </aside>
 </main>
 
@@ -589,7 +627,7 @@ o   o
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
 class Component extends DCLogic {
 componentDidMount() {
-  try { const j = JSON.parse(localStorage.getItem('bb-settings') || 'null'); if (j && typeof j === 'object') this.setState(j); } catch (err) {}
+  try { const j = JSON.parse(localStorage.getItem('bb-settings') || 'null'); if (j && typeof j === 'object') { delete j.side; this.setState(j); } } catch (err) {}
   this.loaded = true;
   try {
     // text sent in by the bookmark: app.html#in=<the page's text>
@@ -696,7 +734,7 @@ const growH = s.growH || 0;
 const growW = s.growW || 0;
 const clampG = (v, m) => Math.round(Math.min(m, Math.max(0, v)));
 if (this.loaded) {
-  const keepStr = JSON.stringify({ tab: s.tab, classes: s.classes, cls: s.cls, opt: s.opt, outs: s.outs, voice: s.voice, saveCls: s.saveCls, side: s.side });
+  const keepStr = JSON.stringify({ tab: s.tab, classes: s.classes, cls: s.cls, opt: s.opt, outs: s.outs, voice: s.voice, saveCls: s.saveCls });
   if (keepStr !== this.keepStr) { this.keepStr = keepStr; try { localStorage.setItem('bb-settings', keepStr); } catch (err) {} }
 }
 const tabIdx = s.tab || 0;
@@ -1007,8 +1045,11 @@ const WORK_MSGS = ['reading it', 'finding every question', 'working each one out
 const realHist = (API && API.history) ? API.history() : [];
 const fmtWhen = (iso) => { try { const d = new Date(iso); const h = d.getHours(); return ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][d.getMonth()] + ' ' + String(d.getDate()).padStart(2, '0') + ' ' + ((h % 12) || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + (h < 12 ? 'am' : 'pm'); } catch (err) { return ''; } };
 const goWalk = () => { window.location.href = 'walkthrough.html'; };
-const histItems = realHist.length ? realHist.map((h) => ({ when: fmtWhen(h.at), tab: h.tab || 'auto', title: h.title || 'assignment', meta: h.n + ' question' + (h.n === 1 ? '' : 's') + (h.flags ? ' · ' + h.flags + ' [!]' : ''), open: () => { if (API.openRun(h.id)) goWalk(); } }))
+const histItems = realHist.length ? realHist.map((h) => ({ when: fmtWhen(h.at), tab: h.tab || 'auto', title: h.title || 'assignment', meta: h.n + ' question' + (h.n === 1 ? '' : 's') + (h.flags ? ' · ' + h.flags + ' [!]' : ''), open: () => { if (API.openRun(h.id)) goWalk(); },
+    canDrop: true, dropAria: 'remove ' + (h.title || 'this run') + ' from past runs', drop: () => { API.removeRun(h.id); this.setState({ histTick: (s.histTick || 0) + 1, clearAsk: false }); } }))
   : (LIVE_ON || s.cleared ? [] : HIST.map((h) => Object.assign({}, h, { open: goWalk })));
+const todoList = (API && API.todos) ? API.todos() : (s.todoMem || []);
+const setTodos = (list) => { if (API && API.saveTodos) API.saveTodos(list); this.setState({ todoMem: list, todoTick: (s.todoTick || 0) + 1 }); };
 const cancel = () => {
   this.runId = (this.runId || 0) + 1;
   this.apiPending = false;
@@ -1137,8 +1178,27 @@ return {
   sideShown: !!s.side,
   sideCaret: s.side ? '\u25be' : '\u25b8',
   sideCount: histItems.length ? '(' + histItems.length + ')' : '',
-  onToggleSide: () => this.setState({ side: !s.side }),
-  sideNote: histItems.length ? (realHist.length ? 'click one to reopen it' : 'sample data') : 'nothing yet. finished runs show up here.',
+  onToggleSide: () => this.setState({ side: !s.side, clearAsk: false }),
+  sideNote: s.clearAsk ? 'remove all ' + histItems.length + '? this can\'t be undone.' : histItems.length ? (realHist.length ? 'click one to reopen it' : 'sample data') : 'nothing yet. finished runs show up here.',
+  sideHas: realHist.length > 0,
+  sideClearLabel: s.clearAsk ? '[ yes, clear all ]' : '[ clear all ]',
+  onSideClear: () => { if (!s.clearAsk) { this.setState({ clearAsk: true }); return; } if (API && API.clearHistory) API.clearHistory(); this.setState({ clearAsk: false, cleared: true, histTick: (s.histTick || 0) + 1 }); },
+  todos: todoList.map((t) => ({ text: t.text, box: t.done ? '[x]' : '[ ]', checked: t.done ? 'true' : 'false', aria: (t.done ? 'done: ' : 'not done: ') + t.text, fg: t.done ? '#8C8C8C' : '#FFFFFF', deco: t.done ? 'line-through' : 'none',
+    toggle: () => setTodos(todoList.map((x) => x.id === t.id ? Object.assign({}, x, { done: !x.done }) : x)),
+    dropAria: 'remove ' + t.text, drop: () => setTodos(todoList.filter((x) => x.id !== t.id)) })),
+  todoCount: todoList.length ? '(' + todoList.filter((t) => !t.done).length + ' left)' : '',
+  todoNote: todoList.length ? (todoList.every((t) => t.done) ? 'all done.' : '') : 'nothing to do yet. type one above.',
+  todoHasDone: todoList.some((t) => t.done),
+  onTodoClear: () => setTodos(todoList.filter((t) => !t.done)),
+  onTodoKey: (e) => {
+    if (e.key === 'Escape') { e.target.value = ''; e.target.blur(); return; }
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const text = String(e.target.value || '').trim().slice(0, 140);
+    if (!text) return;
+    e.target.value = '';
+    setTodos(todoList.concat([{ id: 't' + Date.now(), text: text, done: false }]));
+  },
   histNote: realHist.length ? 'on this device' : (LIVE_ON ? '' : 'sample data'),
   askText: B.pending ? B.pending.text : '',
   askEg: B.pending ? B.pending.eg : '',
@@ -1300,13 +1360,14 @@ return {
   onPageKey: (e) => {
     const tag = (e.target && e.target.tagName) || '';
     const typing = tag === 'TEXTAREA' || tag === 'INPUT';
+    if (tag === 'INPUT' && e.target.closest && e.target.closest('.bb-side')) return;   // the to-do box handles its own keys
     if (e.altKey && !e.ctrlKey && !e.metaKey && (e.code === 'KeyH' || e.code === 'KeyS' || e.code === 'KeyI')) { e.preventDefault(); if (e.code === 'KeyH') this.setState({ hist: !showHistory, set: false }); else if (e.code === 'KeyS') this.setState({ set: !showSettings, hist: false }); else this.setState({ intro: !showIntro }); return; }
     if (e.key === 'Escape') { e.preventDefault(); if (inProgress) { cancel(); return; } if (showHistory || showSettings) { this.setState({ hist: false, set: false }); return; } back(); return; }
     if ((e.ctrlKey || e.metaKey) && (e.key === 'o' || e.key === 'O')) { e.preventDefault(); const f = document.querySelector('.bb-attach input'); if (f) f.click(); return; }
     if (e.key === 'Enter' && !e.shiftKey && doneNow && tag !== 'TEXTAREA' && tag !== 'A') { e.preventDefault(); openWalk(); return; }
     if (e.key === 'Enter' && !e.shiftKey && !running) {
       const t = e.target || {};
-      const skip = tag === 'TEXTAREA' || tag === 'A' || t.type === 'file' || (t.closest && t.closest('section[aria-labelledby="bb-hist-h"], section[aria-labelledby="bb-set-h"]'));
+      const skip = tag === 'TEXTAREA' || tag === 'A' || t.type === 'file' || (t.closest && t.closest('section[aria-labelledby="bb-hist-h"], section[aria-labelledby="bb-set-h"], .bb-side'));
       if (!skip) { e.preventDefault(); submit(); return; }
     }
     if (typing) return;
