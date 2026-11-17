@@ -83,7 +83,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <header style="height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 1ch; padding: 0 16px; background: {{accent}}; color: #000000; white-space: nowrap; overflow: hidden">
 <a class="bb-link" href="MonoTerminal.dc.html" style="color: #000000; text-decoration: none; white-space: pre; font-weight: 700"><span aria-hidden="true">[ </span>&lt; back<span aria-hidden="true"> ]</span></a>
 <span aria-hidden="true">──</span>
-<span style="font-weight: 700">badgerbox 0.1.29</span>
+<span style="font-weight: 700">badgerbox 0.1.30</span>
 <span aria-hidden="true">──</span>
 <span>{{ runMeta }}</span>
 <span aria-hidden="true" style="flex-grow: 1; min-width: 0; overflow: hidden">────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
@@ -359,7 +359,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <div class="bb-fill-page" style="position: relative; container-type: inline-size; background: #FFFFFF; margin-bottom: 12px; overflow: hidden">
 <img src="{{ pg.url }}" alt="{{ pg.alt }}" draggable="false" style="display: block; width: 100%; height: auto; -webkit-user-select: none; user-select: none">
 <sc-for list="{{ pg.items }}" as="it" hint-placeholder-count="0">
-<span class="bb-fill-ans" title="drag to move" onPointerDown="{{ it.down }}" onPointerMove="{{ it.move }}" onPointerUp="{{ it.up }}" onPointerCancel="{{ it.up }}" style="position: absolute; left: {{ it.left }}; top: {{ it.top }}; max-width: {{ it.width }}; font: 700 {{ it.size }}/1.25 Arial, Helvetica, sans-serif; color: #0B2A8A; cursor: move; touch-action: none; white-space: pre-wrap; overflow-wrap: anywhere; -webkit-user-select: none; user-select: none">{{ it.text }}</span>
+<span class="bb-fill-ans" title="drag to move. click to select it, then change its size" onPointerDown="{{ it.down }}" onPointerMove="{{ it.move }}" onPointerUp="{{ it.up }}" onPointerCancel="{{ it.up }}" style="position: absolute; left: {{ it.left }}; top: {{ it.top }}; max-width: {{ it.width }}; font: 700 {{ it.size }}/1.25 Arial, Helvetica, sans-serif; color: #0B2A8A; cursor: move; touch-action: none; white-space: pre-wrap; overflow-wrap: anywhere; outline: {{ it.outline }}; outline-offset: 2px; -webkit-user-select: none; user-select: none">{{ it.text }}</span>
 </sc-for>
 </div>
 </sc-for>
@@ -894,52 +894,81 @@ const loadImgDim = (url) => new Promise((res) => { const im = new Image(); im.on
 // Where each answer really goes on a page. The spot comes from the model (or from where the student dragged
 // it); this makes it readable: wide enough to sit on one line when the page has room, never off the page,
 // and never on top of another answer. Answers the student dragged stay exactly where they put them.
+const EM0 = 0.021;        // normal letter height, as a share of the page width
+const EM_MIN = 0.0105;    // the smallest an answer is shrunk to fit a blank
+this.lastLay = this.lastLay || {};
 const fillItems = (pi) => {
   const items = rawItems(pi);
   if (!items.length) return items;
   const asp = aspectOf(pi);
-  const em = 0.021 * fillScale;                 // letter height, as a share of the page width
-  const charW = em * 0.56, lineH = em * 1.25 * asp;   // lineH as a share of the page height
   const boxes = items.map((x) => {
-    const fixed = !!moved[x.i];
+    const pl = x.pl, byUser = !!moved[x.i];
     const lines = ansLine(x.q, x.i).split('\n');
     const longest = lines.reduce((m, l) => Math.max(m, l.length), 1);
+    let em = EM0 * fillScale * (Number(pl.s) || 1);
+    if (!byUser && Number(pl.h) > 0) {
+      // in a blank that was found on the page: size the writing to the blank and sit it on the line
+      const bw = Number(pl.w), bh = Number(pl.h), pad = Math.min(0.006, bw * 0.04);
+      em = Math.min(em, (bh / (1.25 * asp)) * 0.9);                                   // no taller than the blank
+      em = Math.min(em, Math.max(EM_MIN * fillScale, (bw - pad * 2) / (longest * 0.56 + 0.4)));   // fit on one line if it can
+      const lineH = em * 1.25 * asp, inner = Math.max(0.02, bw - pad * 2);
+      const rows = lines.reduce((n, l) => n + Math.max(1, Math.ceil((l.length * em * 0.56) / inner)), 0);
+      const py = (pl.box && bh > lineH * 2.4) ? Number(pl.y) + lineH * 0.25 : Number(pl.y) + bh - rows * lineH - lineH * 0.05;
+      return { x: x, fixed: true, px: Number(pl.x) + pad, py: Math.max(0.002, py), w: inner, h: rows * lineH, em: em, lineH: lineH };
+    }
+    const charW = em * 0.56, lineH = em * 1.25 * asp;
     const want = Math.min(0.94, longest * charW + em);          // width that fits the text on one line
-    let px = Math.min(0.96, Math.max(0.01, Number(x.pl.x) || 0));
-    let w = Math.max(Number(x.pl.w) || 0, want, 0.15);
-    if (px + w > 0.98) { if (!fixed) px = Math.max(0.02, 0.98 - w); w = Math.max(0.15, 0.98 - px); }
+    let px = Math.min(0.96, Math.max(0.01, Number(pl.x) || 0));
+    let w = Math.max(Number(pl.w) || 0, want, 0.15);
+    if (px + w > 0.98) { if (!byUser) px = Math.max(0.02, 0.98 - w); w = Math.max(0.15, 0.98 - px); }
     const rows = lines.reduce((n, l) => n + Math.max(1, Math.ceil((l.length * charW) / Math.max(0.05, w - em * 0.5))), 0);
-    return { x: x, fixed: fixed, px: px, py: Math.min(0.97, Math.max(0.005, Number(x.pl.y) || 0)), w: w, h: rows * lineH };
+    return { x: x, fixed: byUser, px: px, py: Math.min(0.97, Math.max(0.005, Number(pl.y) || 0)), w: w, h: rows * lineH, em: em, lineH: lineH };
   });
-  const hits = (a, b) => a.px < b.px + b.w && b.px < a.px + a.w && a.py < b.py + b.h + lineH * 0.15 && b.py < a.py + a.h + lineH * 0.15;
+  const hits = (a, b) => a.px < b.px + b.w && b.px < a.px + a.w && a.py < b.py + b.h + a.lineH * 0.15 && b.py < a.py + a.h + a.lineH * 0.15;
   const done = boxes.filter((b) => b.fixed);
   boxes.filter((b) => !b.fixed).sort((a, b) => a.py - b.py || a.px - b.px).forEach((b) => {
     for (let guard = 0; guard < 60; guard++) {
       const o = done.find((d) => hits(b, d));
       if (!o) break;
-      b.py = o.py + o.h + lineH * 0.2;          // slide down to just under the answer in the way
+      b.py = o.py + o.h + b.lineH * 0.2;          // slide down to just under the answer in the way
     }
     if (b.py + b.h > 0.995) b.py = Math.max(0.005, 0.995 - b.h);
     done.push(b);
   });
-  return boxes.map((b) => ({ q: b.x.q, i: b.x.i, pl: Object.assign({}, b.x.pl, { x: b.px, y: b.py, w: b.w }) }));
+  return boxes.map((b) => {
+    this.lastLay[b.x.i] = { page: b.x.pl.page, x: b.px, y: b.py, w: b.w, em: b.em };
+    return { q: b.x.q, i: b.x.i, pl: Object.assign({}, b.x.pl, { x: b.px, y: b.py, w: b.w, em: b.em }) };
+  });
+};
+// make one answer bigger or smaller. it becomes a free answer at the spot it is shown.
+const resizeAns = (i, f) => {
+  const L = this.lastLay[i]; if (!L) return;
+  const mv = { page: L.page, x: L.x, y: L.y, w: L.w, s: Math.min(3, Math.max(0.35, (L.em / (EM0 * fillScale)) * f)) };
+  this.setState({ moved: Object.assign({}, moved, { [i]: mv }) });
+  const run = API && API.lastRun();
+  if (run && run.questions && run.questions[i]) { run.questions[i].place = mv; API.saveRun(run); }
 };
 const startDrag = (i, pl) => (e) => {
   if (e.button != null && e.button !== 0) return;
   e.preventDefault();
   const rc = e.currentTarget.parentNode.getBoundingClientRect();
-  this.dragA = { i: i, x0: e.clientX, y0: e.clientY, px: Number(pl.x), py: Number(pl.y), w: rc.width, h: rc.height, pl: pl };
+  this.dragA = { i: i, x0: e.clientX, y0: e.clientY, px: Number(pl.x), py: Number(pl.y), w: rc.width, h: rc.height, pl: pl, went: false };
   try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
 };
 const moveDrag = (e) => {
   const d = this.dragA; if (!d) return;
+  if (!d.went && Math.abs(e.clientX - d.x0) + Math.abs(e.clientY - d.y0) < 4) return;   // a click, not a drag
+  d.went = true;
   const nx = Math.min(0.98, Math.max(0, d.px + (e.clientX - d.x0) / d.w)), ny = Math.min(0.98, Math.max(0, d.py + (e.clientY - d.y0) / d.h));
-  this.setState({ moved: Object.assign({}, (this.state || {}).moved || {}, { [d.i]: Object.assign({}, d.pl, { x: nx, y: ny }) }) });
+  // once dragged, an answer is free: it keeps the size it had, and no longer snaps to the blank it was in
+  const free = { page: d.pl.page, x: nx, y: ny, w: Number(d.pl.w) || 0.4, s: (Number(d.pl.em) || EM0 * fillScale) / (EM0 * fillScale) };
+  this.setState({ moved: Object.assign({}, (this.state || {}).moved || {}, { [d.i]: free }) });
 };
 const endDrag = (e) => {
   const d = this.dragA; if (!d) return;
   this.dragA = null;
   try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+  if (!d.went) { this.setState({ selA: (this.state || {}).selA === d.i ? null : d.i }); return; }
   const mv = ((this.state || {}).moved || {})[d.i];
   const run = API.lastRun();
   if (mv && run && run.questions && run.questions[d.i]) { run.questions[d.i].place = mv; API.saveRun(run); }
@@ -959,10 +988,11 @@ const renderPage = (pi) => loadImg(FILES[pi].url).then((im) => {
   const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
   const g = c.getContext('2d');
   g.drawImage(im, 0, 0);
-  const fs = c.width * 0.021 * fillScale;
-  g.font = '700 ' + fs + 'px Arial, Helvetica, sans-serif'; g.fillStyle = '#0B2A8A'; g.textBaseline = 'top';
+  g.fillStyle = '#0B2A8A'; g.textBaseline = 'top';
   fillItems(pi).forEach((x) => {
-    const maxW = Math.max(0.15, Math.min(1 - Number(x.pl.x), Number(x.pl.w) || 0.5)) * c.width;
+    const fs = c.width * (Number(x.pl.em) || EM0 * fillScale);
+    g.font = '700 ' + fs + 'px Arial, Helvetica, sans-serif';
+    const maxW = Math.max(0.02, Math.min(1 - Number(x.pl.x), Number(x.pl.w) || 0.5)) * c.width;
     wrapLines(g, ansLine(x.q, x.i), maxW).forEach((ln, k) => g.fillText(ln, Number(x.pl.x) * c.width, Number(x.pl.y) * c.height + k * fs * 1.25));
   });
   return c;
@@ -1014,11 +1044,11 @@ const partJob = (P, fmt) => {
     if (P.orig && P.orig.kind === 'pptx' && P.pages.length) {
       // page pictures match the slides one to one, so each answer goes exactly where the preview shows it
       const placed = {}, list = [];
-      P.pages.forEach((pi, k) => fillItems(pi).forEach((x) => { placed[x.i] = 1; list.push({ at: k + 1, x: Number(x.pl.x), y: Number(x.pl.y), w: Number(x.pl.w) || 0.5, scale: fillScale, text: ansLine(x.q, x.i) }); }));
+      P.pages.forEach((pi, k) => fillItems(pi).forEach((x) => { placed[x.i] = 1; list.push({ at: k + 1, x: Number(x.pl.x), y: Number(x.pl.y), w: Number(x.pl.w) || 0.5, scale: (Number(x.pl.em) || EM0 * fillScale) / EM0, text: ansLine(x.q, x.i) }); }));
       job = OFF.fill(P.orig.url, 'pptx', list.concat(officeAnswers('slide', P.qi.filter((i) => !placed[i]))));
     }
     else if (P.orig && P.orig.kind === 'pptx') job = OFF.fill(P.orig.url, 'pptx', officeAnswers('slide', P.qi));
-    else if (P.pages.length) job = Promise.all(P.pages.map((pi) => loadImg(FILES[pi].url))).then((ims) => OFF.pagesPptx(P.pages.map((pi, k) => ({ url: FILES[pi].url, w: ims[k] ? ims[k].naturalWidth : 850, h: ims[k] ? ims[k].naturalHeight : 1100, items: fillItems(pi).map((x) => ({ x: Number(x.pl.x), y: Number(x.pl.y), w: Number(x.pl.w) || 0.5, text: ansLine(x.q, x.i) })) })), fillScale));
+    else if (P.pages.length) job = Promise.all(P.pages.map((pi) => loadImg(FILES[pi].url))).then((ims) => OFF.pagesPptx(P.pages.map((pi, k) => ({ url: FILES[pi].url, w: ims[k] ? ims[k].naturalWidth : 850, h: ims[k] ? ims[k].naturalHeight : 1100, items: fillItems(pi).map((x) => ({ x: Number(x.pl.x), y: Number(x.pl.y), w: Number(x.pl.w) || 0.5, scale: (Number(x.pl.em) || EM0 * fillScale) / EM0, text: ansLine(x.q, x.i) })) })), fillScale));
     else job = OFF.cleanPptx(dlTitle(P), cleanQs(P.qi));
     return job.then((blob) => saveBlob(blob, nm('pptx')));
   }
@@ -1242,13 +1272,21 @@ return {
   sheetModes: canFill ? [
     { text: 'on your worksheet', on: filledOn, pick: () => this.setState({ sheetMode: 'filled' }) },
     { text: 'clean copy', on: !filledOn, pick: () => this.setState({ sheetMode: 'clean' }) }
-  ].concat(filledOn ? [{ text: 'A-', on: false, pick: () => this.setState({ fillScale: Math.max(0.6, fillScale - 0.1) }) }, { text: 'A+', on: false, pick: () => this.setState({ fillScale: Math.min(2, fillScale + 0.1) }) }] : [])
+  ].concat(filledOn ? ((s.selA != null && this.lastLay[s.selA]) ? [
+      { text: 'this answer: smaller', on: false, pick: () => resizeAns(s.selA, 1 / 1.12) },
+      { text: 'this answer: bigger', on: false, pick: () => resizeAns(s.selA, 1.12) },
+      { text: 'done', on: false, pick: () => this.setState({ selA: null }) }
+    ] : [
+      { text: 'all answers: smaller', on: false, pick: () => this.setState({ fillScale: Math.max(0.5, fillScale - 0.1) }) },
+      { text: 'all answers: bigger', on: false, pick: () => this.setState({ fillScale: Math.min(2, fillScale + 0.1) }) }
+    ]) : [])
     .map((m) => ({ text: m.text, pressed: m.on ? 'true' : 'false', bg: m.on ? accent : 'transparent', fg: m.on ? '#000000' : '#BDBDBD', border: m.on ? accent : '#5A5A5A', pick: m.pick })) : [],
   fillPages: filledOn ? FILES.map((f, pi) => ({ url: f.url, alt: 'your worksheet, page ' + (pi + 1) + ', with the answers written in',
     items: fillItems(pi).map((x) => ({ text: ansLine(x.q, x.i), left: (Number(x.pl.x) * 100).toFixed(2) + '%', top: (Number(x.pl.y) * 100).toFixed(2) + '%',
-      width: (Math.max(0.15, Math.min(1 - Number(x.pl.x), Number(x.pl.w) || 0.5)) * 100).toFixed(1) + '%', size: (2.1 * fillScale).toFixed(2) + 'cqw',
+      width: (Math.max(0.02, Math.min(1 - Number(x.pl.x), Number(x.pl.w) || 0.5)) * 100).toFixed(1) + '%', size: ((Number(x.pl.em) || EM0 * fillScale) * 100).toFixed(3) + 'cqw',
+      outline: s.selA === x.i ? '2px solid #E0245E' : 'none',
       down: startDrag(x.i, x.pl), move: moveDrag, up: endDrag })) })) : [],
-  sheetNote: (giveFmt === 'pptx' ? (ORIG && ORIG.kind === 'pptx' ? (FILES.length ? 'these are your own slides. download gives back the real slides file with each answer where you see it here, as a text box you can still move in google slides. drag an answer to fix its spot first. ' : 'download gives back your own slides, with each answer added in blue at the bottom of its slide. the boxes can be moved in google slides. (no picture of the slides to show here: send the assignment with the badgerbox browser button to see them.) ') : (FILES.length ? 'download gives slides with your pages as the background and each answer as a text box you can move and edit. ' : 'download gives one slide per question that you can edit. ')) : giveFmt === 'docx' ? (ORIG && ORIG.kind === 'docx' ? 'download gives back your own document, with each answer added in blue right after its question. ' : 'download gives the questions, work and answers as normal text you can edit in google docs. graphs are left out. ') : '') || (filledOn ? 'your own worksheet with the answers written where they go. drag an answer if it landed in the wrong spot. A- and A+ change the size.' + (nFlag ? ' (?) marks the ones it wasn\'t sure about.' : '') : (ORIG ? 'this preview is the clean copy. ' : '') + (LIVE && !canFill && sheet ? 'this is the clean copy. answers can only be put on your own worksheet when you give it as a screenshot, photo or PDF of up to 10 pages. ' : '') + 'a clean copy in the worksheet\'s own order and numbering, with the work shown.' + (nFlag ? ' ' + flagNames + (nFlag === 1 ? ' stays' : ' stay') + ' marked until you fix ' + (nFlag === 1 ? 'it.' : 'them.') : ' every answer is checked.')),
+  sheetNote: (giveFmt === 'pptx' ? (ORIG && ORIG.kind === 'pptx' ? (FILES.length ? 'these are your own slides. download gives back the real slides file with each answer where you see it here, as a text box you can still move in google slides. drag an answer to move it, or click it to change its size. ' : 'download gives back your own slides, with each answer added in blue at the bottom of its slide. the boxes can be moved in google slides. (no picture of the slides to show here: send the assignment with the badgerbox browser button to see them.) ') : (FILES.length ? 'download gives slides with your pages as the background and each answer as a text box you can move and edit. ' : 'download gives one slide per question that you can edit. ')) : giveFmt === 'docx' ? (ORIG && ORIG.kind === 'docx' ? 'download gives back your own document, with each answer added in blue right after its question. ' : 'download gives the questions, work and answers as normal text you can edit in google docs. graphs are left out. ') : '') || (filledOn ? 'your own worksheet with the answers written where they go. drag an answer if it landed in the wrong spot. A- and A+ change the size.' + (nFlag ? ' (?) marks the ones it wasn\'t sure about.' : '') : (ORIG ? 'this preview is the clean copy. ' : '') + (LIVE && !canFill && sheet ? 'this is the clean copy. answers can only be put on your own worksheet when you give it as a screenshot, photo or PDF of up to 10 pages. ' : '') + 'a clean copy in the worksheet\'s own order and numbering, with the work shown.' + (nFlag ? ' ' + flagNames + (nFlag === 1 ? ' stays' : ' stay') + ' marked until you fix ' + (nFlag === 1 ? 'it.' : 'them.') : ' every answer is checked.')),
   paper: QL.map((q, i) => ({
     head: numOf(i) + '. ' + q.text,
     work: q.steps.map((d) => ({ line: d.text + ':  ' + d.result })),

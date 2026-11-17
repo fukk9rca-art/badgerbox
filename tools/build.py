@@ -27,6 +27,7 @@ HEAD = (
     '<script src="js/bb-api.js" defer></script>\n'
     '<script src="js/bb-plot.js" defer></script>\n'
     '<script src="js/bb-office.js" defer></script>\n'
+    '<script src="js/bb-blanks.js" defer></script>\n'
     '<script src="js/bb-fx.js" defer></script>\n'
     '<script src="js/dc-lite.js" defer></script>'
 )

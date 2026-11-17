@@ -110,6 +110,8 @@ It ships empty apart from an example. See `skills/README.md` for how to add one.
 | `js/bb-api.js` | The pages' link to the backend. |
 | `vendor/pdfjs/` | pdf.js (Apache-2.0), used to turn PDF worksheets into page images. |
 | `js/bb-office.js`, `vendor/office/` | Reads Word and PowerPoint files and writes answers back into them (JSZip and PptxGenJS, both MIT). |
+| `js/bb-blanks.js` | Finds the blanks on a worksheet picture (answer lines, empty table cells, boxes) with plain image processing and labels them, so the model only has to say which blank an answer goes in. |
+| `api/place.js` | The placement pass: given the labelled pages, says which blank each answer belongs in. |
 | `js/bb-plot.js` | Draws graphs (scatter + best fit, line, function, bar, histogram, box plot) and does the statistics itself. |
 | `api/solve.js` | Finds and works every question, then a second pass checks each answer a different way. |
 | `api/ask.js` | Answers follow-up questions in the walkthrough chat, and turns away off-topic ones. |
