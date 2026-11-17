@@ -17,6 +17,7 @@ function fakeReply(system, content) {
   const asked = (content || []).map((b) => b.text || '').join(' ');
   if (/follow-up/.test(system) && /french revolution/i.test(asked)) return JSON.stringify({ kind: 'redirect', tab: 'social', answer: 'that is a history question. this chat is for the algebra assignment, so ask it in the social tab.' });
   if (/follow-up/.test(system) && /tell me a joke/i.test(asked)) return JSON.stringify({ kind: 'refuse', tab: null, answer: 'badgerbox only helps with the assignment in front of you.' });
+  if (/worksheet placement/.test(system)) return JSON.stringify({ places: [{ i: 0, page: 1, x: 0.30, y: 0.20, w: 0.3 }, { i: 1, page: 1, x: 0.30, y: 0.45, w: 0.3 }, { i: 2, page: 2, x: 0.20, y: 0.30, w: 0.5 }, { i: 3, page: 9, x: 0.5, y: 0.5, w: 0.2 }] });
   if (/checker/.test(system)) {
     return JSON.stringify({ checks: [
       { number: 1, agree: true, check: 'substituted x = 5 back in: 3(5) + 7 = 22.', note: null },
