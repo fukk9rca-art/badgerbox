@@ -679,6 +679,7 @@ componentDidMount() {
     });
   };
   window.addEventListener('message', this.onExt);
+  window.addEventListener('bb-status', () => this.forceUpdate());
   document.documentElement.dataset.bbReady = '1';
   this.focusBox();
 }
@@ -769,7 +770,8 @@ const hasWork = !!text || files.length > 0;
 const needTick = false;
 const ok = hasWork && !needTick && !needPick;
 const badFile = s.badFile || '';
-const showError = (!!s.tried && !ok && !away) || !!badFile;
+const STALE = !!(window.bbApi && window.bbApi.serverStale && window.bbApi.serverStale());
+const showError = (!!s.tried && !ok && !away) || !!badFile || STALE;
 const running = !!s.tried && ok && !badFile && !away;
 const phase = s.phase || 0;
 const pad = (a, b) => a + ' ' + '.'.repeat(Math.max(2, 30 - a.length)) + ' ' + b;
@@ -890,7 +892,8 @@ const logLines = allLog.slice(0, phase).map((t, i) => ({
   color: (i === allLog.length - 1 || t.indexOf('[!]') !== -1) ? '#FFFFFF' : '#BDBDBD'
 }));
 let errorText = '';
-if (badFile) errorText = s.badOpen ? "badgerbox could not open " + badFile + ", so it was left out. save it as a pdf or take a screenshot of it instead" : badFile + " isn't a type badgerbox can read. use a screenshot or photo, pdf, .docx, .pptx or plain text";
+if (STALE) errorText = 'restart needed: badgerbox was updated, but the black badgerbox window is still running the old version. close that window, then double-click start-badgerbox.bat (or share-badgerbox.bat) again';
+else if (badFile) errorText = s.badOpen ? "badgerbox could not open " + badFile + ", so it was left out. save it as a pdf or take a screenshot of it instead" : badFile + " isn't a type badgerbox can read. use a screenshot or photo, pdf, .docx, .pptx or plain text";
 else if (!hasWork && needTick) errorText = "can't run yet: add your assignment and tick the permission box";
 else if (!hasWork) errorText = "can't run yet: add your assignment first";
 else if (needPick) errorText = "can't run yet: pick at least one question";
@@ -1403,7 +1406,7 @@ return {
   tickInvalid: showError && needTick && hasWork ? 'true' : 'false',
   describedText: showError ? 'bb-hint bb-error' : 'bb-hint',
   dragging: !!s.dragging,
-  statusMain: away ? (awayDone ? '[done] your ' + TABS[s.runTab].label + ' run is finished. click the ' + TABS[s.runTab].label + ' tab to open it' : awayAsk ? '[waiting] your ' + TABS[s.runTab].label + ' run has a question for you. click the ' + TABS[s.runTab].label + ' tab' : '[working] your ' + TABS[s.runTab].label + ' run is still going. click the ' + TABS[s.runTab].label + ' tab to watch it') : (running && this.apiError && phase >= allLog.length) ? '[stopped] ' + String(this.apiError).slice(0, 110) : s.sheet ? '[worksheet] a clean, printable completed copy would download here when badgerbox is live' : s.addCls ? '[settings] adding a class would open here when badgerbox is live' : running ? (phase >= allLog.length ? (flagged ? '[done] ' + (nChecked - (LVR ? lvFlags : 1)) + ' checked, ' + (LVR ? lvFlags : 1) + ' to look at' : '[done] every answer checked') : (pendingAsk && phase === askAt ? '[waiting] badgerbox has a question for you' : (this.apiPending ? '[running] the model is working on it, this can take up to a minute' : '[running] working on your assignment'))) : (s.cancelled ? '[cancelled] run stopped' : '[ready] waiting for an assignment'),
+  statusMain: STALE ? '[restart needed] badgerbox was updated but is still running the old version. close the black badgerbox window, then start it again' : away ? (awayDone ? '[done] your ' + TABS[s.runTab].label + ' run is finished. click the ' + TABS[s.runTab].label + ' tab to open it' : awayAsk ? '[waiting] your ' + TABS[s.runTab].label + ' run has a question for you. click the ' + TABS[s.runTab].label + ' tab' : '[working] your ' + TABS[s.runTab].label + ' run is still going. click the ' + TABS[s.runTab].label + ' tab to watch it') : (running && this.apiError && phase >= allLog.length) ? '[stopped] ' + String(this.apiError).slice(0, 110) : s.sheet ? '[worksheet] a clean, printable completed copy would download here when badgerbox is live' : s.addCls ? '[settings] adding a class would open here when badgerbox is live' : running ? (phase >= allLog.length ? (flagged ? '[done] ' + (nChecked - (LVR ? lvFlags : 1)) + ' checked, ' + (LVR ? lvFlags : 1) + ' to look at' : '[done] every answer checked') : (pendingAsk && phase === askAt ? '[waiting] badgerbox has a question for you' : (this.apiPending ? '[running] the model is working on it, this can take up to a minute' : '[running] working on your assignment'))) : (s.cancelled ? '[cancelled] run stopped' : '[ready] waiting for an assignment'),
   statusNeed: (running || away) ? '' : (ok ? 'ready to run' : 'still needed: ' + missing.join(', '))
 };
 }

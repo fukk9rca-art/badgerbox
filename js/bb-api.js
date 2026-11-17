@@ -16,7 +16,8 @@
   function saveLocal(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (err) { return false; } }
   var KEY_KEY = 'bb-key';
   function accessKey() { try { return localStorage.getItem(KEY_KEY) || ''; } catch (err) { return ''; } }
-  var status = { live: false, model: '', checked: false };
+  var status = { live: false, model: '', checked: false, stale: false };
+  var NEED_V = 24;
 
   function post(path, body) {
     return fetch(path, {
@@ -206,6 +207,7 @@
     flatten: flatten,
     status: status,
     isLive: function () { return status.live; },
+    serverStale: function () { return !!status.stale; },
     readFile: readFile,
     /* Ask the backend whether an access key is valid. Offline (no backend), only the test key works. */
     checkKey: function (key) {
@@ -388,5 +390,8 @@
     status.live = !!(j && j.live);
     status.model = (j && j.model) || '';
     status.checked = true;
+    // the pages are always the newest files, but a server started before an update still runs old code
+    status.stale = !!j && !(Number(j.v) >= NEED_V);
+    try { window.dispatchEvent(new Event('bb-status')); } catch (err) {}
   }).catch(function () { status.checked = true; });
 })();
