@@ -57,6 +57,7 @@ const server = http.createServer(async (req, res) => {
     (parts.length === 1 && /^(keys|usage|package|vercel)[^/]*\.json$|\.(bat|md|mjs)$/i.test(parts[0]));
   if (blocked || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; res.end('not found'); return; }
   res.setHeader('content-type', TYPES[path.extname(file)] || 'application/octet-stream');
+  res.setHeader('cache-control', 'no-cache, no-store');   // always the newest pages and scripts after an update
   fs.createReadStream(file).pipe(res);
 });
 
