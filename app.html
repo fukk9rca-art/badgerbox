@@ -404,6 +404,12 @@ o   o
 </div>
 <div id="bb-hint" style="color: #8C8C8C; margin: 6px 0 0 0; min-width: 0">{{ hint }}</div>
 
+<sc-if value="{{ voiceShow }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="my voice" style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px 2ch; margin: 10px 0 10px 0; padding: 8px 2ch; border: 2px solid #FFFFFF; background: #000000">
+<button type="button" id="bb-voice-switch" class="bb-btn" role="switch" aria-checked="{{ voiceChecked }}" onClick="{{ onVoiceSwitch }}" style="height: 40px; padding: 0 2ch; background: {{ voiceBg }}; color: {{ voiceFg }}; border: 2px solid #FFFFFF; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ voiceLabel }}</button>
+<span style="flex: 1 1 30ch; min-width: 0; color: {{ voiceNoteFg }}">{{ voiceSwitchNote }}</span>
+</div>
+</sc-if>
 <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px">
 <sc-for list="{{ optGroups }}" as="g" hint-placeholder-count="2">
 <div role="group" aria-label="{{ g.label }}" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; min-height: 36px">
@@ -975,6 +981,7 @@ const startApi = (st0) => {
     answers: ans,
     options: (t.opts || []).reduce((o, g) => { o[g.label] = g.choices[(st.opt && st.opt[t.id + '.' + g.key]) || 0]; return o; }, {}),
     voice: String(st.voice || '').slice(0, 6000),
+    myVoice: !!st.myVoice,
     outputs: (Array.isArray(st.outs) ? st.outs : [0, 1, 2]).map((i) => OUTPUT.choices[i]),
     picked: fs.length && Array.isArray(st.picked) ? st.picked.map((i) => i + 1) : null,
     files: sendFiles,
@@ -1086,6 +1093,9 @@ const addFiles = (list) => {
   this.setState({ files: next, badFile: bad, badOpen: false, tried: false, dragging: false, picked: null, fileNote: over ? '3 files max. remove one to add another.' : '' });
 };
 this.addFilesFn = addFiles;
+const VOICE_TABS = (API && API.voiceTabs && API.voiceTabs()) || null;
+const VOICE_HERE = !!VOICE_TABS && VOICE_TABS.indexOf(tab.id) !== -1;
+const VOICE_ON = VOICE_HERE && !!s.myVoice;
 const groups = tab.opts.map((g) => ({ label: g.label, choices: g.choices, k: tab.id + '.' + g.key })).concat([{ label: OUTPUT.label, choices: OUTPUT.choices, k: OUTPUT.key }, { label: 'give back', choices: ['same as i gave it', 'slides', 'docs', 'pdf'], k: 'give' }]);
 const bbHome = /^https?:/.test(location.protocol) ? location.origin : 'https://badgerbox.app';
 const bookmarklet = "javascript:(function(){var s=''+(window.getSelection?window.getSelection():'');var t=s.length>20?s:(document.body?document.body.innerText:'');window.open('" + bbHome + "/app.html#in='+encodeURIComponent(t.trim().slice(0,6000)),'_blank');})();";
@@ -1251,6 +1261,14 @@ return {
     pickTab(n);
     this.later(() => { const b = document.getElementById('bb-tab-' + TABS[n].id); if (b) b.focus(); }, 0);
   },
+  voiceShow: VOICE_HERE,
+  voiceChecked: VOICE_ON ? 'true' : 'false',
+  voiceLabel: VOICE_ON ? '[x] my voice: ON' : '[ ] my voice: OFF',
+  voiceBg: VOICE_ON ? '#FFFFFF' : '#000000',
+  voiceFg: VOICE_ON ? '#000000' : '#FFFFFF',
+  voiceNoteFg: VOICE_ON ? '#FFFFFF' : '#8C8C8C',
+  voiceSwitchNote: VOICE_ON ? 'written answers on this tab come out in your own plain style, using your my-voice skill and writing sample.' : 'off: badgerbox writes the normal way. turn it on to have written answers come out in your own plain style.',
+  onVoiceSwitch: () => this.setState({ myVoice: !s.myVoice, tried: running ? s.tried : false }),
   optGroups: groups.map((g) => ({
     label: g.label,
     choices: g.choices.map((c, i) => {

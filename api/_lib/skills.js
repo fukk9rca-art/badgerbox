@@ -34,9 +34,11 @@ export function loadSkills() {
 
 // The skill text to add for this tab. A tab's own skill always applies; on the auto tab (and any tab with
 // no skill of its own) the "auto" skills are offered and the model uses one only if the work matches.
-export function skillText(tab) {
+// off: names of skills to leave out of this run (a switch on the main screen turned them off).
+export function skillText(tab, off) {
   const t = String(tab || 'auto').toLowerCase();
-  const all = loadSkills();
+  const skip = (off || []).map((n) => String(n).toLowerCase());
+  const all = loadSkills().filter((s) => !skip.includes(s.name.toLowerCase()));
   const own = all.filter((s) => s.tabs.includes(t));
   if (own.length) return '\n\n' + own.map((s) => 'SKILL FOR THIS ASSIGNMENT: ' + s.name + '\n' + s.body).join('\n\n');
   // offered only where the subject is open: math, science, language and code keep their own rules
@@ -44,6 +46,11 @@ export function skillText(tab) {
   if (!maybe.length) return '';
   return '\n\n' + maybe.map((s) => 'SKILL, USE ONLY IF THE ASSIGNMENT MATCHES: ' + s.name + ' (' + s.description + ')\n' + s.body).join('\n\n');
 }
+
+// The "my voice" switch on the main screen controls exactly one skill: the one named my-voice.
+export const VOICE = 'my-voice';
+export function voiceOff(body) { return body && body.myVoice === true ? [] : [VOICE]; }
+export function voiceTabs() { const s = loadSkills().find((x) => x.name.toLowerCase() === VOICE); return s ? s.tabs.concat(s.auto ? ['auto', 'online'] : []) : null; }
 
 export function skillNames(tab) {
   const t = String(tab || 'auto').toLowerCase();

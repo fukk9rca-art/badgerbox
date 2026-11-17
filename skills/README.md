@@ -30,6 +30,12 @@ auto: false
 - `auto`: `true` also offers it on the auto, online, social and reading tabs, where the AI uses it only
   if the assignment matches the description.
 
+## The my voice switch
+
+A skill named exactly `my-voice` gets an on/off switch on the main screen, on the tabs its header lists.
+The switch starts off every time badgerbox opens. It controls that one skill only. Every other skill in
+this folder is always on for its tabs.
+
 ## Good to know
 
 - Several skills can share a tab. All of them are added.
