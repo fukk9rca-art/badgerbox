@@ -345,7 +345,24 @@
       return true;
     },
     clearHistory: function () { try { localStorage.removeItem(HIST_KEY); } catch (err) {} },
-    saveRun: function (run) { store(RUN_KEY, run); }
+    removeRun: function (id) { saveLocal(HIST_KEY, loadLocal(HIST_KEY, []).filter(function (x) { return x.id !== id; })); },
+    /* Saves the open run, and the same run in past runs, so fixes made in the walkthrough are still there later. */
+    saveRun: function (run) {
+      store(RUN_KEY, run);
+      if (!run || !run.id) return;
+      var hist = loadLocal(HIST_KEY, []), qs = run.questions || [], okd = (run.ui && run.ui.okd) || {};
+      var changed = false;
+      hist.forEach(function (h) {
+        if (h.id !== run.id) return;
+        h.run = run; h.n = qs.length; h.title = run.title || h.title;
+        h.flags = qs.filter(function (q, i) { return !q.sure && !okd[i]; }).length;
+        changed = true;
+      });
+      if (changed) saveLocal(HIST_KEY, hist);
+    },
+    /* the to-do list on the main screen */
+    todos: function () { var t = loadLocal('bb-todo', []); return Array.isArray(t) ? t : []; },
+    saveTodos: function (list) { saveLocal('bb-todo', (list || []).slice(0, 60)); }
   };
 
   fetch('api/status').then(function (r) { return r.json(); }).then(function (j) {

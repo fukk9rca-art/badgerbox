@@ -558,7 +558,8 @@ const syncM = (id, ta) => setTimeout(() => { const m = document.getElementById(i
 const API = window.bbApi || null;
 const RUN = (API && API.lastRun()) || null;
 const LIVE = !!(RUN && RUN.source === 'model' && Array.isArray(RUN.questions) && RUN.questions.length);
-const okd = s.okd || {};
+const UI0 = (LIVE && RUN.ui) || {};
+const okd = s.okd || UI0.okd || {};
 const QL = LIVE ? RUN.questions : QS;
 const N = QL.length;
 const pad = (a, b) => a + ' ' + '.'.repeat(Math.max(2, 30 - a.length)) + ' ' + String(b);
@@ -582,7 +583,7 @@ const Q = QL[cur];
 const flagNow = isFlag(cur);
 const FIG = Q.figure || null;
 const G = (FIG && BP) ? BP.build(FIG, { hov: s.hov }) : null;
-const readOk = !!(s.readOk || {})[cur];
+const readOk = !!(s.readOk || UI0.readOk || {})[cur];
 const walkH = (s.walkH != null) ? s.walkH : (G ? 600 : DEF_H);
 const open = (s.open != null) ? s.open : (flagNow ? 1 : -1);
 const asked = String(s.asked || '');
@@ -747,7 +748,7 @@ const redo = () => {
   });
 };
 const shiftKeys = (o, at, dir) => { const out = {}; Object.keys(o || {}).forEach((k) => { const n = Number(k); if (dir < 0) { if (n < at) out[n] = o[k]; else if (n > at) out[n - 1] = o[k]; } else out[n >= at ? n + 1 : n] = o[k]; }); return out; };
-const reKey = (at, dir) => { const st = this.state || {}; return { okd: shiftKeys(st.okd, at, dir), moved: shiftKeys(st.moved, at, dir), readOk: shiftKeys(st.readOk, at, dir) }; };
+const reKey = (at, dir) => { const st = this.state || {}; const u = (API && API.lastRun() || {}).ui || {}; return { okd: shiftKeys(st.okd || u.okd, at, dir), moved: shiftKeys(st.moved || u.moved, at, dir), readOk: shiftKeys(st.readOk || u.readOk, at, dir) }; };
 const delQ = () => {
   if (!LIVE || !API) return;
   const run = API.lastRun();
@@ -814,7 +815,7 @@ const fixPoint = (txt) => {
   let k = 0;
   cp.forEach((q, i) => { if (Math.abs(q[0] - x) < Math.abs(cp[k][0] - x)) k = i; });
   const next = cp.map((q, i) => (i === k ? [x, y] : q));
-  const ok = Object.assign({}, s.readOk || {}, { [cur]: true });
+  const ok = Object.assign({}, s.readOk || UI0.readOk || {}, { [cur]: true });
   if (LIVE) {
     const run = API.lastRun();
     if (run && run.questions[cur] && run.questions[cur].figure) { run.questions[cur].figure.points = next; API.saveRun(run); }
@@ -855,11 +856,18 @@ const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': 
 const ALLIMG = (LIVE && this.runFiles) ? this.runFiles.filter((f) => /^image\//.test(f.type || '')) : [];
 const FILES = ALLIMG.map((f, gi) => Object.assign({}, f, { gi: gi })).filter((f) => !f.ref);
 const asPdf = FILES.length > 1 || !!((RUN && RUN.meta) || {}).fromPdf;
-const moved = s.moved || {};
+const moved = s.moved || UI0.moved || {};
 const placeOf = (q, i) => { const pl = moved[i] || q.place; return (pl && pl.x != null && pl.y != null) ? pl : null; };
 const canFill = FILES.length > 0 && QL.some((q, i) => !!placeOf(q, i));
 const filledOn = canFill && s.sheetMode !== 'clean';
-const fillScale = s.fillScale || 1;
+const fillScale = s.fillScale || UI0.fillScale || 1;
+// keep what the student fixed (marked right, confirmed points, moved answers) with the run, so it is still there from past runs
+if (LIVE && API && !this.dragA) {
+  const ui = { okd: okd, readOk: s.readOk || UI0.readOk || {}, moved: moved, fillScale: fillScale };
+  const sig = JSON.stringify(ui);
+  if (this.uiSig === undefined) this.uiSig = JSON.stringify({ okd: UI0.okd || {}, readOk: UI0.readOk || {}, moved: UI0.moved || {}, fillScale: UI0.fillScale || 1 });
+  if (sig !== this.uiSig) { this.uiSig = sig; const run = API.lastRun(); if (run) { run.ui = ui; API.saveRun(run); } }
+}
 const ansLine = (q, i) => q.ans + (isFlag(i) ? ' (?)' : '');
 const fillItems = (pi) => QL.map((q, i) => ({ q: q, i: i, pl: placeOf(q, i) })).filter((x) => x.pl && Math.min(ALLIMG.length, Math.max(1, Number(x.pl.page) || 1)) === FILES[pi].gi + 1);
 const startDrag = (i, pl) => (e) => {
@@ -1128,7 +1136,7 @@ return {
     readHead: readOk ? '[✓] read off the graph' : 'read off the graph',
     readSub: readOk ? 'confirmed by you' : 'does this match your worksheet?',
     rows: (FIG && Array.isArray(FIG.points) ? FIG.points : []).map((q, i) => ({ n: (i + 1) + '.', text: q[0] + (FIG.xUnit ? ' ' + FIG.xUnit : '') + '  →  ' + q[1] + (FIG.yUnit ? ' ' + FIG.yUnit : ''), color: s.edited === i ? '#FFFFFF' : '#BDBDBD', weight: s.edited === i ? '700' : '400' })),
-    btns: (readOk ? [] : [{ text: 'looks right', bg: accent, fg: '#000000', pick: () => this.setState({ readOk: Object.assign({}, s.readOk || {}, { [cur]: true }), fixPt: false }) }]).concat([
+    btns: (readOk ? [] : [{ text: 'looks right', bg: accent, fg: '#000000', pick: () => this.setState({ readOk: Object.assign({}, s.readOk || UI0.readOk || {}, { [cur]: true }), fixPt: false }) }]).concat([
       { text: 'fix a point', bg: 'transparent', fg: '#FFFFFF', pick: () => { this.setState({ fixPt: true }); const ta = document.getElementById('bb-ask'); if (ta) ta.focus(); } }]),
     readNote: s.fixPt ? 'type the right point in the box below, like (0.30, 0.28), then enter.' : (readOk ? '' : 'if a point is off, the answer is off. badgerbox asks so it never guesses.')
   }),

@@ -126,6 +126,7 @@ chemistry sample, so the site always works.
 - Real accounts and billing. Keys and daily limits exist (`keys.json`) but are managed by hand and only enforced on your own computer.
 - Model routing by subject and difficulty (one model for now).
 - Past runs, classes and settings are saved in the browser on one device only, not to an account.
+- The to-do list and the past runs panel sit in the space on the right, so they only show on wide windows (1700px and up).
 - Answers are placed on the student's own worksheet for screenshots, photos and PDFs of up to 10 pages.
   The model's placement is approximate, which is why answers can be dragged. A PDF comes back as a PDF made
   of page images (the text in it can no longer be selected).
