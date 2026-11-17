@@ -2,7 +2,7 @@
 // Body: { title, subject, cls: { name, rules }, hint, questions: [{ text, answer }] }
 // Reply: { source: 'model', tldr: { topic, nutshell, basis, sections: [{ head, items }] } } | { source: 'mock' } | { source: 'error', error }
 import { useKey } from './_lib/keys.js';
-import { hasKey, callModel, parseJson, classText, readBody } from './_lib/claude.js';
+import { hasKey, callJson, classText, readBody } from './_lib/claude.js';
 
 const SYSTEM = `You write the tl;dr for badgerbox: a short study summary of what one homework assignment is teaching.
 Work out what the student is learning from the assignment itself and their class. Do not ask them: most students
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     'The assignment and its worked answers:\n' + qs
   ].filter(Boolean).join('\n\n');
   try {
-    const out = parseJson(await callModel({ system: SYSTEM, content: [{ type: 'text', text: prompt }], maxTokens: 2500 }));
+    const out = await callJson({ system: SYSTEM, content: [{ type: 'text', text: prompt }], maxTokens: 2500 });
     const sections = (Array.isArray(out.sections) ? out.sections : []).slice(0, 6)
       .map((s) => ({ head: String(s.head || ''), items: (Array.isArray(s.items) ? s.items : []).slice(0, 6).map(String) }))
       .filter((s) => s.head && s.items.length);
