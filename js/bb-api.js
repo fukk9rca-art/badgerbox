@@ -56,6 +56,20 @@
       });
     }).catch(function () { return false; });
   }
+  /* Each finished run keeps its own copy of the worksheet pictures, original files and what was sent,
+   * so opening it again from past runs gives the same completed worksheet in the same format. */
+  var KEEP = 'bb-keep:';
+  function snap(id) {
+    if (!id) return Promise.resolve();
+    return Promise.all([idbGet(FILES_KEY), idbGet(ORIG_KEY), idbGet(PAYLOAD_KEY)]).then(function (v) {
+      return idbSet(KEEP + id, { files: v[0] || [], orig: v[1] || [], payload: v[2] || null });
+    }).then(function () {
+      // drop the copies of runs that are no longer in past runs
+      var live = loadLocal(HIST_KEY, []).map(function (x) { return x.id; }), all = loadLocal('bb-keep-ids', []).concat([id]);
+      all.filter(function (x) { return live.indexOf(x) === -1 && x !== id; }).forEach(function (x) { idbSet(KEEP + x, null); });
+      saveLocal('bb-keep-ids', all.filter(function (x, i) { return (live.indexOf(x) !== -1 || x === id) && all.indexOf(x) === i; }));
+    }).catch(function () {});
+  }
   function idbGet(key) {
     return idb().then(function (db) {
       return new Promise(function (resolve) {
@@ -219,7 +233,8 @@
           store(RUN_KEY, res);
           // keep the worksheet images for this tab only, so answers can be put back on them
           var imgs = ((payload && payload.files) || []).filter(function (f) { return f && /^image\//.test(f.type || ''); });
-          keep = idbSet(FILES_KEY, imgs).then(function () { return idbSet(ORIG_KEY, originals); }).then(function () { return idbSet(PAYLOAD_KEY, payload); }).then(function () { return idbSet(CTX_KEY, []); });
+          keep = idbSet(FILES_KEY, imgs).then(function () { return idbSet(ORIG_KEY, originals); }).then(function () { return idbSet(PAYLOAD_KEY, payload); }).then(function () { return idbSet(CTX_KEY, []); })
+            .then(function () { return snap(res.id); });
           var qs = res.questions || [];
           var hist = loadLocal(HIST_KEY, []);
           hist.unshift({ id: res.id, at: new Date().toISOString(), tab: (res.meta || {}).tab || '', title: res.title || res.subject || 'assignment',
@@ -285,6 +300,7 @@
           return idbSet(FILES_KEY, imgs0.concat(fresh.files.filter(isImg)))
             .then(function () { return idbSet(ORIG_KEY, orig0.concat(fresh.keep)); })
             .then(function () { return idbSet(PAYLOAD_KEY, p0); })
+            .then(function () { return snap(run.id); })
             .then(function () { res.added = res.questions.length; return res; });
         });
       });
@@ -337,15 +353,17 @@
     loadRunFiles: function () { return idbGet(FILES_KEY).then(function (v) { return Array.isArray(v) ? v : []; }); },
     /* finished runs kept on this device (without the worksheet images) */
     history: function () { return loadLocal(HIST_KEY, []); },
+    /* Reopens a past run with its worksheet pictures and original files. Resolves true when it is ready to show. */
     openRun: function (id) {
       var h = loadLocal(HIST_KEY, []).filter(function (x) { return x.id === id; })[0];
-      if (!h || !h.run) return false;
-      idbSet(FILES_KEY, []); idbSet(ORIG_KEY, []); idbSet(PAYLOAD_KEY, null); idbSet(CTX_KEY, []);
-      store(RUN_KEY, h.run);
-      return true;
+      if (!h || !h.run) return Promise.resolve(false);
+      return idbGet(KEEP + id).then(function (k) { return k || {}; }, function () { return {}; }).then(function (k) {
+        return idbSet(FILES_KEY, k.files || []).then(function () { return idbSet(ORIG_KEY, k.orig || []); })
+          .then(function () { return idbSet(PAYLOAD_KEY, k.payload || null); }).then(function () { return idbSet(CTX_KEY, []); });
+      }).then(function () { store(RUN_KEY, h.run); return true; }, function () { store(RUN_KEY, h.run); return true; });
     },
-    clearHistory: function () { try { localStorage.removeItem(HIST_KEY); } catch (err) {} },
-    removeRun: function (id) { saveLocal(HIST_KEY, loadLocal(HIST_KEY, []).filter(function (x) { return x.id !== id; })); },
+    clearHistory: function () { loadLocal(HIST_KEY, []).forEach(function (x) { idbSet(KEEP + x.id, null); }); try { localStorage.removeItem(HIST_KEY); } catch (err) {} },
+    removeRun: function (id) { idbSet(KEEP + id, null); saveLocal(HIST_KEY, loadLocal(HIST_KEY, []).filter(function (x) { return x.id !== id; })); },
     /* Saves the open run, and the same run in past runs, so fixes made in the walkthrough are still there later. */
     saveRun: function (run) {
       store(RUN_KEY, run);

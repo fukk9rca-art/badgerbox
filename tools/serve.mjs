@@ -3,7 +3,7 @@
 //   node tools/serve.mjs            -> http://localhost:3000
 //   ANTHROPIC_API_KEY=... node tools/serve.mjs   (real model)
 import http from 'node:http';
-import { exec } from 'node:child_process';
+import { exec, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -42,7 +42,8 @@ const server = http.createServer(async (req, res) => {
     if (tooBig) { shim(res).status(413).json({ source: 'error', error: 'that is too much to send at once' }); return; }
     try { req.body = raw ? JSON.parse(raw) : {}; } catch (err) { req.body = {}; }
     const mod = await import(pathToFileURL(file).href);
-    try { await mod.default(req, shim(res)); } catch (err) { shim(res).status(500).json({ source: 'error', error: String(err) }); }
+    busyApi++;
+    try { await mod.default(req, shim(res)); } catch (err) { shim(res).status(500).json({ source: 'error', error: String(err) }); } finally { busyApi--; }
     return;
   }
   let p = decodeURIComponent(url.pathname);
@@ -58,6 +59,28 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('content-type', TYPES[path.extname(file)] || 'application/octet-stream');
   fs.createReadStream(file).pipe(res);
 });
+
+// When the server code (api/ or this file) is updated on disk, start a fresh copy so the update takes
+// effect without anyone closing this window. Pages and scripts are always read fresh, so they never need this.
+const codeStamp = () => {
+  let newest = 0;
+  const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.m?js$/.test(e.name)) newest = Math.max(newest, fs.statSync(f).mtimeMs); } };
+  try { walk(path.join(ROOT, 'api')); newest = Math.max(newest, fs.statSync(path.join(ROOT, 'tools', 'serve.mjs')).mtimeMs); } catch (err) {}
+  return newest;
+};
+const startStamp = codeStamp();
+let busyApi = 0, swapping = false;
+const watcher = setInterval(() => {
+  if (swapping || busyApi > 0 || codeStamp() === startStamp) return;
+  swapping = true;
+  clearInterval(watcher);
+  console.log('badgerbox was updated. loading the new version...');
+  server.close(() => {
+    const child = spawn(process.execPath, [path.join(ROOT, 'tools', 'serve.mjs')], { stdio: 'inherit', env: Object.assign({}, process.env, { BADGERBOX_OPEN: '0' }) });
+    child.on('exit', (code) => process.exit(code || 0));
+  });
+  if (server.closeAllConnections) server.closeAllConnections();
+}, 3000);
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') console.log('badgerbox is already running (port ' + PORT + ' is in use). open http://localhost:' + PORT + ' or close the other badgerbox window first.');
