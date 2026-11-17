@@ -53,7 +53,7 @@ const server = http.createServer(async (req, res) => {
   // never hand out settings, keys or server code. checked on the real path, so "\\" and ".." tricks can't get around it
   const parts = path.relative(ROOT, file).split(/[\\/]+/);
   const blocked = parts[0] === '..' || path.isAbsolute(path.relative(ROOT, file)) || parts.some((s) => s.startsWith('.')) ||
-    ['api', 'tools', 'node_modules', 'screens'].includes(parts[0].toLowerCase()) ||
+    ['api', 'tools', 'node_modules', 'screens', 'skills'].includes(parts[0].toLowerCase()) ||
     (parts.length === 1 && /^(keys|usage|package|vercel)[^/]*\.json$|\.(bat|md|mjs)$/i.test(parts[0]));
   if (blocked || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; res.end('not found'); return; }
   res.setHeader('content-type', TYPES[path.extname(file)] || 'application/octet-stream');
