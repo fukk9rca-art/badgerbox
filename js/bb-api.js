@@ -292,7 +292,7 @@
           run.questions = run.questions.concat(withFile(res.questions, nos[0], nos));
           run.files = run.files.concat(fresh.fileInfo);
           run.tldr = null;
-          store(RUN_KEY, run);
+          window.bbApi.saveRun(run);
           p0.files = sent0.concat(fresh.files);
           p0.fileInfo = (p0.fileInfo && p0.fileInfo.length ? p0.fileInfo : run.files.slice(0, run.files.length - fresh.fileInfo.length)).concat(fresh.fileInfo);
           p0.keep = (p0.keep || []).concat(fresh.keep);
@@ -324,7 +324,8 @@
           run.questions = withFile(res.questions, nos[0] || 1, nos.length ? nos : null);
           run.subject = res.subject || run.subject; run.level = res.level || run.level; run.title = res.title || run.title;
           run.tldr = null;
-          store(RUN_KEY, run);
+          run.ui = null;
+          window.bbApi.saveRun(run);
           return res;
         });
       });

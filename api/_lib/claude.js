@@ -34,6 +34,8 @@ function fakeReply(system, content) {
         { head: 'watch out for', items: ['dividing only one side.'] },
         { head: 'remember', items: ['always check by substituting.'] }] });
   }
+  if (/ONE QUESTION IS BEING DONE AGAIN/.test(asked)) return JSON.stringify({ subject: 'algebra', level: 'easy', title: 'linear equations', questions: [
+    { number: 2, text: 'Solve 2x - 1 = 9', answer: 'x = 5', unclear: null, steps: [{ text: 'add 1 to both sides', result: '2x = 10', why: 'undo the - 1.' }, { text: 'divide by 2', result: 'x = 5', why: 'undo the times 2.' }] }] });
   return JSON.stringify({ subject: 'algebra', level: 'easy', title: 'linear equations', questions: [
     { number: 1, text: 'Solve 3x + 7 = 22', answer: 'x = 5', unclear: null, anchor: { p: 2, slide: 1 }, place: { page: 1, x: 0.55, y: 0.1, w: 0.4 }, steps: [
       { text: 'take 7 from both sides', result: '3x = 15', why: 'undo the + 7 first so the x term is alone.' },
