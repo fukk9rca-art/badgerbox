@@ -259,7 +259,7 @@
         var cx = flatten((ctxItems || []).map(function (c, i) { return { name: c.name, data: c.data, ref: true, no: maxNo(p0.fileInfo) + i + 1 }; }), base.filter(isImg).length);
         var run = load(RUN_KEY) || {}, req = run.request || {};
         return post('api/solve', {
-          tab: p0.tab || req.tab, cls: p0.cls || req.cls, answers: p0.answers, outputs: p0.outputs, options: p0.options, voice: p0.voice, myVoice: !!(p0.myVoice || req.myVoice),
+          tab: p0.tab || req.tab, cls: p0.cls || req.cls, answers: p0.answers, outputs: p0.outputs, options: p0.options, voice: p0.voice, myVoice: req.myVoice != null ? !!req.myVoice : !!p0.myVoice,
           files: base.concat(cx.files).slice(0, 18),
           text: [p0.text || '', cx.text || ''].filter(Boolean).join('\n\n'),
           fileInfo: (p0.fileInfo || []).map(function (f) { return { n: f.n, name: f.name, role: 'reference', origin: f.origin, pages: f.pages }; }).concat(cx.fileInfo),

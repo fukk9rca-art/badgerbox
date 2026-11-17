@@ -96,6 +96,9 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <span aria-hidden="true">──</span>
 <span>{{ runMeta }}</span>
 <span aria-hidden="true" style="flex-grow: 1; min-width: 0; overflow: hidden">────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
+<sc-if value="{{ voiceShow }}" hint-placeholder-val="{{ false }}">
+<button type="button" id="bb-voice-switch" class="bb-link" role="switch" aria-checked="{{ voiceChecked }}" title="written answers in your own style, for questions and retries on this run" onClick="{{ onVoiceSwitch }}" style="padding: 0; margin: 0; background: transparent; color: #000000; border: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: {{ voiceWeight }}; cursor: pointer; white-space: pre">{{ voiceLabel }}</button>
+</sc-if>
 <a class="bb-link" href="app.html" style="color: #000000; text-decoration: none; white-space: pre"><span aria-hidden="true">[ </span>new assignment<span aria-hidden="true"> ]</span></a>
 </header>
 
@@ -493,6 +496,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FFFFFF","options":["#FFFFFF","#E6E6E6","#C94BFF","#3FE0FF"]},"$preview":{"width":1440,"height":1040}}'>
 class Component extends DCLogic {
 componentDidMount() {
+  window.addEventListener('bb-status', () => this.forceUpdate());
   this.focusBox();
   let view = '';
   try { view = sessionStorage.getItem('bb-view') || ''; sessionStorage.removeItem('bb-view'); } catch (err) {}
@@ -1260,6 +1264,11 @@ return {
   lostFiles: LIVE && !!this.runFiles && !!this.runOrig && !FILES.length && !ORIG && AF.some((f) => f.origin && f.origin !== 'text'),
   lostName: AF.filter((f) => f.origin && f.origin !== 'text').map((f) => f.name).join(', ') || 'your file',
   onRunAgain: back,
+  voiceShow: LIVE && !!(API && API.voiceTabs && API.voiceTabs()),
+  voiceChecked: (RUN.request || {}).myVoice ? 'true' : 'false',
+  voiceLabel: (RUN.request || {}).myVoice ? '[x] my voice' : '[ ] my voice',
+  voiceWeight: (RUN.request || {}).myVoice ? '700' : '400',
+  onVoiceSwitch: () => { const run = API.lastRun(); if (!run) return; run.request = Object.assign({}, run.request || {}, { myVoice: !(run.request || {}).myVoice }); API.saveRun(run); this.forceUpdate(); say([{ who: 'bb', text: run.request.myVoice ? 'my voice is on. questions, retries and edits on this run are written in your own style from now on. answers already here stay as they are: press retry on one to redo it in your voice.' : 'my voice is off for this run.' }]); },
   onAskType: (e) => { this.setState({ asked: e.target.value, askPos: e.target.selectionStart }); syncM('bb-ask-mirror', e.target); },
   onCaret: (e) => { const p = e.target.selectionStart; if (p !== (this.state || {}).askPos) this.setState({ askPos: p }); syncM('bb-ask-mirror', e.target); },
   onTaScroll: (e) => syncM('bb-ask-mirror', e.target),

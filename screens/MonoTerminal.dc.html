@@ -395,12 +395,6 @@ o   o
 </div>
 <div id="bb-hint" style="color: #8C8C8C; margin: 6px 0 0 0; min-width: 0">{{ hint }}</div>
 
-<sc-if value="{{ voiceShow }}" hint-placeholder-val="{{ false }}">
-<div role="group" aria-label="my voice" style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px 2ch; margin: 10px 0 10px 0; padding: 8px 2ch; border: 2px solid #FFFFFF; background: #000000">
-<button type="button" id="bb-voice-switch" class="bb-btn" role="switch" aria-checked="{{ voiceChecked }}" onClick="{{ onVoiceSwitch }}" style="height: 40px; padding: 0 2ch; background: {{ voiceBg }}; color: {{ voiceFg }}; border: 2px solid #FFFFFF; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ voiceLabel }}</button>
-<span style="flex: 1 1 30ch; min-width: 0; color: {{ voiceNoteFg }}">{{ voiceSwitchNote }}</span>
-</div>
-</sc-if>
 <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px">
 <sc-for list="{{ optGroups }}" as="g" hint-placeholder-count="2">
 <div role="group" aria-label="{{ g.label }}" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; min-height: 36px">
@@ -410,6 +404,13 @@ o   o
 </sc-for>
 </div>
 </sc-for>
+<sc-if value="{{ voiceShow }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="my voice" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; min-height: 36px">
+<span aria-hidden="true" style="width: 11ch; flex-shrink: 0; color: #8C8C8C">my voice</span>
+<button type="button" id="bb-voice-switch" class="bb-opt" role="switch" aria-checked="{{ voiceChecked }}" aria-label="my voice" onClick="{{ onVoiceSwitch }}" style="height: 32px; padding: 0 1ch; background: {{ voiceBg }}; color: {{ voiceFg }}; border: 1px solid #FFFFFF; border-radius: 0; font-family: inherit; font-size: 16px; line-height: 24px; font-weight: 700; cursor: pointer; white-space: pre">{{ voiceLabel }}</button>
+<span style="color: #8C8C8C; min-width: 0">{{ voiceSwitchNote }}</span>
+</div>
+</sc-if>
 </div>
 
 <div role="group" aria-label="class" style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 1ch; min-height: 36px">
@@ -1085,7 +1086,7 @@ const addFiles = (list) => {
 };
 this.addFilesFn = addFiles;
 const VOICE_TABS = (API && API.voiceTabs && API.voiceTabs()) || null;
-const VOICE_HERE = !!VOICE_TABS && VOICE_TABS.indexOf(tab.id) !== -1;
+const VOICE_HERE = !!VOICE_TABS;
 const VOICE_ON = VOICE_HERE && !!s.myVoice;
 const groups = tab.opts.map((g) => ({ label: g.label, choices: g.choices, k: tab.id + '.' + g.key })).concat([{ label: OUTPUT.label, choices: OUTPUT.choices, k: OUTPUT.key }, { label: 'give back', choices: ['same as i gave it', 'slides', 'docs', 'pdf'], k: 'give' }]);
 const bbHome = /^https?:/.test(location.protocol) ? location.origin : 'https://badgerbox.app';
@@ -1254,11 +1255,11 @@ return {
   },
   voiceShow: VOICE_HERE,
   voiceChecked: VOICE_ON ? 'true' : 'false',
-  voiceLabel: VOICE_ON ? '[x] my voice: ON' : '[ ] my voice: OFF',
+  voiceLabel: VOICE_ON ? '[x] on' : '[ ] off',
   voiceBg: VOICE_ON ? '#FFFFFF' : '#000000',
   voiceFg: VOICE_ON ? '#000000' : '#FFFFFF',
   voiceNoteFg: VOICE_ON ? '#FFFFFF' : '#8C8C8C',
-  voiceSwitchNote: VOICE_ON ? 'written answers on this tab come out in your own plain style, using your my-voice skill and writing sample.' : 'off: badgerbox writes the normal way. turn it on to have written answers come out in your own plain style.',
+  voiceSwitchNote: VOICE_ON ? 'written answers come out in your own style' : 'written answers in your own style',
   onVoiceSwitch: () => this.setState({ myVoice: !s.myVoice, tried: running ? s.tried : false }),
   optGroups: groups.map((g) => ({
     label: g.label,
