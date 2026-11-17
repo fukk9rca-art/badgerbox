@@ -17,7 +17,7 @@
   var KEY_KEY = 'bb-key';
   function accessKey() { try { return localStorage.getItem(KEY_KEY) || ''; } catch (err) { return ''; } }
   var status = { live: false, model: '', checked: false, stale: false };
-  var NEED_V = 25;
+  var NEED_V = 26;
 
   function post(path, body) {
     return fetch(path, {
@@ -102,24 +102,44 @@
       im.src = url;
     });
   }
-  /* A second look, only at where the answers go: the model gets the pages with a ruler grid and returns a
-   * spot for each answer. Its spots replace the first guess. If anything fails the first guess is kept. */
+  /* A second look, only at where the answers go. The blanks on each page are found by code (bb-blanks.js)
+   * and labelled; the model gets the labelled pages and says which blank each answer belongs in. For an
+   * answer with no blank it reads a spot off the ruler grid. If anything fails the first guess is kept. */
   function placeAnswers(res, imgs) {
     var shown = [];
     (imgs || []).forEach(function (f, gi) { if (f && !f.ref) shown.push({ n: gi + 1, url: f.url }); });
     shown = shown.slice(0, 8);
     var qs = res.questions || [];
     if (!shown.length || !qs.length) return Promise.resolve();
+    var B = window.bbBlanks;
     var timeout = new Promise(function (r) { setTimeout(function () { r(null); }, 90000); });
-    var job = Promise.all(shown.map(function (p) { return gridImage(p.url).then(function (u) { return u ? { n: p.n, type: 'image/jpeg', url: u } : null; }); })).then(function (pages) {
+    var found = {};
+    var job = Promise.all(shown.map(function (p) {
+      return (B ? B.detect(p.url) : Promise.resolve([])).then(function (blanks) {
+        found[p.n] = blanks || [];
+        return (B ? B.tagged(p.url, blanks) : gridImage(p.url)).then(function (u) { return u ? { n: p.n, type: 'image/jpeg', url: u, blanks: (blanks || []).length } : null; });
+      });
+    })).then(function (pages) {
       pages = pages.filter(Boolean);
       if (!pages.length) return null;
       return post('api/place', { pages: pages, items: qs.map(function (q, i) { return { i: i, number: q.number, text: q.text, answer: q.ans, page: q.place && q.place.page }; }) });
     }).then(function (out) {
       if (!out || out.source !== 'model' || !Array.isArray(out.places)) return;
-      var n = 0;
-      out.places.forEach(function (p) { if (qs[p.i]) { qs[p.i].place = { page: p.page, x: p.x, y: p.y, w: p.w }; n++; } });
+      var n = 0, used = {};
+      out.places.forEach(function (p) {
+        if (!qs[p.i]) return;
+        var blank = p.tag ? (found[p.page] || []).filter(function (b) { return b.tag === p.tag; })[0] : null;
+        if (blank && !used[p.page + ':' + p.tag]) {
+          used[p.page + ':' + p.tag] = 1;
+          qs[p.i].place = { page: p.page, x: blank.x, y: blank.y, w: blank.w, h: blank.h, box: !!blank.box, blank: p.tag };
+          n++;
+        } else if (isFinite(p.x) && isFinite(p.y) && p.x != null && p.y != null) {
+          qs[p.i].place = { page: p.page, x: p.x, y: p.y, w: p.w || 0.4 };
+          n++;
+        }
+      });
       res.placed = n;
+      res.blanks = found;
     }).catch(function () {});
     return Promise.race([job, timeout]);
   }

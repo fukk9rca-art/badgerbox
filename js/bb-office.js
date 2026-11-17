@@ -225,9 +225,10 @@
         var slide = pptx.addSlide();
         var ph = Math.min(H, W * pg.h / pg.w);
         slide.addImage({ data: pg.url.replace(/^data:/, ''), x: 0, y: 0, w: W, h: ph });
-        var size = Math.max(8, Math.round(W * 72 * 0.021 * (scale || 1)));
         pg.items.forEach(function (it) {
-          var w = Math.max(0.15, Math.min(1 - it.x, it.w || 0.5)) * W;
+          // each answer carries its own size (fitted to its blank), with the page-wide size as the fallback
+          var size = Math.max(6, Math.round(W * 72 * 0.021 * (it.scale || scale || 1)));
+          var w = Math.max(0.02, Math.min(1 - it.x, it.w || 0.5)) * W;
           var lines = Math.max(1, String(it.text).split('\n').length + Math.floor(String(it.text).length * size * 0.55 / (w * 72)));
           slide.addText(String(it.text), { x: it.x * W, y: it.y * ph, w: w, h: lines * size * 1.3 / 72, fontSize: size, bold: true, color: INK, fontFace: 'Arial', valign: 'top', margin: 0 });
         });
