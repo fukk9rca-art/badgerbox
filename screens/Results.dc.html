@@ -637,8 +637,13 @@ const rerun = (i, opt) => {
       this.prevQ = Object.assign({}, this.prevQ || {}, { [i]: old });
       run.questions[i] = nq;
       API.saveRun(run);
-      this.setState({ retry: '', open: null, undoTick: ((this.state || {}).undoTick || 0) + 1 });
-      say([{ who: 'bb', text: '#' + numOf(i) + ' worked out again and re-checked 2 ways: ' + (nq.sure ? 'both match, so it is [✓].' : 'still not sure. ' + (nq.flag || '')) + (String(nq.ans) === String(old.ans) ? ' same answer as before.' : ' the answer changed. press undo to go back to the old one.') }]);
+      // when the student typed the question out or corrected it, their word settles it: the "not sure" menu goes away
+      const fixed = !!(opt.note || opt.newText);
+      const st0 = this.state || {}, u0 = run.ui || {};
+      const okNow = Object.assign({}, st0.okd || u0.okd || {});
+      if (fixed) okNow[i] = true; else delete okNow[i];
+      this.setState({ retry: '', open: null, typing: false, okd: okNow, undoTick: (st0.undoTick || 0) + 1 });
+      say([{ who: 'bb', text: '#' + numOf(i) + ' worked out again' + (fixed ? ' from what you typed' : '') + ' and re-checked 2 ways: ' + (nq.sure ? 'both match, so it is [✓].' : (fixed ? 'marked [✓] because you corrected it. the second way did not fully agree though' + (nq.flag ? ': ' + nq.flag : '.') : 'still not sure. ' + (nq.flag || ''))) + (String(nq.ans) === String(old.ans) ? ' same answer as before.' : ' the answer changed. press undo to go back to the old one.') }]);
     } else {
       this.setState({ retry: '' });
       say([{ who: 'bb', text: 'could not re-run it: ' + ((res && res.error) || 'no reply from the model') }]);

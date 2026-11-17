@@ -1054,7 +1054,7 @@ const WORK_MSGS = ['reading it', 'finding every question', 'working each one out
 const realHist = (API && API.history) ? API.history() : [];
 const fmtWhen = (iso) => { try { const d = new Date(iso); const h = d.getHours(); return ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][d.getMonth()] + ' ' + String(d.getDate()).padStart(2, '0') + ' ' + ((h % 12) || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + (h < 12 ? 'am' : 'pm'); } catch (err) { return ''; } };
 const goWalk = () => { window.location.href = 'walkthrough.html'; };
-const histItems = realHist.length ? realHist.map((h) => ({ when: fmtWhen(h.at), tab: h.tab || 'auto', title: h.title || 'assignment', meta: h.n + ' question' + (h.n === 1 ? '' : 's') + (h.flags ? ' · ' + h.flags + ' [!]' : ''), open: () => { if (API.openRun(h.id)) goWalk(); },
+const histItems = realHist.length ? realHist.map((h) => ({ when: fmtWhen(h.at), tab: h.tab || 'auto', title: h.title || 'assignment', meta: h.n + ' question' + (h.n === 1 ? '' : 's') + (h.flags ? ' · ' + h.flags + ' [!]' : ''), open: () => { Promise.resolve(API.openRun(h.id)).then((ok) => { if (ok) goWalk(); }); },
     canDrop: true, dropAria: 'remove ' + (h.title || 'this run') + ' from past runs', drop: () => { API.removeRun(h.id); this.setState({ histTick: (s.histTick || 0) + 1, clearAsk: false }); } }))
   : (LIVE_ON || s.cleared ? [] : HIST.map((h) => Object.assign({}, h, { open: goWalk })));
 const todoList = (API && API.todos) ? API.todos() : (s.todoMem || []);
