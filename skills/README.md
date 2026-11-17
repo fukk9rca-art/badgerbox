@@ -32,9 +32,10 @@ auto: false
 
 ## The my voice switch
 
-A skill named exactly `my-voice` gets an on/off switch on the main screen, on the tabs its header lists.
-The switch starts off every time badgerbox opens. It controls that one skill only. Every other skill in
-this folder is always on for its tabs.
+A skill named exactly `my-voice` gets an on/off switch: a row in the options on every tab of the main
+screen, and a small one at the top of the walkthrough. It starts off every time badgerbox opens. When it
+is on, that skill is used on whatever tab you are on; when it is off, it is not used at all. It controls
+that one skill only. Every other skill in this folder is always on for its tabs.
 
 ## Good to know
 

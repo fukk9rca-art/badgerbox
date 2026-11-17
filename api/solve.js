@@ -5,7 +5,7 @@
 // Two passes: the first finds and works every question, the second solves each
 // one again a different way and compares. Answers that don't match get flagged.
 import { useKey } from './_lib/keys.js';
-import { skillText, voiceOff } from './_lib/skills.js';
+import { skillText, voiceOff, voiceOn } from './_lib/skills.js';
 import { MODEL, hasKey, callJson, fileBlock, classText, readBody } from './_lib/claude.js';
 
 const SOLVE_SYSTEM = `You are badgerbox, a homework walkthrough tool for high school and college students.
@@ -105,7 +105,7 @@ export default async function handler(req, res) {
 
   try {
     const solved = await callJson({
-      system: SOLVE_SYSTEM + skillText(body.tab, voiceOff(body)),
+      system: SOLVE_SYSTEM + skillText(body.tab, voiceOff(body), voiceOn(body)),
       content: blocks.concat([{ type: 'text', text: brief }]),
       maxTokens: 16000
     });
