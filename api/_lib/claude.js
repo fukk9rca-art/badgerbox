@@ -54,8 +54,21 @@ function fakeReply(system, content) {
   ] });
 }
 
-export async function callModel({ system, content, maxTokens = 8000 }) {
-  if (FAKE) { await new Promise((r) => setTimeout(r, Number(process.env.BADGERBOX_FAKE_DELAY) || 0)); return fakeReply(system, content); }
+// Returns the reply text. With full: true, returns { text, cut } where cut means the reply hit the length limit.
+export async function callModel({ system, content, maxTokens = 8000, full = false }) {
+  if (FAKE) {
+    await new Promise((r) => setTimeout(r, Number(process.env.BADGERBOX_FAKE_DELAY) || 0));
+    let t = fakeReply(system, content);
+    // test hooks: a reply with a stray quote in it, or one cut off part way
+    const broke = process.env.BADGERBOX_FAKE_BREAK || '';
+    if (broke && !/fix broken JSON/.test(system) && !/checker/.test(system) && !globalThis.bbBrokeOnce) {
+      globalThis.bbBrokeOnce = true;
+      if (broke === 'quote') t = t.replace('"take 7 from both sides"', '"take 7 from "both" sides"');
+      if (broke === 'cut') return full ? { text: t.slice(0, 400), cut: true } : t.slice(0, 400);
+    }
+    if (/fix broken JSON/.test(system)) t = (content[0].text || '').replace('from "both" sides', 'from both sides');
+    return full ? { text: t, cut: false } : t;
+  }
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -75,7 +88,45 @@ export async function callModel({ system, content, maxTokens = 8000 }) {
     const msg = (data && data.error && data.error.message) || ('model request failed (' + res.status + ')');
     throw new Error(msg);
   }
-  return (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+  const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+  return full ? { text, cut: data.stop_reason === 'max_tokens' } : text;
+}
+
+// Small repairs that need no second model call: math written with single backslashes ("\frac"), and
+// trailing commas. Returns the parsed object or null.
+function repairLocally(text) {
+  const start = text.indexOf('{'), end = text.lastIndexOf('}');
+  if (start === -1 || end <= start) return null;
+  const body = text.slice(start, end + 1)
+    .replace(/\\(?!["\\/nrtu]|[bf](?![a-zA-Z]))/g, '\\\\')
+    .replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(body); } catch (err) { return null; }
+}
+
+// Ask the model for JSON and make sure JSON comes back. If the reply is broken it is repaired here when
+// possible, otherwise the model is asked once more: to carry on shorter if it ran out of room, or to fix
+// the broken reply if a quote or bracket was off.
+export async function callJson({ system, content, maxTokens = 8000 }) {
+  const first = await callModel({ system, content, maxTokens, full: true });
+  try { return parseJson(first.text); } catch (err) { /* fall through to repairs */ }
+  const local = repairLocally(first.text);
+  if (local) return local;
+  if (first.cut) {
+    const again = await callModel({
+      system,
+      content: content.concat([{ type: 'text', text: 'Your last reply was too long and got cut off. Answer again, complete this time: keep every question, but at most 3 steps each, and one short sentence for each "why".' }]),
+      maxTokens: Math.min(32000, maxTokens * 2), full: true
+    });
+    try { return parseJson(again.text); } catch (err) { const l2 = repairLocally(again.text); if (l2) return l2; }
+    throw new Error('this assignment is too long to do in one go. run it in two parts (half the pages each).');
+  }
+  const fixed = await callModel({
+    system: 'You fix broken JSON. Reply with the corrected JSON only and change nothing else: same keys, same text. Escape double quotes inside strings as \\" and backslashes as \\\\, and remove raw line breaks inside strings.',
+    content: [{ type: 'text', text: first.text.slice(0, 120000) }],
+    maxTokens: Math.min(32000, maxTokens + 2000)
+  });
+  try { return parseJson(fixed); } catch (err) { const l3 = repairLocally(fixed); if (l3) return l3; }
+  throw new Error('the answer came back garbled twice. press run again.');
 }
 
 // Pull the first JSON object out of a model reply (it may wrap it in prose or a code fence).

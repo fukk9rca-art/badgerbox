@@ -5,7 +5,7 @@
 // Two passes: the first finds and works every question, the second solves each
 // one again a different way and compares. Answers that don't match get flagged.
 import { useKey } from './_lib/keys.js';
-import { MODEL, hasKey, callModel, parseJson, fileBlock, classText, readBody } from './_lib/claude.js';
+import { MODEL, hasKey, callJson, fileBlock, classText, readBody } from './_lib/claude.js';
 
 const SOLVE_SYSTEM = `You are badgerbox, a homework walkthrough tool for high school and college students.
 You get an assignment as text, photos, a PDF, or any mix. Find every separate question in it, keep the
@@ -46,6 +46,8 @@ Rules:
   Set "read": true when the points were read off a graph or table on the worksheet (the student is shown them
   to confirm). "fit": true only when a best-fit line is wanted. "predict" is an x value to read off that line.
   In "expr" use x, + - * / ^, parentheses, and sin cos tan sqrt abs ln log exp pi e.
+- The reply must be valid JSON. Inside a string, write a double quote as \\" and a backslash as \\\\ (so LaTeX
+  like \\\\frac needs two backslashes), and never put a raw line break. Prefer plain text math: x^2, sqrt(3), 3/4.
 - Reply with JSON only, no prose, in exactly this shape:
 {"subject": "short subject, e.g. chemistry", "level": "easy|medium|hard", "title": "short name for the assignment",
  "questions": [{"number": 1, "text": "the question as written", "answer": "the final answer",
@@ -97,21 +99,22 @@ export default async function handler(req, res) {
   ].filter(Boolean).join('\n\n');
 
   try {
-    const solved = parseJson(await callModel({
+    const solved = await callJson({
       system: SOLVE_SYSTEM,
-      content: blocks.concat([{ type: 'text', text: brief }])
-    }));
+      content: blocks.concat([{ type: 'text', text: brief }]),
+      maxTokens: 16000
+    });
     const qs = (Array.isArray(solved.questions) ? solved.questions : []).slice(0, one ? 1 : 200);
     if (!qs.length) throw new Error('no questions found in the assignment');
 
     let checks = [];
     try {
       const list = qs.map((q) => '#' + q.number + ': ' + q.text + '\nanswer given: ' + q.answer).join('\n\n');
-      const checked = parseJson(await callModel({
+      const checked = await callJson({
         system: CHECK_SYSTEM,
         content: [{ type: 'text', text: classText(body.cls) + '\n\n' + list }],
-        maxTokens: 4000
-      }));
+        maxTokens: 6000
+      });
       checks = Array.isArray(checked.checks) ? checked.checks : [];
     } catch (err) {
       checks = [];
