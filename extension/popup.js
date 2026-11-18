@@ -3,11 +3,11 @@
 const $ = (id) => document.getElementById(id);
 const MAX_FILES = 3;            // badgerbox takes 3 files per run
 const MAX_BYTES = 15 * 1024 * 1024;
-const state = { shot: null, items: [], busy: 0 };
+const state = { shot: null, items: [], vids: [], busy: 0 };
 
 // ---- runs inside the assignment page
 function collect() {
-  const out = { title: document.title || '', text: '', links: [], au: null };
+  const out = { title: document.title || '', text: '', links: [], videos: [], au: null };
   const seen = {};
   const au = /\/u\/(\d+)\//.exec(location.pathname);
   out.au = au ? au[1] : null;
@@ -34,7 +34,20 @@ function collect() {
   };
   const onClassroom = /(^|\.)classroom\.google\.com$/.test(location.hostname);
   const onAssignment = /\/c\/[^/]+\/(a|m|sa|mc)\/[^/]+/.test(location.pathname);
+  // YouTube videos: the page itself, links, and embedded players
+  const vseen = {};
+  const video = (href, label) => {
+    const m = /(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/.exec(String(href || ''));
+    if (!m || vseen[m[1]] || out.videos.length >= 4) return;
+    vseen[m[1]] = 1;
+    out.videos.push({ id: m[1], label: String(label || '').replace(/^Attachment:\s*/i, '').replace(/\s+/g, ' ').trim().slice(0, 80) });
+  };
+  video(location.href, document.title);
   scan(location.href, document.title);
+  if (!onClassroom || onAssignment) {
+    document.querySelectorAll('a[href]').forEach((a) => { if (shown(a)) video(a.href, a.getAttribute('aria-label') || a.title || a.innerText); });
+    document.querySelectorAll('iframe[src]').forEach((f) => { if (shown(f)) video(f.src, f.title); });
+  }
   if (!onClassroom || onAssignment) document.querySelectorAll('a[href]').forEach((a) => { if (shown(a)) scan(a.href, a.getAttribute('aria-label') || a.title || a.innerText); });
 
   const picked = String(window.getSelection ? window.getSelection() : '').trim();
@@ -114,23 +127,106 @@ async function grab(l, pageAu) {
   throw new Error(last);
 }
 
+// ---- YouTube transcripts
+// Pulls a JSON object that a page assigns to a variable ("var name = {...};") out of the page's HTML.
+function jsonAfter(html, marker) {
+  const at = html.indexOf(marker);
+  if (at === -1) return null;
+  const start = html.indexOf('{', at);
+  if (start === -1) return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let k = start; k < html.length; k++) {
+    const ch = html[k];
+    if (inStr) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === '"') inStr = false; continue; }
+    if (ch === '"') inStr = true;
+    else if (ch === '{') depth++;
+    else if (ch === '}') { depth--; if (depth === 0) { try { return JSON.parse(html.slice(start, k + 1)); } catch (err) { return null; } } }
+  }
+  return null;
+}
+const stamp = (ms) => { const t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0'); };
+// lines of { ms, text } -> readable text with a time mark about every 30 seconds
+function joinLines(lines) {
+  let out = '', last = -1e9;
+  lines.forEach((l) => {
+    const t = String(l.text || '').replace(/\s+/g, ' ').trim();
+    if (!t) return;
+    if (l.ms - last >= 30000) { out += (out ? '\n' : '') + '[' + stamp(l.ms) + '] '; last = l.ms; }
+    out += t + ' ';
+  });
+  return out.trim();
+}
+async function transcript(id) {
+  const r = await fetch('https://www.youtube.com/watch?v=' + id + '&hl=en', { credentials: 'include' });
+  if (!r.ok) throw new Error('could not open the video (' + r.status + ')');
+  const html = await r.text();
+  const player = jsonAfter(html, 'ytInitialPlayerResponse = ') || jsonAfter(html, 'ytInitialPlayerResponse=') || {};
+  const det = player.videoDetails || {};
+  const title = String(det.title || ((/<title>([^<]*)<\/title>/.exec(html) || [])[1] || '').replace(/ - YouTube$/, '') || 'video').slice(0, 120);
+  const meta = { title: title, channel: String(det.author || '').slice(0, 80), seconds: Number(det.lengthSeconds) || 0 };
+  const tracks = (((player.captions || {}).playerCaptionsTracklistRenderer || {}).captionTracks) || [];
+  // captions people wrote beat automatic ones; English first, otherwise whatever there is
+  const rank = (t) => (t.kind === 'asr' ? 2 : 0) + (String(t.languageCode || '').indexOf('en') === 0 ? 0 : 1);
+  const order = tracks.slice().sort((a, b) => rank(a) - rank(b));
+  for (const t of order.slice(0, 3)) {
+    try {
+      const c = await fetch(t.baseUrl + (/[?&]fmt=/.test(t.baseUrl) ? '' : '&fmt=json3'), { credentials: 'include' });
+      const j = c.ok ? await c.json() : null;
+      const lines = ((j && j.events) || []).filter((e) => e.segs).map((e) => ({ ms: Number(e.tStartMs) || 0, text: e.segs.map((s) => s.utf8 || '').join('') }));
+      const text = joinLines(lines);
+      if (text.length > 40) return Object.assign(meta, { text: text, lang: t.languageCode || '', auto: t.kind === 'asr' });
+    } catch (err) { /* try the next way */ }
+  }
+  // second way: the same request YouTube's own "Show transcript" panel makes
+  try {
+    const key = (/"INNERTUBE_API_KEY":"([^"]+)"/.exec(html) || [])[1], ver = (/"INNERTUBE_CLIENT_VERSION":"([^"]+)"/.exec(html) || [])[1];
+    if (key && ver) {
+      const inner = [0x12, id.length].concat(Array.from(id).map((ch) => ch.charCodeAt(0)));
+      const params = btoa(String.fromCharCode.apply(null, [0x0a, inner.length].concat(inner)));
+      const p = await fetch('https://www.youtube.com/youtubei/v1/get_transcript?key=' + encodeURIComponent(key) + '&prettyPrint=false', {
+        method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ context: { client: { clientName: 'WEB', clientVersion: ver, hl: 'en' } }, params: params })
+      });
+      const j = p.ok ? await p.json() : null;
+      const lines = [];
+      (function walk(o) {
+        if (!o || typeof o !== 'object') return;
+        if (o.transcriptSegmentRenderer) { const s = o.transcriptSegmentRenderer; lines.push({ ms: Number(s.startMs) || 0, text: (((s.snippet || {}).runs) || []).map((x) => x.text || '').join('') }); return; }
+        Object.keys(o).forEach((k) => walk(o[k]));
+      })(j);
+      const text = joinLines(lines);
+      if (text.length > 40) return Object.assign(meta, { text: text, lang: '', auto: false });
+    }
+  } catch (err) { /* fall through */ }
+  throw new Error(tracks.length ? 'YouTube would not give the captions' : 'this video has no captions');
+}
+function payloadContext() {
+  return state.vids.filter((v) => v.state === 'ok' && v.use).map((v) => ({
+    name: 'video: ' + v.info.title,
+    text: ('YouTube video "' + v.info.title + '"' + (v.info.channel ? ' by ' + v.info.channel : '') + (v.info.seconds ? ', ' + stamp(v.info.seconds * 1000) + ' long' : '') +
+      ' (https://youtu.be/' + v.id + '). Transcript of what is said' + (v.info.auto ? ' (automatic captions, may have mistakes)' : '') + ', with time marks:\n' + v.info.text).slice(0, 30000)
+  }));
+}
+
 // ---- the popup
 function render() {
   const rows = [];
   rows.push({ st: state.shot === null ? '[..]' : state.shot ? '[ok]' : '[no]', nm: 'screenshot of this page' + (state.shot === false ? ' (not allowed on this page)' : '') });
   state.items.forEach((it) => rows.push({ it: it.state === 'ok' ? it : null, st: it.state === 'busy' ? '[..]' : it.state === 'ok' ? (it.use ? '[x]' : '[ ]') : '[no]', nm: (it.file ? it.file.name : it.label || 'attached file') + (it.note ? ' : ' + it.note : '') }));
   if (!state.items.length && state.done) rows.push({ st: '', nm: 'no attached files found on this page', dim: true });
+  state.vids.forEach((v) => rows.push({ it: v.state === 'ok' ? v : null, vid: true, st: v.state === 'busy' ? '[..]' : v.state === 'ok' ? (v.use ? '[x]' : '[ ]') : '[no]',
+    nm: 'video: ' + (v.info ? v.info.title : v.label || 'YouTube video') + (v.state === 'ok' ? ' (transcript, ' + v.info.text.split(/\s+/).length + ' words)' : v.note ? ' : ' + v.note : '') }));
   const list = $('list');
   list.textContent = '';
   rows.forEach((r) => {
     const d = document.createElement(r.it ? 'button' : 'div');
     d.className = 'row' + (r.dim || (r.it && !r.it.use) ? ' dim' : '') + (r.it ? ' pick' : '');
-    if (r.it) { d.type = 'button'; d.setAttribute('aria-pressed', r.it.use ? 'true' : 'false'); d.title = r.it.use ? 'click to leave this file out' : 'click to send this file'; d.addEventListener('click', () => toggle(r.it)); }
+    if (r.it) { d.type = 'button'; d.setAttribute('aria-pressed', r.it.use ? 'true' : 'false'); d.title = r.it.use ? 'click to leave this file out' : 'click to send this file'; d.addEventListener('click', () => (r.vid ? (r.it.use = !r.it.use, render()) : toggle(r.it))); }
     const a = document.createElement('span'); a.className = 'st'; a.textContent = r.st;
     const b = document.createElement('span'); b.className = 'nm'; b.textContent = r.nm;
     d.append(a, b); list.append(d);
   });
-  $('send').disabled = state.busy > 0 || !state.done || !payloadFiles().length && !$('text').value.trim();
+  $('send').disabled = state.busy > 0 || !state.done || !payloadFiles().length && !$('text').value.trim() && !payloadContext().length;
 }
 // the screenshot always goes first; attached files fill the rest, up to 3 files in all
 function payloadFiles() {
@@ -170,9 +266,11 @@ async function start() {
   if (info.note) say(info.note);
 
   state.items = info.links.slice(0, 6).map((l) => ({ label: l.label, state: 'busy', link: l }));
+  state.vids = (info.videos || []).slice(0, 4).map((v) => ({ id: v.id, label: v.label, state: 'busy', use: true }));
   state.done = true;
-  state.busy = state.items.length;
+  state.busy = state.items.length + state.vids.length;
   render();
+  state.vids.forEach((v) => transcript(v.id).then((t) => { v.info = t; v.state = 'ok'; }, (err) => { v.state = 'no'; v.note = err.message; }).then(() => { state.busy--; render(); }));
   await Promise.all(state.items.map((it) => grab(it.link, info.au).then((f) => { it.file = f; it.state = 'ok'; }, (err) => { it.state = 'no'; it.note = err.message; }).then(() => { state.busy--; render(); })));
   const ok = state.items.filter((it) => it.state === 'ok');
   ok.forEach((it, i) => { it.use = i < room(); });
@@ -187,7 +285,7 @@ $('send').addEventListener('click', async () => {
   await chrome.storage.local.set({ home: home });
   $('send').disabled = true;
   say('opening badgerbox...');
-  const res = await chrome.runtime.sendMessage({ bbSend: { home: home, files: payloadFiles(), text: $('useText').checked ? $('text').value.trim().slice(0, 6000) : '' } });
+  const res = await chrome.runtime.sendMessage({ bbSend: { home: home, files: payloadFiles(), context: payloadContext(), text: $('useText').checked ? $('text').value.trim().slice(0, 6000) : '' } });
   if (res && res.ok) window.close();
   else { say('could not send: ' + ((res && res.error) || 'no reply') + '. start badgerbox first.'); $('send').disabled = false; }
 });

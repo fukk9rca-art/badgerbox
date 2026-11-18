@@ -66,7 +66,7 @@ export default async function handler(req, res) {
 
   const body = readBody(req);
   const blocks = (body.files || []).map(fileBlock).filter(Boolean).slice(0, 20);
-  const text = String(body.text || '').slice(0, 20000);
+  const text = String(body.text || '').slice(0, 90000);
   const one = (body.one && typeof body.one === 'object') ? body.one : null;
   if (!blocks.length && !text.trim() && !one) { res.status(400).json({ source: 'error', error: 'nothing to solve' }); return; }
   const gate = useKey(req, 'run');

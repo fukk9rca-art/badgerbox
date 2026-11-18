@@ -58,13 +58,15 @@ press its button and it:
 
 1. takes a screenshot of the page (sent as reference),
 2. downloads the attached Google Docs (as .docx), Slides (as .pptx) and Drive PDFs or images,
-3. reads the teacher's instructions and lets you edit them or leave them out,
-4. opens badgerbox with all of it loaded. Press Enter to run.
+3. reads the transcript of YouTube videos linked or embedded on the page (or of the video you are
+   watching), so questions about a video can be answered. It gets what is said, not what is shown,
+4. reads the teacher's instructions and lets you edit them or leave them out,
+5. opens badgerbox with all of it loaded. Press Enter to run.
 
 To add it: open the browser's extensions page (`opera://extensions`, `chrome://extensions`), turn on
 **Developer mode**, press **Load unpacked** and choose the `extension` folder. badgerbox has to be running.
-It sends at most 3 files (the screenshot plus two attachments). It only talks to Google Classroom, Docs and
-Drive and to badgerbox itself (`localhost`, or a share link set under "badgerbox address"). School-managed
+It sends at most 3 files (the screenshot plus two attachments). It only talks to Google Classroom, Docs,
+Drive and YouTube and to badgerbox itself (`localhost`, or a share link set under "badgerbox address"). School-managed
 Chromebooks usually block extensions.
 
 ## Skills
