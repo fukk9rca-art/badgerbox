@@ -23,7 +23,7 @@ function handOver(payload) {
 async function deliver(p) {
   const tab = await chrome.tabs.create({ url: p.home + '/app.html' });
   await whenLoaded(tab.id);
-  const out = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: handOver, args: [{ files: p.files, text: p.text }] });
+  const out = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: handOver, args: [{ files: p.files, text: p.text, context: p.context || [] }] });
   if (!out || !out[0] || out[0].result !== 'sent') throw new Error('that page is not badgerbox');
 }
 
