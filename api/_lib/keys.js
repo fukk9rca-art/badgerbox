@@ -52,9 +52,11 @@ export function isRemote(req) {
 export function weakKey(key) { const k = String(key); return k.length < 4 || k === '8008' || /^change-me/i.test(k); }
 
 // Slow down guessing: after 15 wrong keys in 10 minutes, share-link visitors are locked out for 10 minutes.
-let bad = [];
-export function guessLocked() { const t = Date.now(); bad = bad.filter((x) => t - x < 600000); return bad.length >= 15; }
-export function noteBad() { bad.push(Date.now()); }
+// Counted per visitor, so one person guessing cannot lock everyone else out.
+const bad = new Map();
+export function visitor(req) { const h = (req && req.headers) || {}; return String(h['cf-connecting-ip'] || String(h['x-forwarded-for'] || '').split(',')[0].trim() || h['x-real-ip'] || 'remote').slice(0, 60); }
+export function guessLocked(who) { const t = Date.now(); const list = (bad.get(who) || []).filter((x) => t - x < 600000); bad.set(who, list); return list.length >= 15; }
+export function noteBad(who) { if (bad.size > 5000) bad.clear(); bad.set(who, (bad.get(who) || []).concat([Date.now()])); }
 
 export function keyOf(req) {
   const h = req.headers || {};
@@ -64,9 +66,10 @@ export function keyOf(req) {
 // What a key is allowed, and what it has used today. null if the key isn't valid.
 export function keyInfo(key, req) {
   const remote = isRemote(req);
-  if (remote && guessLocked()) return null;
+  const who = remote ? visitor(req) : '';
+  if (remote && guessLocked(who)) return null;
   const entry = Object.prototype.hasOwnProperty.call(loadKeys(), key) ? loadKeys()[key] : null;
-  if (!key || !entry || (remote && weakKey(key))) { if (remote && key) noteBad(); return null; }
+  if (!key || !entry || (remote && weakKey(key))) { if (remote && key) noteBad(who); return null; }
   const runsPerDay = Math.max(0, Number(entry.runsPerDay) || 0);
   const day = ((readUsage()[today()] || {})[key]) || {};
   return { name: entry.name || '', runsPerDay, asksPerDay: runsPerDay * 10, runs: day.runs || 0, asks: day.asks || 0 };

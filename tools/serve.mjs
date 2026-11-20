@@ -30,6 +30,26 @@ function shim(res) {
   return res;
 }
 
+// Only these may be handed out, and only by their real names: the pages at the top level, and the scripts
+// and styles in css/, js/ and vendor/. Everything else (settings, keys, server code, skills) is refused.
+// The check runs on the file's real path, so Windows short names (KEYS~1.JSO), alternate data streams
+// (name::$DATA), trailing dots, links and ".." cannot reach anything that is not on the list.
+const REAL_ROOT = fs.realpathSync.native(ROOT);
+const MAY_SERVE = { '': /^[a-z0-9-]+\.html$|^favicon\.svg$/, css: /^[\w.-]+\.css$/, js: /^[\w.-]+\.js$/, vendor: /^[\w.-]+\.(js|mjs)$/ };
+function safeFile(p) {
+  if (/[:~*?"<>|\0]/.test(p) || /[. ]([\\/]|$)/.test(p)) return null;
+  let real;
+  try { real = fs.realpathSync.native(path.join(ROOT, p)); } catch (err) { return null; }
+  const rel = path.relative(REAL_ROOT, real);
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return null;
+  const parts = rel.split(/[\\/]+/).map((x) => x.toLowerCase());
+  if (parts.some((x) => x.startsWith('.'))) return null;
+  const rule = MAY_SERVE[parts.length === 1 ? '' : parts[0]];
+  if (!rule || !rule.test(parts[parts.length - 1])) return null;
+  try { if (!fs.statSync(real).isFile()) return null; } catch (err) { return null; }
+  return real;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname.startsWith('/api/')) {
@@ -46,16 +66,12 @@ const server = http.createServer(async (req, res) => {
     try { await mod.default(req, shim(res)); } catch (err) { shim(res).status(500).json({ source: 'error', error: String(err) }); } finally { busyApi--; }
     return;
   }
-  let p = decodeURIComponent(url.pathname);
+  let p;
+  try { p = decodeURIComponent(url.pathname); } catch (err) { res.statusCode = 400; res.end('bad request'); return; }
   if (p.endsWith('/')) p += 'index.html';
-  if (!path.extname(p) && fs.existsSync(path.join(ROOT, p + '.html'))) p += '.html';
-  const file = path.join(ROOT, p);
-  // never hand out settings, keys or server code. checked on the real path, so "\\" and ".." tricks can't get around it
-  const parts = path.relative(ROOT, file).split(/[\\/]+/);
-  const blocked = parts[0] === '..' || path.isAbsolute(path.relative(ROOT, file)) || parts.some((s) => s.startsWith('.')) ||
-    ['api', 'tools', 'node_modules', 'screens', 'skills'].includes(parts[0].toLowerCase()) ||
-    (parts.length === 1 && /^(keys|usage|package|vercel)[^/]*\.json$|\.(bat|md|mjs)$/i.test(parts[0]));
-  if (blocked || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; res.end('not found'); return; }
+  if (!path.extname(p) && /^\/[a-z0-9-]+$/i.test(p)) p += '.html';
+  const file = safeFile(p);
+  if (!file) { res.statusCode = 404; res.end('not found'); return; }
   res.setHeader('content-type', TYPES[path.extname(file)] || 'application/octet-stream');
   res.setHeader('cache-control', 'no-cache, no-store');   // always the newest pages and scripts after an update
   fs.createReadStream(file).pipe(res);
@@ -76,6 +92,7 @@ const watcher = setInterval(() => {
   swapping = true;
   clearInterval(watcher);
   console.log('badgerbox was updated. loading the new version...');
+  if (six) { try { six.close(); if (six.closeAllConnections) six.closeAllConnections(); } catch (err) {} }
   server.close(() => {
     const child = spawn(process.execPath, [path.join(ROOT, 'tools', 'serve.mjs')], { stdio: 'inherit', env: Object.assign({}, process.env, { BADGERBOX_OPEN: '0' }) });
     child.on('exit', (code) => process.exit(code || 0));
@@ -87,7 +104,12 @@ server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') console.log('badgerbox is already running (port ' + PORT + ' is in use). open http://localhost:' + PORT + ' or close the other badgerbox window first.');
   else console.log('could not start: ' + err.message);
 });
-server.listen(PORT, () => {
+// Listen on this computer only. Other devices on the same Wi-Fi cannot connect; friends come in through the
+// share link, which reaches badgerbox from this computer. Set BADGERBOX_HOST=0.0.0.0 to open it to the network.
+const HOST = process.env.BADGERBOX_HOST || '127.0.0.1';
+const six = HOST === '127.0.0.1' ? http.createServer(server.listeners('request')[0]) : null;
+if (six) { six.on('error', () => {}); six.listen(PORT, '::1'); }
+server.listen(PORT, HOST, () => {
   console.log('badgerbox is running: http://localhost:' + PORT);
   console.log(process.env.ANTHROPIC_API_KEY ? 'model: connected (real answers)' : 'model: not connected (sample answers). add your key to the .env file to turn it on.');
   console.log('leave this window open while you use badgerbox. close it to stop.');

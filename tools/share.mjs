@@ -8,7 +8,7 @@ await import('./serve.mjs');
 await new Promise((r) => setTimeout(r, 700));
 
 console.log('\nopening a share link (this takes a few seconds)...');
-const cf = spawn('cloudflared', ['tunnel', '--no-autoupdate', '--url', 'http://localhost:' + PORT], { stdio: ['ignore', 'pipe', 'pipe'] });
+const cf = spawn('cloudflared', ['tunnel', '--no-autoupdate', '--url', 'http://127.0.0.1:' + PORT], { stdio: ['ignore', 'pipe', 'pipe'] });
 let shown = false, tail = '';
 const read = (buf) => {
   tail = (tail + String(buf)).slice(-4000);
