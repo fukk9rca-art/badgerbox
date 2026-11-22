@@ -1,10 +1,13 @@
 // POST /api/solve
-// Body: { tab, text, cls: { name, rules }, answers, outputs, picked: [numbers], files: [{ type, url }] }
-// Reply: { source: 'model', subject, level, modelLabel, questions: [...] } | { source: 'mock' } | { source: 'error', error }
+// Body: { tab, text, context, cls: { name, rules }, classes: [{ name, rules }], answers, outputs, picked: [numbers], files: [{ type, url, ref }] }
+// Reply: { source: 'model', subject, level, modelLabel, cost, questions: [...] } | { source: 'mock' } | { source: 'error', kind, error, refunded }
+//
+// Cost: a run is charged by size (keys.js costOf) before the model is called, then settled against the tokens
+// the model really used. If nothing comes back (an error, or no questions found) the runs are given back.
 //
 // Two passes: the first finds and works every question, the second solves each
 // one again a different way and compares. Answers that don't match get flagged.
-import { useKey } from './_lib/keys.js';
+import { useKey, refund, charge, costOf } from './_lib/keys.js';
 import { skillText, voiceOff, voiceOn } from './_lib/skills.js';
 import { MODEL, hasKey, callJson, fileBlock, classText, readBody } from './_lib/claude.js';
 
@@ -69,8 +72,11 @@ export default async function handler(req, res) {
   const text = String(body.text || '').slice(0, 90000);
   const one = (body.one && typeof body.one === 'object') ? body.one : null;
   if (!blocks.length && !text.trim() && !one) { res.status(400).json({ source: 'error', error: 'nothing to solve' }); return; }
-  const gate = useKey(req, 'run');
-  if (!gate.ok) { res.status(200).json({ source: 'error', error: gate.error }); return; }
+  const cost = one ? 1 : costOf(body);
+  const gate = useKey(req, 'run', cost);
+  if (!gate.ok) { res.status(200).json({ source: 'error', kind: gate.out ? 'limit' : 'cost', error: gate.error }); return; }
+  const meter = { tokens: 0 };
+  const giveBack = () => { refund(req, 'run', cost); };
 
   const answers = body.answers || {};
   const extra = Object.keys(answers)
@@ -89,6 +95,7 @@ export default async function handler(req, res) {
     fileLines.length ? 'The files:\n' + fileLines.join('\n') : '',
     body.more ? 'Other work from this student was already completed. Only answer the questions in the files marked ASSIGNMENT.' : '',
     classText(body.cls),
+    (!body.cls && Array.isArray(body.classes) && body.classes.length) ? 'The student\'s saved classes. If this assignment belongs to one of them, work it the way that class wants:\n' + body.classes.slice(0, 12).map((c) => '- ' + String((c && c.name) || '').slice(0, 80) + ((c && Array.isArray(c.rules) && c.rules.filter(Boolean).length) ? ': ' + c.rules.filter(Boolean).map((r) => String(r).slice(0, 300)).join('; ') : '')).join('\n') : '',
     one ? [
       'ONE QUESTION IS BEING DONE AGAIN. The whole assignment is attached above only so you can understand it. Do not answer the other questions.',
       'The question (number ' + String(one.number || '').slice(0, 12) + '), as badgerbox read it: ' + String(one.text || '').slice(0, 3000),
@@ -100,17 +107,19 @@ export default async function handler(req, res) {
     options.length ? 'What the student picked for this run: ' + options.join('; ') + '.' : '',
     extra.length ? 'Extra context the student gave:\n' + extra.join('\n') : '',
     voice ? 'A sample of the student\'s own writing (for their voice only, never copy from it):\n' + voice : '',
-    text ? 'The student typed:\n' + text : ''
+    text ? 'The student typed:\n' + text : '',
+    body.context ? 'Context that came with the assignment (a teacher\'s instructions, a video transcript). Use it; the questions may be about it:\n' + String(body.context).slice(0, 60000) : ''
   ].filter(Boolean).join('\n\n');
 
   try {
     const solved = await callJson({
       system: SOLVE_SYSTEM + skillText(body.tab, voiceOff(body), voiceOn(body)),
       content: blocks.concat([{ type: 'text', text: brief }]),
-      maxTokens: 16000
+      maxTokens: 16000,
+      meter
     });
     const qs = (Array.isArray(solved.questions) ? solved.questions : []).slice(0, one ? 1 : 200);
-    if (!qs.length) throw new Error('no questions found in the assignment');
+    if (!qs.length) { giveBack(); res.status(200).json({ source: 'error', kind: 'empty', refunded: true, error: 'I couldn\'t find any questions in that. try a closer screenshot of the questions, or type them out.' }); return; }
 
     let checks = [];
     try {
@@ -118,7 +127,8 @@ export default async function handler(req, res) {
       const checked = await callJson({
         system: CHECK_SYSTEM,
         content: [{ type: 'text', text: classText(body.cls) + '\n\n' + list }],
-        maxTokens: 6000
+        maxTokens: 6000,
+        meter
       });
       checks = Array.isArray(checked.checks) ? checked.checks : [];
     } catch (err) {
@@ -144,16 +154,23 @@ export default async function handler(req, res) {
       };
     });
 
+    // settle up: a run is worth about RUN_TOKENS tokens. Charge more only when the work was clearly bigger.
+    const RUN_TOKENS = Number(process.env.BADGERBOX_RUN_TOKENS) || 20000;
+    const real = meter.tokens ? Math.ceil(meter.tokens / RUN_TOKENS) : cost;
+    const extra = real > cost ? charge(req, 'run', real - cost) : 0;
+    if (req.socket && req.socket.destroyed) { giveBack(); return; }
     res.status(200).json({
       source: 'model',
+      cost: cost + extra,
       subject: solved.subject || body.tab || 'homework',
       level: solved.level || 'medium',
       title: solved.title || '',
       modelLabel: MODEL,
-      limit: gate.limit,
+      limit: { used: gate.limit.used + extra, limit: gate.limit.limit, kind: 'run' },
       questions
     });
   } catch (err) {
-    res.status(200).json({ source: 'error', error: String(err && err.message || err) });
+    giveBack();
+    res.status(200).json({ source: 'error', kind: 'failed', refunded: true, error: String(err && err.message || err) });
   }
 }

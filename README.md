@@ -105,11 +105,14 @@ It ships empty apart from an example. See `skills/README.md` for how to add one.
 
 | Path | What it is |
 | --- | --- |
-| `screens/*.dc.html` | The five screens, from the Claude Design canvas. **Edit these.** |
+| `screens/*.dc.html` | The screens, from the Claude Design canvas. **Edit these.** `Drop` and `Answers` are the main two. |
 | `tools/build.py` | Turns `screens/` into the pages below. Run `python3 tools/build.py` after editing a screen. |
-| `index.html` `enter.html` `app.html` `walkthrough.html` `states.html` | Generated pages (landing, key + agreement, main screen, walkthrough, box states). |
+| `app.html` `answers.html` | Generated: the two main screens. Drop an assignment on `app.html`; every answer, flag and fix is on `answers.html`. |
+| `index.html` `enter.html` `classic.html` `walkthrough.html` `states.html` | Generated: landing, key, and the old main screen and walkthrough (still reachable from **more**). |
 | `js/dc-lite.js` | Small runtime that runs the screen format in a normal browser. |
 | `js/bb-api.js` | The pages' link to the backend. |
+| `js/bb-sheet.js` | Writes the answers onto the student's own pages and makes the download (PDF, picture, Word, slides, or a clean answer sheet). |
+| `tests/flow.test.cjs` | End-to-end test of the two main screens against the fake model (no key, no cost). How to run it is at the top of the file. |
 | `vendor/pdfjs/` | pdf.js (Apache-2.0), used to turn PDF worksheets into page images. |
 | `js/bb-office.js`, `vendor/office/` | Reads Word and PowerPoint files and writes answers back into them (JSZip and PptxGenJS, both MIT). |
 | `js/bb-blanks.js` | Finds the blanks on a worksheet picture (answer lines, empty table cells, boxes) with plain image processing and labels them, so the model only has to say which blank an answer goes in. |
@@ -119,7 +122,7 @@ It ships empty apart from an example. See `skills/README.md` for how to add one.
 | `api/ask.js` | Answers follow-up questions in the walkthrough chat, and turns away off-topic ones. |
 | `api/tldr.js` | Builds the tl;dr: what the assignment is teaching, worked out from the class and the work. |
 | `api/status.js` | Tells the pages whether a model is connected. |
-| `api/key.js`, `api/_lib/keys.js` | Access keys and per-key daily limits. |
+| `api/key.js`, `api/_lib/keys.js` | Access keys and per-key daily limits. A run is charged by size (about 2 pages = 1 run, reference files half), shown on the run button first, and given back if nothing comes back. |
 | `extension/` | Browser extension: one button sends the open assignment (screenshot, attached files, instructions) to badgerbox. |
 | `skills/`, `api/_lib/skills.js` | Your own instruction files per subject tab, and the code that loads them. |
 | `start-badgerbox.bat` | Double-click starter for Windows. |

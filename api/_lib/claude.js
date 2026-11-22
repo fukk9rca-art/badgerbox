@@ -26,6 +26,7 @@ function fakeReply(system, content) {
       { number: 4, agree: true, check: 'recounted the bins from the sorted list.', note: null }
     ] });
   }
+  if (/follow-up/.test(system) && /should be/i.test(asked)) return JSON.stringify({ kind: 'change', tab: null, proposed: (/should be\s+(.+?)[.!?]*$/i.exec(asked.split('The student asks:').pop()) || [])[1] || 'x = 4', answer: 'my steps still give the first answer, so double-check it on your sheet before you change it.' });
   if (/follow-up/.test(system)) return 'fake model: this is where the real follow-up answer goes.';
   if (/tl;dr/.test(system)) {
     return JSON.stringify({ topic: 'solving linear equations', nutshell: 'undo what was done to x, in reverse order, doing the same thing to both sides.',
@@ -56,7 +57,8 @@ function fakeReply(system, content) {
 }
 
 // Returns the reply text. With full: true, returns { text, cut } where cut means the reply hit the length limit.
-export async function callModel({ system, content, maxTokens = 8000, full = false }) {
+// meter (optional): { tokens } that this call's input and output tokens are added to, so a run can be charged by size.
+export async function callModel({ system, content, maxTokens = 8000, full = false, meter = null }) {
   if (FAKE) {
     await new Promise((r) => setTimeout(r, Number(process.env.BADGERBOX_FAKE_DELAY) || 0));
     let t = fakeReply(system, content);
@@ -89,6 +91,7 @@ export async function callModel({ system, content, maxTokens = 8000, full = fals
     const msg = (data && data.error && data.error.message) || ('model request failed (' + res.status + ')');
     throw new Error(msg);
   }
+  if (meter && data.usage) meter.tokens = (meter.tokens || 0) + (Number(data.usage.input_tokens) || 0) + (Number(data.usage.output_tokens) || 0);
   const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
   return full ? { text, cut: data.stop_reason === 'max_tokens' } : text;
 }
@@ -107,8 +110,8 @@ function repairLocally(text) {
 // Ask the model for JSON and make sure JSON comes back. If the reply is broken it is repaired here when
 // possible, otherwise the model is asked once more: to carry on shorter if it ran out of room, or to fix
 // the broken reply if a quote or bracket was off.
-export async function callJson({ system, content, maxTokens = 8000 }) {
-  const first = await callModel({ system, content, maxTokens, full: true });
+export async function callJson({ system, content, maxTokens = 8000, meter = null }) {
+  const first = await callModel({ system, content, maxTokens, full: true, meter });
   try { return parseJson(first.text); } catch (err) { /* fall through to repairs */ }
   const local = repairLocally(first.text);
   if (local) return local;
@@ -116,7 +119,7 @@ export async function callJson({ system, content, maxTokens = 8000 }) {
     const again = await callModel({
       system,
       content: content.concat([{ type: 'text', text: 'Your last reply was too long and got cut off. Answer again, complete this time: keep every question, but at most 3 steps each, and one short sentence for each "why".' }]),
-      maxTokens: Math.min(32000, maxTokens * 2), full: true
+      maxTokens: Math.min(32000, maxTokens * 2), full: true, meter
     });
     try { return parseJson(again.text); } catch (err) { const l2 = repairLocally(again.text); if (l2) return l2; }
     throw new Error('this assignment is too long to do in one go. run it in two parts (half the pages each).');
@@ -124,7 +127,7 @@ export async function callJson({ system, content, maxTokens = 8000 }) {
   const fixed = await callModel({
     system: 'You fix broken JSON. Reply with the corrected JSON only and change nothing else: same keys, same text. Escape double quotes inside strings as \\" and backslashes as \\\\, and remove raw line breaks inside strings.',
     content: [{ type: 'text', text: first.text.slice(0, 120000) }],
-    maxTokens: Math.min(32000, maxTokens + 2000)
+    maxTokens: Math.min(32000, maxTokens + 2000), meter
   });
   try { return parseJson(fixed); } catch (err) { const l3 = repairLocally(fixed); if (l3) return l3; }
   throw new Error('the answer came back garbled twice. press run again.');

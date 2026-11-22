@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>badgerbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000000;color:#FFFFFF;font-family:Cousine,"DejaVu Sans Mono",Menlo,Consolas,monospace}
+a{color:#FFFFFF}a:hover{color:#FFFFFF}
+::selection{background:#FFFFFF;color:#000000}
+@keyframes bb-blink{50%{opacity:0}}
+.bb-cursor{animation:bb-blink 0.9s steps(1) infinite}
+.bb-btn{cursor:pointer}
+.bb-btn:not([disabled]):hover{background:#FFFFFF !important;color:#000000 !important}
+.bb-inv{cursor:pointer}
+.bb-inv:not([disabled]):hover{background:#000000 !important;color:#FFFFFF !important}
+.bb-go:not([disabled]):hover{background:#000000 !important;color:#FFFFFF !important}
+.bb-btn:focus-visible,.bb-in:focus-visible,.bb-chk:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-go:focus-visible,.bb-inv:focus-visible{outline:3px solid #000000;outline-offset:-9px}
+.bb-file:focus-visible + label{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-in::placeholder{color:#8F8F8F}
+.bb-chk{width:20px;height:20px;margin:0;accent-color:#FFFFFF;flex:0 0 auto}
+@keyframes bb-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes bb-hunt{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+.bb-rise{animation:bb-in 320ms cubic-bezier(0.16,1,0.3,1) both}
+.bb-box{transition:box-shadow 140ms ease-out,transform 140ms ease-out}
+.bb-box:focus-within{box-shadow:14px 14px 0 #8F8F8F !important;transform:translate(-2px,-2px)}
+.bb-go:not([disabled]) .bb-arrow{display:inline-block;animation:bb-hunt 0.9s steps(2) infinite}
+@media (prefers-reduced-motion: reduce){.bb-cursor,.bb-rise,.bb-go .bb-arrow{animation:none}.bb-box{transition:none}}
+@media (max-width: 700px){.bb-pad{padding-left:16px !important;padding-right:16px !important}.bb-first{order:-1}.bb-desk{display:none !important}}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; background: #000000; color: #FFFFFF; font-family: Cousine, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 16px; line-height: 24px; position: relative; overflow: hidden">
+
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(255,255,255,0.04) 3px, rgba(255,255,255,0.04) 4px); pointer-events: none"></div>
+<sc-for list="{{ marks }}" as="m" hint-placeholder-count="0">
+<pre aria-hidden="true" style="position: absolute; left: {{ m.left }}; top: {{ m.top }}; margin: 0; font-family: inherit; font-size: {{ m.size }}; line-height: {{ m.lh }}; font-weight: 700; color: {{ m.color }}; transform: rotate({{ m.rot }}); pointer-events: none">{{ m.art }}</pre>
+</sc-for>
+
+<header class="bb-pad" style="position: relative; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 16px 32px; border-bottom: 2px solid #FFFFFF">
+<div style="font-weight: 700; font-size: 22px; opacity: {{ logoOpacity }}">badgerbox</div>
+<div style="margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px">
+<sc-if value="{{ hasRuns }}" hint-placeholder-val="{{ true }}">
+<div id="bb-runs" style="color: #A8A8A8">{{ runsText }}</div>
+</sc-if>
+<button type="button" class="bb-btn bb-desk" onClick="{{ openExt }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">get the extension</button>
+<div style="position: relative">
+<button type="button" id="bb-more" class="bb-btn" aria-expanded="{{ menuOpenAttr }}" onClick="{{ toggleMenu }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">more</button>
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; right: 0; top: 52px; z-index: 12; width: 300px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; background: #000000; border: 1px solid #FFFFFF">
+<button type="button" class="bb-btn" onClick="{{ openPast }}" style="min-height: 48px; padding: 0 2ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; border-bottom: 1px solid #3A3A3A; font: inherit">past runs</button>
+<a href="MonoTerminal.dc.html" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">my classes + settings</a>
+<button type="button" class="bb-btn" onClick="{{ openExt }}" style="min-height: 48px; padding: 0 2ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; border-bottom: 1px solid #3A3A3A; font: inherit">the extension</button>
+<a href="MonoTerminal.dc.html" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; text-decoration: none; color: #BDBDBD">the old badgerbox screen</a>
+</div>
+</sc-if>
+</div>
+</div>
+</header>
+
+<sc-if value="{{ stale }}" hint-placeholder-val="{{ false }}">
+<div role="alert" class="bb-pad" style="position: relative; z-index: 6; padding: 10px 32px; background: #FFFFFF; color: #000000"><span style="font-weight: 700">restart badgerbox.</span> it's running older code than these pages. close the black window, then double-click start-badgerbox.bat.</div>
+</sc-if>
+
+<sc-if value="{{ noKey }}" hint-placeholder-val="{{ false }}">
+<div class="bb-pad" style="position: relative; z-index: 6; padding: 10px 32px; border-bottom: 1px solid #FFFFFF">no access key on this browser yet. <a href="Enter.dc.html" style="font-weight: 700">type your key</a></div>
+</sc-if>
+
+<sc-if value="{{ panelPast }}" hint-placeholder-val="{{ false }}">
+<section aria-label="past runs" class="bb-pad" style="position: relative; z-index: 7; display: flex; flex-direction: column; gap: 12px; padding: 20px 32px; border-bottom: 2px solid #FFFFFF; background: #000000">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px"><h2 style="margin: 0; font-size: 20px">past runs</h2><span style="color: #A8A8A8">kept on this computer</span>
+<sc-if value="{{ hasPast }}" hint-placeholder-val="{{ true }}"><button type="button" class="bb-btn" onClick="{{ clearPast }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">clear all</button></sc-if>
+<button type="button" class="bb-btn" onClick="{{ closePanels }}" style="margin-left: auto; min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">close</button></div>
+<sc-if value="{{ noPast }}" hint-placeholder-val="{{ false }}"><div style="color: #A8A8A8">nothing yet. finished runs show up here.</div></sc-if>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{ past }}" as="p" hint-placeholder-count="3">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 4px 0; border-top: 1px solid #3A3A3A">
+<button type="button" class="bb-btn" onClick="{{ p.open }}" style="flex: 1 1 30ch; min-height: 48px; padding: 0 1ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; font: inherit"><span style="font-weight: 700">{{ p.title }}</span> <span style="color: #A8A8A8">{{ p.info }}</span></button>
+<button type="button" class="bb-btn" onClick="{{ p.remove }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">remove</button>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ panelExt }}" hint-placeholder-val="{{ false }}">
+<section aria-label="the extension" class="bb-pad" style="position: relative; z-index: 7; display: flex; flex-direction: column; gap: 12px; padding: 20px 32px; border-bottom: 2px solid #FFFFFF; background: #000000">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px"><h2 style="margin: 0; font-size: 20px">the badgerbox extension</h2>
+<button type="button" class="bb-btn" onClick="{{ closePanels }}" style="margin-left: auto; min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">close</button></div>
+<div style="color: #BDBDBD; max-width: 72ch">open an assignment on google classroom, or a youtube video, click the badger, and it sends the assignment, its files and the transcript here in one go.</div>
+<ol style="margin: 0; padding-left: 3ch; display: flex; flex-direction: column; gap: 4px; max-width: 72ch">
+<li>open your browser's extensions page: opera://extensions, or chrome://extensions in chrome.</li>
+<li>turn on developer mode.</li>
+<li>press "load unpacked" and pick the <span style="font-weight: 700">extension</span> folder inside your badgerbox folder.</li>
+<li>pin the badger, then click it on an assignment page.</li>
+</ol>
+</section>
+</sc-if>
+
+<main class="bb-pad" style="position: relative; flex: 1; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 32px 56px; padding: 32px 32px 48px">
+
+<pre role="img" aria-label="the badger" style="flex: 0 1 auto; margin: 23.1em 0; max-width: 100%; transform: scaleY(2.1); transform-origin: center; opacity: {{ badgerOpacity }}; font-family: Cousine, 'DejaVu Sans Mono', monospace; font-size: clamp(5px, 0.64vw, 9px); line-height: 1; font-weight: 700; color: {{ badgerColor }}; text-shadow: {{ badgerGlow }}">                                               -:::: :::--:: %%%%%*****
+                                     %%%%%*=-:::::::::--::.:=-==--:::==+*
+                                %%%%%@%*=-::::::.:..::. .... .. ...   .:-==
+                            %%%%%%%@%=-::::::::....    .              ...:::
+                          %@%%%@@%*=::::::::........                     ...
+                       @@%%@%@@#+:::::::::.......                         .
+                     @@@@@%%%#=::::::........   ... . ..                     .
+                  @@@@%@@%%*-.::-=-::...::..............::.....   :.          .
+                @@@@@@%%#+-..:::::........:.:::::::::-----::::.. ..      . .....:..
+              @@@@@%%#*+::..:.: =: . ::::::-==+===++***===-=:::::..:::::::::.....::
+        *%%%%%%%%%#**=:::.::::::. .: :::*%%#****+++**===+*========-:===-:::::......
+  %#**+====:-=*#%%*=:......::::--:::::*%**%#******+==============++======::::::....
+ #*=:::--:::.:=+**%**+:.     ..::::-+***++==+=========-::::-============-::::::....
+=:::.   .   : :=======-:. ....:=+*+**=-==++---======--:::::::---=-::::::::::..::.
+  *-.      :  .-::-==-::.   :-======:::====----=====-:::::.:::::::::::::......::::.
+  *-..:::.    ..:::::::.  ..:----:::::::::--=--===----::::::::::::.:::........:::::
+   .            .::-:.    .::::::::::-::::::::::-=--::::-:::::::::::...:::..:::::::
+      .:..... . .......  ..:::::::::::::---:---::--:-::::::::::::::::::::::::::::::
+         ::.:...:.   ...... ....:::::.:::::::::::::::::::::::::::::.:::.:....::::::
+         *=..   =:.           ......:::::::::::::..........:.. ........    .:::::::
+         *=-    *=*:..         .....::::-:::.       ....         ...      ..  .::::
+          *      *  *-:.        .....:::::.                    ...              ...
+                       :.        :...::::..
+                       ::. .... .:.  ::..                                        ..
+                        :..::..:=:  .:::.
+                        =:=:...==:  .:::
+                        *+=:.:+=:. .::.
+                  *+=   #*-.=+-::  ::.
+                   ===  *++=+:::. ..    :..
+                    -::::-+:::...... .:::::...
+                     *+*+*#:     ....::::::...     .
+                     #*+*=:.        .:-:==::..        ..
+                                     :-==--:::...
+                                     ::+=--:::...     .
+                                      ::==-----:..
+                                      ---:==::::::..      .
+                                      ::==---:::..:....
+                                      ::----:::::::....
+                                       :---::::::..:....
+                                       ::::::::::......
+                                       :::--:::::.......
+                                       ..:::::::......</pre>
+
+<div class="bb-first" style="flex: 1 1 480px; max-width: 780px; min-width: 0; display: flex; flex-direction: column; gap: 24px; padding: 24px 12px 0 0">
+
+<div class="bb-rise" style="display: flex; flex-direction: column; gap: 10px">
+<div style="color: #BDBDBD; letter-spacing: 1px">&gt; your badger is hungry!!</div>
+<h1 style="margin: 0; font-size: clamp(34px, 4.6vw, 64px); line-height: 1.05; font-weight: 700">feed it :P</h1>
+<p style="margin: 0; color: #BDBDBD">drop in an assignment. it spits back every answer, the steps, and your worksheet filled in.</p>
+</div>
+
+<sc-if value="{{ showInput }}" hint-placeholder-val="{{ true }}">
+<div class="bb-box bb-rise" onDragOver="{{ onDragOver }}" onDrop="{{ onDrop }}" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; border: 3px solid #FFFFFF; background: #000000; box-shadow: 10px 10px 0 #6E6E6E">
+<label for="bb-in" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">your assignment</label>
+<div style="position: relative; overflow: hidden">
+<textarea id="bb-in" class="bb-in" rows="6" value="{{ text }}" onInput="{{ onInput }}" onPaste="{{ onPaste }}" onScroll="{{ onCaret }}" onSelect="{{ onCaret }}" onKeyUp="{{ onCaret }}" onClick="{{ onCaret }}" onFocus="{{ onCaret }}" onBlur="{{ onBlurIn }}" placeholder="paste a screenshot, drop a file, or type the questions here" style="display: block; width: 100%; min-height: 176px; box-sizing: border-box; padding: 20px; resize: vertical; background: #000000; color: #FFFFFF; caret-color: transparent; border: 0; font: inherit"></textarea>
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: {{ caretTop }}; box-sizing: border-box; padding: 20px; white-space: pre-wrap; overflow-wrap: break-word; color: transparent; pointer-events: none"><span>{{ caretBefore }}</span><sc-if value="{{ focused }}" hint-placeholder-val="{{ false }}"><span class="bb-cursor" style="color: #FFFFFF">&#9608;</span></sc-if></div>
+</div>
+
+<sc-for list="{{ files }}" as="f" hint-placeholder-count="0">
+<div class="bb-filerow" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 4px 20px; border-top: 1px solid #3A3A3A">
+<div style="flex: 1 1 22ch; min-width: 0; overflow-wrap: anywhere"><span style="font-weight: 700">{{ f.name }}</span> <span style="color: #A8A8A8">{{ f.note }}</span></div>
+<button type="button" class="bb-btn" aria-pressed="{{ f.refAttr }}" onClick="{{ f.flip }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #6E6E6E; font: inherit">{{ f.roleLabel }}</button>
+<button type="button" class="bb-btn" onClick="{{ f.remove }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">remove</button>
+</div>
+</sc-for>
+
+<sc-if value="{{ hasCtx }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 20px; border-top: 1px solid #3A3A3A">
+<sc-for list="{{ ctx }}" as="c" hint-placeholder-count="1">
+<button type="button" class="bb-btn" onClick="{{ c.remove }}" aria-label="{{ c.aria }}" style="min-height: 36px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">+ {{ c.label }} &#215;</button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasFileError }}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="padding: 8px 20px; border-top: 1px solid #3A3A3A; background: #FFFFFF; color: #000000">{{ fileError }}</div>
+</sc-if>
+
+<sc-if value="{{ needAgree }}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-top: 1px solid #3A3A3A; cursor: pointer"><input id="bb-agree" class="bb-chk" type="checkbox" onChange="{{ onAgree }}"><span>I have my teacher's ok to use badgerbox, and I'm not using it to cheat.</span></label>
+</sc-if>
+
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: 0; border-top: 2px solid #FFFFFF">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; padding: 6px 20px; min-width: 0; flex: 1 1 260px">
+<input id="bb-file" class="bb-file" type="file" multiple accept="image/*,.pdf,.docx,.pptx,.txt" onChange="{{ onFiles }}" style="position: absolute; width: 1px; height: 1px; opacity: 0">
+<label for="bb-file" class="bb-btn" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 2ch; border: 1px solid #FFFFFF">+ add a file</label>
+<div style="color: #A8A8A8">{{ fileHint }}</div>
+</div>
+<button type="button" id="bb-run" class="bb-go" disabled="{{ cantRun }}" onClick="{{ run }}" style="min-height: 60px; flex: 1 0 200px; max-width: 100%; padding: 0 3ch; background: {{ goBg }}; color: {{ goFg }}; border: 0; border-left: 2px solid #FFFFFF; box-shadow: {{ goInset }}; font: inherit; font-size: 22px; font-weight: 700; cursor: {{ goCursor }}">{{ runLabel }} <span class="bb-arrow" aria-hidden="true">&gt;&gt;</span></button>
+</div>
+</div>
+
+<div class="bb-desk" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-top: 6px; padding: 10px 2ch; border: 1px solid #8F8F8F">
+<div style="flex: 1 1 30ch; min-width: 0"><span style="font-weight: 700">on classroom or youtube?</span> <span style="color: #BDBDBD">the badgerbox extension grabs the assignment, its files and the video transcript in one click.</span></div>
+<button type="button" class="bb-btn" onClick="{{ openExt }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit; font-weight: 700">get the extension</button>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 1ch; color: #A8A8A8"><span>nothing handy?</span><a href="Answers.dc.html#sample" class="bb-btn" onClick="{{ toSample }}" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 1ch; text-decoration: underline">see a sample run</a></div>
+</sc-if>
+
+<sc-if value="{{ showRun }}" hint-placeholder-val="{{ false }}">
+<div id="bb-runbox" aria-live="polite" class="bb-rise" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; padding: 28px; border: 3px solid #FFFFFF; background: #000000; box-shadow: 10px 10px 0 #6E6E6E">
+<div style="overflow-wrap: anywhere"><span style="color: #A8A8A8">working on</span> <span style="font-weight: 700">{{ jobName }}</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{ steps }}" as="st" hint-placeholder-count="2">
+<div style="display: flex; gap: 2ch; color: {{ st.color }}"><span style="flex: 0 0 5ch; font-weight: 700">{{ st.mark }}</span><span>{{ st.text }}</span></div>
+</sc-for>
+</div>
+<div aria-hidden="true" style="font-size: 20px; line-height: 24px; letter-spacing: 2px; overflow: hidden; white-space: nowrap">{{ bar }}</div>
+
+<sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px">
+<div style="color: #BDBDBD">{{ waitNote }}</div>
+<button type="button" class="bb-btn" onClick="{{ cancel }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">cancel</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px">
+<div id="bb-done" style="font-size: 20px; font-weight: 700">{{ doneText }}</div>
+<a href="Answers.dc.html" id="bb-see" class="bb-go" style="display: inline-flex; align-items: center; min-height: 60px; padding: 0 4ch; background: #FFFFFF; color: #000000; border: 2px solid #FFFFFF; font-size: 20px; font-weight: 700; text-decoration: none">see your answers</a>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+<div id="bb-error" role="alert" class="bb-rise" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; padding: 28px; border: 3px solid #FFFFFF; background: #000000; box-shadow: 10px 10px 0 #6E6E6E">
+<div style="font-size: 22px; font-weight: 700">{{ errTitle }}</div>
+<div style="color: #BDBDBD">{{ errText }} <span style="color: #FFFFFF">{{ errRefund }}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 12px">
+<sc-if value="{{ errRetry }}" hint-placeholder-val="{{ true }}"><button type="button" class="bb-inv" onClick="{{ run }}" style="min-height: 44px; padding: 0 2ch; background: #FFFFFF; color: #000000; border: 2px solid #FFFFFF; font: inherit; font-weight: 700">try again</button></sc-if>
+<button type="button" class="bb-btn" onClick="{{ backToInput }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">back to my files</button>
+<sc-if value="{{ errPast }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-btn" onClick="{{ openPast }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">open past runs</button></sc-if>
+</div>
+</div>
+</sc-if>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+componentDidMount() {
+  this.fileData = {};
+  this.nextId = 1;
+  try { this.setState({ agreed: localStorage.getItem('bb-agree') === '1' }); } catch (err) {}
+  if (/#past/.test(location.hash || '')) this.setState({ panel: 'past' });
+  if (/#ext/.test(location.hash || '')) this.setState({ panel: 'ext' });
+  this.loadRuns();
+  window.addEventListener('bb-status', () => this.forceUpdate());
+  // the badgerbox browser extension hands over an assignment: files (as data: URLs), the teacher's instructions,
+  // and context such as a video transcript
+  this.onExt = (e) => {
+    if (e.source !== window || e.origin !== location.origin || !e.data || !e.data.bbExt) return;
+    const d = e.data.bbExt;
+    const list = (Array.isArray(d.files) ? d.files : []).filter((f) => f && /^data:/.test(f.url || '')).slice(0, 3);
+    const ctx = (Array.isArray(d.context) ? d.context : []).filter((c) => c && c.text).slice(0, 4).map((c) => ({ name: String(c.name || 'context').slice(0, 140), text: String(c.text).slice(0, 30000) }));
+    const instr = String(d.text || '').slice(0, 6000).trim();
+    if (instr) ctx.unshift({ name: "teacher's instructions", text: instr });
+    this.fileData = {};
+    this.setState({ files: [], ctx: ctx, stage: 'input', err: null, fileError: '' });
+    Promise.all(list.map((f) => fetch(f.url).then((r) => r.blob()).then((b) => new File([b], String(f.name || 'assignment').slice(0, 120), { type: f.type || b.type })).catch(() => null))).then((made) => {
+      made.forEach((file, i) => { if (file) this.addFile(file, !!list[i].ref, list[i].pdf || ''); });
+    });
+  };
+  window.addEventListener('message', this.onExt);
+  document.documentElement.dataset.bbReady = '1';
+  if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) this.startFlicker();
+}
+componentWillUnmount() { clearTimeout(this.fT); clearTimeout(this.rT); clearInterval(this.tick); if (this.onExt) window.removeEventListener('message', this.onExt); }
+startFlicker() {
+  const R = Math.random;
+  const calm = () => { const st = this.state || {}; return !!st.focused || st.stage === 'running'; };
+  const flick = () => {
+    this.fT = setTimeout(() => {
+      if (calm()) { flick(); return; }
+      const n = R() < 0.3 ? 2 : 1; let k = 0;
+      const dip = () => {
+        this.setState({ dim: 0.3 + R() * 0.3 });
+        this.fT = setTimeout(() => { this.setState({ dim: 0 }); k++; if (k < n) this.fT = setTimeout(dip, 50 + R() * 90); else flick(); }, 50 + R() * 110);
+      };
+      dip();
+    }, 1500 + R() * 3500);
+  };
+  const red = () => {
+    this.rT = setTimeout(() => {
+      if (calm()) { red(); return; }
+      this.setState({ red: true });
+      this.rT = setTimeout(() => { this.setState({ red: false }); red(); }, R() < 0.35 ? 280 + R() * 320 : 60 + R() * 160);
+    }, 5000 + R() * 10000);
+  };
+  flick(); red();
+}
+loadRuns() {
+  const API = window.bbApi;
+  const key = API ? API.accessKey() : '';
+  if (!key) { this.setState({ noKey: true, runs: null }); return; }
+  fetch('api/key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key }) })
+    .then((r) => r.json()).then((j) => { if (j && j.ok) this.setState({ runs: { used: j.runsToday || 0, per: j.runsPerDay || 0 }, noKey: false }); else this.setState({ noKey: true }); })
+    .catch(() => {});
+}
+/* read a file as soon as it is added, so the run button can show what it will cost */
+addFile(file, ref, pdfUrl) {
+  const API = window.bbApi;
+  const OK = /\.(png|jpe?g|webp|gif|pdf|docx|pptx|txt)$/i;
+  const cur = ((this.state || {}).files || []).slice();
+  if (!OK.test(file.name || '') && !/^image\/(png|jpeg|webp|gif)$/.test(file.type || '')) { this.setState({ fileError: (file.name || 'that file') + " isn't something badgerbox can read. use a screenshot, photo, PDF, Word or slides." }); return; }
+  if (cur.length >= 3) { this.setState({ fileError: '3 files max per run. remove one to add another.' }); return; }
+  const id = 'f' + (this.nextId++);
+  const name = (!file.name || file.name === 'image.png') ? 'pasted screenshot.png' : file.name;
+  this.setState({ files: cur.concat([{ id: id, name: name, size: file.size || 0, ref: !!ref, busy: true }]), fileError: '' });
+  if (!API) return;
+  const job = API.readFile(file).then((data) => {
+    if (!data) { this.dropFile(id); this.setState({ fileError: "couldn't open " + name + '. if it is a Word or slides file, save it again as .docx or .pptx, or take a screenshot of it.' }); return; }
+    this.fileData[id] = data;
+    // a Google Doc or Slides file from the extension comes with a PDF of itself: its pages become the worksheet
+    if (pdfUrl && /^data:application\/pdf/.test(pdfUrl)) {
+      return fetch(pdfUrl).then((r) => r.blob()).then((b) => API.readFile(new File([b], 'pages.pdf', { type: 'application/pdf' })))
+        .then((d) => { if (d && d.pages && d.pages.length) data.pages = d.pages; }).catch(() => {});
+    }
+  }).then(() => this.patchFile(id, { busy: false }));
+  this.jobs = (this.jobs || []).concat([job]);
+}
+patchFile(id, p) { this.setState({ files: ((this.state || {}).files || []).map((f) => f.id === id ? Object.assign({}, f, p) : f) }); }
+dropFile(id) { delete this.fileData[id]; this.setState({ files: ((this.state || {}).files || []).filter((f) => f.id !== id) }); }
+/* what gets sent: the same shape the old screen sent, so past runs and the answers screen read it the same way */
+payloadOf(st) {
+  const API = window.bbApi;
+  const files = (st.files || []).filter((f) => this.fileData[f.id]);
+  const flat = API.flatten(files.map((f, i) => ({ name: f.name, data: this.fileData[f.id], ref: !!f.ref, no: i + 1 })), 0);
+  const fromPdf = flat.fileInfo.some((f) => f.origin === 'pdf' && f.role !== 'reference');
+  let classes = [];
+  try { const j = JSON.parse(localStorage.getItem('bb-settings') || 'null'); classes = (j && Array.isArray(j.classes)) ? j.classes.map((c) => ({ name: c.name, rules: Array.isArray(c.rules) ? c.rules : [] })) : []; } catch (err) {}
+  const main = files.filter((f) => !f.ref)[0] || files[0] || null;
+  return {
+    tab: 'auto',
+    text: [String(st.text || '').trim(), flat.text].filter(Boolean).join('\n\n'),
+    context: (st.ctx || []).map((c) => c.name + ':\n' + c.text).join('\n\n'),
+    fileInfo: flat.fileInfo,
+    keep: flat.keep,
+    files: flat.files,
+    classes: classes,
+    meta: { origin: flat.keep[0] ? flat.keep[0].kind : (fromPdf ? 'pdf' : (flat.files.some((x) => /^image\//.test(x.type || '')) ? 'image' : 'text')), fromPdf: fromPdf, fileName: main ? main.name : '', tab: 'auto', v2: true }
+  };
+}
+makeMarks() {
+  let a = 0x51ED270B;
+  const rnd = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const ART = ['/ / /\n / / /', '/ /\n / /\n  / /', '\\ \\ \\\n \\ \\ \\\n  \\ \\ \\', '\\ \\\n \\ \\', '/  /  /  /\n /  /  /  /\n  /  /  /\n   /  /  /\n    /  /', '\\  \\  \\  \\\n \\  \\  \\  \\\n  \\  \\  \\\n   \\  \\  \\\n    \\  \\', ' ^ ^ ^ ^\n.       .\n v v v v', ' o o\no   o\n (_)', '/\n /\n  /', '\\ \\ \\ \\'];
+  const GREY = ['#2A2A2A', '#303030', '#363636', '#3D3D3D', '#444444'];
+  const out = [];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) {
+    if (rnd() < 0.2) continue;
+    const size = 7 + Math.floor(rnd() * 6);
+    out.push({ left: ((c + 0.2 + rnd() * 0.5) * 100 / 6).toFixed(1) + '%', top: ((r + 0.2 + rnd() * 0.5) * 100 / 4).toFixed(1) + '%', size: size + 'px', lh: Math.round(size * 0.74) + 'px', color: GREY[Math.floor(rnd() * GREY.length)], rot: Math.round(rnd() * 100 - 50) + 'deg', art: ART[Math.floor(rnd() * ART.length)] });
+  }
+  return out;
+}
+renderVals() {
+const s = this.state || {};
+const API = window.bbApi || null;
+if (!this.marks) this.marks = this.makeMarks();
+if (!this.fileData) this.fileData = {};
+const files = s.files || [];
+const text = s.text || '';
+const ctx = s.ctx || [];
+const busy = files.some((f) => f.busy);
+const hasInput = files.length > 0 || !!text.trim();
+const agreed = !!s.agreed;
+const stage = s.stage || 'input';
+const pay = (API && hasInput && !busy) ? this.payloadOf(s) : null;
+const cost = pay ? API.costOf(pay) : 0;
+const canRun = hasInput && !busy && agreed;
+const panel = s.panel || '';
+const caretFrom = (el) => ({ caretBefore: el.value.slice(0, el.selectionStart), scrollY: el.scrollTop, focused: true });
+const run = () => {
+  const st = this.state || {};
+  if (!API || !(((st.files || []).length) || String(st.text || '').trim())) return;
+  Promise.all(this.jobs || []).then(() => {
+    const p = this.payloadOf(this.state || {});
+    const c = API.costOf(p);
+    const ctrl = window.AbortController ? new AbortController() : null;
+    this.ctrl = ctrl;
+    this.started = Date.now();
+    clearInterval(this.tick);
+    this.tick = setInterval(() => this.forceUpdate(), 500);
+    this.setState({ stage: 'running', runStage: 0, cost: c, err: null, focused: false, panel: '' });
+    API.solve(p, { signal: ctrl && ctrl.signal, onStage: () => this.setState({ runStage: 1 }) }).then((res) => {
+      clearInterval(this.tick);
+      if (this.ctrl !== ctrl) return;
+      this.ctrl = null;
+      this.loadRuns();
+      if (!res || res.source === 'cancelled') { this.setState({ stage: 'input' }); return; }
+      if (res.source === 'model') {
+        const qs = res.questions || [];
+        const flags = qs.filter((q) => !q.sure).length;
+        this.setState({ stage: 'done', doneText: 'done. ' + qs.length + (qs.length === 1 ? ' answer' : ' answers') + (flags ? ', ' + flags + (flags === 1 ? ' needs' : ' need') + ' a look.' : ', all checked.') });
+        return;
+      }
+      if (res.source === 'mock') { this.setState({ stage: 'error', err: { kind: 'mock' } }); return; }
+      if (res.source === 'offline') { this.setState({ stage: 'error', err: { kind: 'offline' } }); return; }
+      this.setState({ stage: 'error', err: { kind: res.kind || 'failed', text: res.error || 'the model request failed', refunded: !!res.refunded } });
+    });
+  });
+};
+const ERR = {
+  failed: ['run stopped.', true],
+  empty: ['I couldn\'t find any questions in that.', false],
+  limit: ['that\'s all your runs for today.', false],
+  cost: ['not enough runs left for this one.', false],
+  offline: ['badgerbox isn\'t running.', true],
+  mock: ['no model is connected.', false]
+};
+const err = s.err || {};
+const errInfo = ERR[err.kind] || ERR.failed;
+const errText = err.kind === 'offline' ? 'the black window has to stay open. double-click start-badgerbox.bat, wait for it to open, then try again.'
+  : err.kind === 'mock' ? 'badgerbox is running without an api key, so it can\'t do real work yet. you can still look at a sample run from the "see a sample run" link.'
+  : (err.text || '');
+const elapsed = this.started ? (Date.now() - this.started) / 1000 : 0;
+const est = 25 + 20 * (s.cost || 1);
+const rs = s.runStage || 0;
+const filled = stage === 'done' ? 24 : Math.min(rs ? 23 : 18, Math.round(24 * elapsed / est));
+const STEPS = ['working every question, then checking each one a second way', 'writing the answers on your worksheet'];
+const past = API ? API.history() : [];
+const when = (iso) => { try { const d = new Date(iso); return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase(); } catch (e) { return ''; } };
+return {
+  marks: this.marks,
+  badgerColor: s.red ? '#C20A0A' : '#FFFFFF',
+  badgerGlow: s.red ? '0 0 16px rgba(194,10,10,0.9)' : 'none',
+  badgerOpacity: s.dim ? s.dim.toFixed(2) : '0.76',
+  logoOpacity: s.dim ? (s.dim / 0.76).toFixed(2) : '1',
+  stale: !!(API && API.serverStale()),
+  noKey: !!s.noKey,
+  hasRuns: !!s.runs,
+  runsText: s.runs ? ('runs today: ' + s.runs.used + ' of ' + s.runs.per) : '',
+  menuOpen: !!s.menu,
+  menuOpenAttr: s.menu ? 'true' : 'false',
+  toggleMenu: () => this.setState({ menu: !s.menu }),
+  openPast: () => this.setState({ panel: 'past', menu: false }),
+  openExt: () => this.setState({ panel: 'ext', menu: false }),
+  closePanels: () => this.setState({ panel: '' }),
+  panelPast: panel === 'past',
+  panelExt: panel === 'ext',
+  past: past.map((h) => ({
+    title: h.title || 'assignment',
+    info: when(h.at) + ' · ' + (h.n || 0) + ' questions' + (h.flags ? ' · ' + h.flags + ' need a look' : ''),
+    open: () => { API.openRun(h.id).then((ok) => { if (ok) location.href = document.documentElement.dataset.page ? 'answers.html' : 'Answers.dc.html'; }); },
+    remove: () => { API.removeRun(h.id); this.forceUpdate(); }
+  })),
+  hasPast: past.length > 0,
+  noPast: past.length === 0,
+  clearPast: () => { API.clearHistory(); this.forceUpdate(); },
+  showInput: stage === 'input',
+  showRun: stage === 'running' || stage === 'done',
+  showError: stage === 'error',
+  running: stage === 'running',
+  done: stage === 'done',
+  doneText: s.doneText || 'done.',
+  cantRun: !canRun,
+  goBg: canRun ? '#FFFFFF' : '#000000',
+  goFg: canRun ? '#000000' : '#8F8F8F',
+  goInset: canRun ? 'inset 0 0 0 3px #000000' : 'none',
+  goCursor: canRun ? 'pointer' : 'default',
+  runLabel: busy ? 'reading...' : (hasInput ? ('run · uses ' + cost) : 'run'),
+  needAgree: !agreed,
+  onAgree: (e) => { const on = !!e.target.checked; try { if (on) localStorage.setItem('bb-agree', '1'); } catch (er) {} this.setState({ agreed: on }); },
+  text: text,
+  caretBefore: s.caretBefore || '',
+  caretTop: (-(s.scrollY || 0)) + 'px',
+  focused: !!s.focused,
+  onInput: (e) => this.setState(Object.assign({ text: e.target.value }, caretFrom(e.target))),
+  onCaret: (e) => { const c = caretFrom(e.target); if (c.caretBefore !== (s.caretBefore || '') || c.scrollY !== (s.scrollY || 0) || !s.focused) this.setState(c); },
+  onBlurIn: () => this.setState({ focused: false }),
+  onPaste: (e) => {
+    const got = Array.from((e.clipboardData && e.clipboardData.files) || []);
+    if (!got.length) return;
+    e.preventDefault();
+    got.forEach((f) => this.addFile(f, false));
+  },
+  files: files.map((f) => {
+    const d = this.fileData[f.id];
+    const pages = d ? ((d.pages && d.pages.length) || (/^image\//.test(d.type || '') ? 1 : 0)) : 0;
+    return Object.assign({}, f, {
+      note: f.busy ? 'reading...' : (pages ? pages + (pages === 1 ? ' page' : ' pages') : (d && (d.type === 'docx' || d.type === 'pptx') ? (d.type === 'docx' ? 'Word file' : 'slides') : 'ready')),
+      roleLabel: f.ref ? 'just for reference' : 'do this one',
+      refAttr: f.ref ? 'true' : 'false',
+      flip: () => this.patchFile(f.id, { ref: !f.ref }),
+      remove: () => this.dropFile(f.id)
+    });
+  }),
+  hasCtx: ctx.length > 0,
+  ctx: ctx.map((c, i) => ({ label: c.name + ' (' + c.text.split(/\s+/).length + ' words)', aria: 'remove ' + c.name, remove: () => this.setState({ ctx: ctx.filter((_, k) => k !== i) }) })),
+  hasFileError: !!s.fileError,
+  fileError: s.fileError || '',
+  fileHint: files.length ? (files.length + ' of 3 files. 1 run is about 2 pages, reference files count half.') : 'screenshot, photo, PDF, Word or slides',
+  onFiles: (e) => { Array.from(e.target.files || []).forEach((f) => this.addFile(f, false)); e.target.value = ''; },
+  onDragOver: (e) => { e.preventDefault(); },
+  onDrop: (e) => { e.preventDefault(); Array.from((e.dataTransfer && e.dataTransfer.files) || []).forEach((f) => this.addFile(f, false)); },
+  toSample: () => { try { sessionStorage.setItem('bb-sample', '1'); } catch (er) {} },
+  jobName: files.length ? files.map((f) => f.name).join(', ') : 'what you typed',
+  run: run,
+  waitNote: (s.cost > 1 ? 'this one uses ' + s.cost + ' runs. ' : '') + (elapsed > est * 1.5 ? 'taking longer than usual. big files take a while.' : 'usually under a minute. you can switch tabs, it keeps going.'),
+  cancel: () => { if (this.ctrl) this.ctrl.abort(); this.ctrl = null; clearInterval(this.tick); this.setState({ stage: 'input' }); },
+  steps: STEPS.map((t, i) => {
+    const isDone = stage === 'done' || i < rs;
+    const isNow = !isDone && i === rs;
+    return { text: t, mark: isDone ? 'done' : (isNow ? 'now' : '..'), color: isDone ? '#BDBDBD' : (isNow ? '#FFFFFF' : '#8F8F8F') };
+  }),
+  bar: '█'.repeat(filled) + '░'.repeat(24 - filled),
+  errTitle: errInfo[0],
+  errText: errText,
+  errRefund: err.refunded ? "this didn't use any of your runs." : '',
+  errRetry: errInfo[1],
+  errPast: err.kind === 'limit',
+  backToInput: () => this.setState({ stage: 'input', err: null })
+};
+}
+}
+</script>
+</body>
+</html>
