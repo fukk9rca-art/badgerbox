@@ -17,18 +17,35 @@
   var KEY_KEY = 'bb-key';
   function accessKey() { try { return localStorage.getItem(KEY_KEY) || ''; } catch (err) { return ''; } }
   var status = { live: false, model: '', checked: false, stale: false };
-  var NEED_V = 26;
+  var NEED_V = 27;
 
-  function post(path, body) {
+  function post(path, body, signal) {
     return fetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-bb-key': accessKey() },
-      body: JSON.stringify(body || {})
+      body: JSON.stringify(body || {}),
+      signal: signal || undefined
     }).then(function (r) {
       return r.json().catch(function () { return { source: 'error', error: 'bad reply (' + r.status + ')' }; });
     }).catch(function (err) {
+      if (err && err.name === 'AbortError') return { source: 'cancelled' };
       return { source: 'offline', error: String(err && err.message || err) };
     });
+  }
+
+  /* What a run costs, from what will be sent. The same sum as costOf in api/_lib/keys.js: keep them the same.
+   * About 2 pages make 1 run; reference files and extra context count half. */
+  function costOf(body) {
+    var pages = 0;
+    ((body && body.files) || []).forEach(function (f) {
+      var url = String((f && f.url) || ''), share = f && f.ref ? 0.5 : 1;
+      if (/^data:image\//.test(url)) pages += share;
+      else if (/^data:application\/pdf/.test(url)) pages += share * Math.max(1, Math.round(url.length * 0.75 / 150000));
+      else if (/^data:text\//.test(url)) pages += share * Math.max(1, Math.ceil(url.length * 0.75 / 2000));
+    });
+    pages += String((body && body.text) || '').length / 2000;
+    pages += String((body && body.context) || '').length / 4000;
+    return Math.max(1, Math.ceil(pages / 2));
   }
 
   function store(key, val) {
@@ -277,6 +294,7 @@
 
   window.bbApi = {
     flatten: flatten,
+    costOf: costOf,
     status: status,
     isLive: function () { return status.live; },
     serverStale: function () { return !!status.stale; },
@@ -291,11 +309,15 @@
       });
     },
     accessKey: accessKey,
-    solve: function (payload) {
+    /* hooks (optional): { signal: an AbortSignal to cancel, onStage: called with 'place' when the answers are back
+     * and are being placed on the worksheet } */
+    solve: function (payload, hooks) {
+      hooks = hooks || {};
       var started = Date.now();
       var originals = (payload && payload.keep) || [];
-      var body = Object.assign({}, payload); delete body.keep;
-      return post('api/solve', body).then(function (res) {
+      var body = Object.assign({}, payload); delete body.keep; delete body.meta;
+      return post('api/solve', body, hooks.signal).then(function (res) {
+        if (res && res.source === 'model' && hooks.onStage) { try { hooks.onStage('place'); } catch (err) {} }
         res = res || { source: 'error', error: 'no reply' };
         res.seconds = Math.max(1, Math.round((Date.now() - started) / 1000));
         res.meta = (payload && payload.meta) || {};
@@ -382,8 +404,10 @@
     },
 
     /* Work the whole run again, this time with the chat context files as reference. */
-    redo: function (ctxItems) {
+    /* tab (optional): work it again as this subject instead. */
+    redo: function (ctxItems, tab) {
       return idbGet(PAYLOAD_KEY).then(function (p0) {
+        if (p0 && tab) { p0 = Object.assign({}, p0, { tab: tab }); idbSet(PAYLOAD_KEY, p0); }
         if (!p0) return { source: 'error', error: 'this run can no longer be redone. start it again from the main screen.' };
         var run = load(RUN_KEY) || {};
         var ctx = flatten((ctxItems || []).map(function (it, i) { return { name: it.name, data: it.data, ref: true, no: maxNo(p0.fileInfo || run.files) + 1 + i }; }), (p0.files || []).filter(isImg).length);
@@ -397,6 +421,7 @@
           if (!res || res.source !== 'model') return res || { source: 'error', error: 'no reply' };
           var nos = (run.files || []).map(function (f) { return f.n; });
           run.questions = withFile(res.questions, nos[0] || 1, nos.length ? nos : null);
+          if (tab) run.request = Object.assign({}, run.request || {}, { tab: tab });
           run.subject = res.subject || run.subject; run.level = res.level || run.level; run.title = res.title || run.title;
           run.tldr = null;
           run.ui = null;

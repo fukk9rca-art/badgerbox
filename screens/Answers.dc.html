@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>badgerbox: your answers</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cousine:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#000000;color:#FFFFFF;font-family:Cousine,"DejaVu Sans Mono",Menlo,Consolas,monospace}
+a{color:#FFFFFF}a:hover{color:#FFFFFF}
+::selection{background:#FFFFFF;color:#000000}
+.bb-btn{cursor:pointer}
+.bb-btn:not([disabled]):hover{background:#FFFFFF !important;color:#000000 !important}
+.bb-inv{cursor:pointer}
+.bb-inv:not([disabled]):hover{background:#000000 !important;color:#FFFFFF !important}
+.bb-row{cursor:pointer}
+.bb-row:hover{box-shadow:inset 0 0 0 1px #FFFFFF}
+.bb-btn:focus-visible,.bb-row:focus-visible,.bb-in:focus-visible{outline:2px solid #FFFFFF;outline-offset:3px}
+.bb-inv:focus-visible{outline:3px solid #000000;outline-offset:-8px}
+.bb-in::placeholder{color:#8F8F8F}
+@keyframes bb-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes bb-blink{50%{opacity:0.25}}
+.bb-rise{animation:bb-in 320ms cubic-bezier(0.16,1,0.3,1) both}
+.bb-alarm{animation:bb-blink 1s steps(1) infinite}
+.bb-page{container-type:inline-size}
+.bb-ans{cursor:grab;touch-action:none;user-select:none}
+.bb-ans:active{cursor:grabbing}
+.bb-phone-only{display:none !important}
+@media (prefers-reduced-motion: reduce){.bb-rise,.bb-alarm{animation:none}}
+@media (max-width: 700px){.bb-pad{padding-left:16px !important;padding-right:16px !important}.bb-open{padding-left:2ch !important}.bb-phone-only{display:flex !important}.bb-aside{display:none !important}.bb-desk{display:none !important}}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; background: #000000; color: #FFFFFF; font-family: Cousine, 'DejaVu Sans Mono', Menlo, Consolas, monospace; font-size: 16px; line-height: 24px; position: relative; overflow: hidden">
+
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 9; background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(255,255,255,0.04) 3px, rgba(255,255,255,0.04) 4px); pointer-events: none"></div>
+<sc-for list="{{ marks }}" as="m" hint-placeholder-count="0">
+<pre aria-hidden="true" style="position: absolute; left: {{ m.left }}; top: {{ m.top }}; margin: 0; font-family: inherit; font-size: {{ m.size }}; line-height: {{ m.lh }}; font-weight: 700; color: {{ m.color }}; transform: rotate({{ m.rot }}); pointer-events: none">{{ m.art }}</pre>
+</sc-for>
+
+<header class="bb-pad" style="position: relative; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 16px 32px; border-bottom: 2px solid #FFFFFF">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 3ch; min-width: 0">
+<div style="font-weight: 700; font-size: 22px; opacity: {{ logoOpacity }}">badgerbox</div>
+<div style="color: #A8A8A8; overflow-wrap: anywhere">{{ fileTitle }}</div>
+</div>
+<div style="margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px">
+<a href="Drop.dc.html#ext" class="bb-btn bb-desk" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 2ch; border: 1px solid #FFFFFF; text-decoration: none">get the extension</a>
+<a href="Drop.dc.html" id="bb-new" class="bb-btn" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 2ch; border: 1px solid #FFFFFF; text-decoration: none">new assignment</a>
+<div style="position: relative">
+<button type="button" class="bb-btn" aria-expanded="{{ menuOpenAttr }}" onClick="{{ toggleMenu }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">more</button>
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; right: 0; top: 52px; z-index: 12; width: 300px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; background: #000000; border: 1px solid #FFFFFF">
+<a href="Drop.dc.html#past" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">past runs</a>
+<a href="MonoTerminal.dc.html" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">my classes + settings</a>
+<a href="Drop.dc.html#ext" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">the extension</a>
+<a href="Results.dc.html" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; text-decoration: none; color: #BDBDBD">this run in the old screen</a>
+</div>
+</sc-if>
+</div>
+</div>
+</header>
+
+<sc-if value="{{ isSample }}" hint-placeholder-val="{{ false }}">
+<div class="bb-pad" style="position: relative; z-index: 6; padding: 10px 32px; border-bottom: 1px solid #FFFFFF">sample run. this is what you get back. <a href="Drop.dc.html" style="font-weight: 700">feed it a real one</a></div>
+</sc-if>
+
+<section class="bb-rise bb-pad" style="position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 40px; padding: 24px 32px; border-bottom: 1px solid #3A3A3A">
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<div style="color: #BDBDBD; letter-spacing: 1px">&gt; the badger chewed through it</div>
+<h1 id="bb-head" aria-live="polite" style="margin: 0; font-size: clamp(28px, 3.2vw, 44px); line-height: 1.1; font-weight: 700">{{ headline }}</h1>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0 1ch; color: #BDBDBD"><span><span style="color: #FFFFFF; font-weight: 700">{{ subj }}</span> · {{ countText }} · click one for the steps ·</span><button type="button" class="bb-btn" aria-expanded="{{ subjOpenAttr }}" onClick="{{ toggleSubj }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">wrong subject?</button></div>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding-right: 12px; max-width: 100%">
+<button type="button" id="bb-dl" class="bb-inv" onClick="{{ download }}" style="min-height: 64px; padding: 0 3ch; background: #FFFFFF; color: #000000; border: 3px solid #FFFFFF; box-shadow: 8px 8px 0 #6E6E6E; font: inherit; font-size: 20px; font-weight: 700">{{ downloadLabel }}</button>
+<div style="color: #A8A8A8; max-width: 44ch">{{ downloadNote }}</div>
+</div>
+
+<sc-if value="{{ subjOpen }}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1 1 100%; display: flex; flex-direction: column; gap: 10px; padding: 14px 2ch; border: 1px solid #FFFFFF">
+<div>what is it really? picking one runs the whole thing again as that subject. <span style="color: #A8A8A8">{{ redoCost }}</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 12px">
+<sc-for list="{{ subjects }}" as="sb" hint-placeholder-count="6">
+<button type="button" class="bb-btn" onClick="{{ sb.pick }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">{{ sb.name }}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ redoing }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="flex: 1 1 100%; padding: 14px 2ch; border: 2px solid #FFFFFF; font-weight: 700">{{ redoText }}</div>
+</sc-if>
+
+<sc-if value="{{ confirmDl }}" hint-placeholder-val="{{ false }}">
+<div id="bb-confirm" role="alert" style="flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; padding: 14px 2ch; border: 2px solid #FFFFFF; background: #000000; color: #FFFFFF">
+<div style="flex: 1 1 36ch"><span style="font-weight: 700">{{ flagCount }} still flagged.</span> they go on your sheet as best guesses, marked (?), if you download now.</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 12px">
+<button type="button" class="bb-inv" onClick="{{ fixFirst }}" style="min-height: 44px; padding: 0 2ch; background: #FFFFFF; color: #000000; border: 2px solid #FFFFFF; font: inherit; font-weight: 700">fix them first</button>
+<button type="button" id="bb-dl-anyway" class="bb-btn" onClick="{{ downloadAnyway }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">download anyway</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasDlErr }}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="flex: 1 1 100%; padding: 10px 2ch; border: 2px solid #FFFFFF">couldn't make the file: {{ dlErr }}</div>
+</sc-if>
+</section>
+
+<div class="bb-pad" style="position: relative; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 40px 48px; padding: 28px 44px 72px 32px">
+
+<div id="bb-list" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; border: 3px solid #FFFFFF; background: #000000; box-shadow: 10px 10px 0 #6E6E6E">
+<sc-for list="{{ items }}" as="q" hint-placeholder-count="7">
+<div class="bb-rise bb-q" data-n="{{ q.num }}" style="display: flex; flex-direction: column; border-top: {{ q.topLine }}; animation-delay: {{ q.delay }}">
+<button type="button" class="bb-row" aria-expanded="{{ q.openAttr }}" onClick="{{ q.toggle }}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 2ch; width: 100%; min-height: 64px; box-sizing: border-box; padding: 10px 2ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; font: inherit">
+<span style="flex: 0 0 auto; min-width: 3ch; padding: 0 6px; background: {{ q.numBg }}; color: #000000; font-size: 18px; font-weight: 700; text-align: center; box-shadow: 3px 3px 0 #6E6E6E">#{{ q.num }}</span>
+<span style="flex: 1 1 26ch; min-width: 0; color: #BDBDBD; overflow-wrap: anywhere">{{ q.question }}</span>
+<span class="bb-a" style="flex: 0 1 auto; max-width: 100%; font-size: 20px; font-weight: 700; overflow-wrap: anywhere">{{ q.answerShort }}</span>
+<sc-if value="{{ q.isOk }}" hint-placeholder-val="{{ true }}">
+<span class="bb-chip" style="flex: 0 0 auto; padding: 0 1ch; border: 1px solid #6E6E6E; color: #BDBDBD">{{ q.okLabel }}</span>
+</sc-if>
+<sc-if value="{{ q.isFlag }}" hint-placeholder-val="{{ false }}">
+<span class="bb-chip bb-look" style="flex: 0 0 auto; padding: 0 1ch; border: 1px solid #FFFFFF; background: #FFFFFF; color: #000000; font-weight: 700"><span class="bb-alarm" aria-hidden="true">!</span> {{ q.flagLabel }}</span>
+</sc-if>
+<span aria-hidden="true" style="flex: 0 0 1ch; color: #A8A8A8">{{ q.arrow }}</span>
+</button>
+
+<sc-if value="{{ q.open }}" hint-placeholder-val="{{ false }}">
+<div class="bb-open" style="display: flex; flex-direction: column; gap: 20px; padding: 8px 2ch 24px 7ch">
+
+<sc-if value="{{ q.isFlag }}" hint-placeholder-val="{{ false }}">
+<div class="bb-flagbox" style="display: flex; flex-direction: column; gap: 12px; padding: 16px 2ch; border: 2px solid #FFFFFF; box-shadow: 6px 6px 0 #6E6E6E; background: #000000; color: #FFFFFF">
+<div><span style="font-weight: 700">{{ q.whyHead }}</span> {{ q.why }}</div>
+<sc-if value="{{ q.retried }}" hint-placeholder-val="{{ false }}">
+<div style="font-weight: 700">tried it again: same answer. still unsure, so it stays flagged.</div>
+</sc-if>
+<sc-if value="{{ q.choosing }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; gap: 8px 12px">
+<button type="button" class="bb-inv" onClick="{{ q.accept }}" style="min-height: 44px; padding: 0 2ch; background: #FFFFFF; color: #000000; border: 2px solid #FFFFFF; font: inherit; font-weight: 700">it's right</button>
+<button type="button" class="bb-btn" onClick="{{ q.startType }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">type it out</button>
+<sc-if value="{{ q.canRetry }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="bb-btn bb-retry" onClick="{{ q.retry }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">{{ q.retryLabel }}</button>
+</sc-if>
+<button type="button" class="bb-btn" onClick="{{ q.startEdit }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">edit answer</button>
+</div>
+<div style="color: #A8A8A8">type it out and {{ q.retryLabel }} each use a run. editing the answer yourself is free.</div>
+</sc-if>
+<sc-if value="{{ q.typing }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px">
+<div style="flex: 1 1 28ch; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<label for="{{ q.typeId }}">type the question the way it reads on your sheet</label>
+<input id="{{ q.typeId }}" class="bb-in" type="text" value="{{ q.typeText }}" onInput="{{ q.onTypeText }}" style="min-height: 44px; box-sizing: border-box; width: 100%; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">
+</div>
+<button type="button" class="bb-inv" disabled="{{ q.typeEmpty }}" onClick="{{ q.solveTyped }}" style="min-height: 44px; padding: 0 2ch; background: #FFFFFF; color: #000000; border: 2px solid #FFFFFF; font: inherit; font-weight: 700; opacity: {{ q.solveOpacity }}">solve again</button>
+<button type="button" class="bb-btn" onClick="{{ q.cancelMode }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">cancel</button>
+</div>
+</sc-if>
+<sc-if value="{{ q.working }}" hint-placeholder-val="{{ false }}">
+<div aria-live="polite" style="font-weight: 700">working it again...</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ q.hasErr }}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="padding: 8px 2ch; border: 1px solid #FFFFFF">{{ q.err }}</div>
+</sc-if>
+
+<sc-if value="{{ q.hasFixNote }}" hint-placeholder-val="{{ false }}">
+<div style="color: #BDBDBD">{{ q.fixNote }} <button type="button" class="bb-btn bb-undo" onClick="{{ q.undo }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">undo</button></div>
+</sc-if>
+
+<sc-if value="{{ q.editing }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; padding: 14px 2ch; border: 2px solid #FFFFFF">
+<div style="flex: 1 1 24ch; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<label for="{{ q.editId }}">your answer. it goes on the worksheet exactly as you type it.</label>
+<input id="{{ q.editId }}" class="bb-in" type="text" value="{{ q.editText }}" onInput="{{ q.onEditText }}" style="min-height: 44px; box-sizing: border-box; width: 100%; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit; font-size: 20px; font-weight: 700">
+</div>
+<button type="button" class="bb-inv bb-save" disabled="{{ q.editEmpty }}" onClick="{{ q.saveEdit }}" style="min-height: 44px; padding: 0 2ch; background: #FFFFFF; color: #000000; border: 2px solid #FFFFFF; font: inherit; font-weight: 700; opacity: {{ q.saveOpacity }}">save</button>
+<button type="button" class="bb-btn" onClick="{{ q.cancelMode }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">cancel</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ q.long }}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px 2ch; border: 1px solid #FFFFFF; max-width: 80ch; white-space: pre-wrap; overflow-wrap: anywhere">{{ q.answer }}</div>
+</sc-if>
+
+<sc-if value="{{ q.hasFig }}" hint-placeholder-val="{{ false }}">
+<img src="{{ q.fig }}" alt="{{ q.figAlt }}" style="display: block; width: 100%; max-width: 560px; background: #FFFFFF">
+</sc-if>
+
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
+<sc-for list="{{ q.steps }}" as="st" hint-placeholder-count="3">
+<li style="display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; flex-wrap: wrap; gap: 2px 2ch"><span style="flex: 0 0 2ch; color: #A8A8A8">{{ st.n }}</span><span style="flex: 1 1 24ch; min-width: 0">{{ st.text }}</span><span style="flex: 0 1 auto; font-weight: 700; overflow-wrap: anywhere">{{ st.math }}</span></div>
+<div style="padding-left: 4ch; color: #A8A8A8">{{ st.why }}</div>
+</li>
+</sc-for>
+</ol>
+
+<sc-if value="{{ q.hasCheck }}" hint-placeholder-val="{{ true }}">
+<div style="padding: 10px 2ch; border: 1px solid #6E6E6E; color: #BDBDBD"><span style="color: #FFFFFF; font-weight: 700">second check:</span> {{ q.check }}</div>
+</sc-if>
+
+<div class="bb-phone-only" style="align-items: center; gap: 1ch; flex-wrap: wrap; color: #A8A8A8">on your sheet: <span style="padding: 2px 1ch; background: #C9C9C9; color: #000000; font-weight: 700">{{ q.line }}</span></div>
+
+<sc-for list="{{ q.chat }}" as="c" hint-placeholder-count="0">
+<div style="display: flex; flex-direction: column; gap: 6px; padding-left: 2ch; border-left: 2px solid {{ c.bar }}">
+<div style="color: {{ c.color }}">{{ c.text }}</div>
+<sc-if value="{{ c.pending }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; gap: 8px 12px">
+<button type="button" class="bb-inv bb-change" onClick="{{ c.accept }}" style="min-height: 44px; padding: 0 2ch; background: #FFFFFF; color: #000000; border: 2px solid #FFFFFF; font: inherit; font-weight: 700">change it to {{ c.proposed }}</button>
+<button type="button" class="bb-btn" onClick="{{ c.keep }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">keep {{ q.answerShort }}</button>
+</div>
+</sc-if>
+</div>
+</sc-for>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px">
+<div style="flex: 1 1 28ch; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<label for="{{ q.askId }}" style="color: #A8A8A8">stuck on a step? ask about this one</label>
+<input id="{{ q.askId }}" class="bb-in bb-askbox" type="text" value="{{ q.askText }}" onInput="{{ q.onAskText }}" onKeyDown="{{ q.askKey }}" placeholder="why that step? or tell me if it's wrong" style="min-height: 44px; box-sizing: border-box; width: 100%; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">
+</div>
+<button type="button" class="bb-btn bb-ask" onClick="{{ q.ask }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">ask</button>
+<button type="button" class="bb-btn bb-edit" onClick="{{ q.startEdit }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">edit answer</button>
+<button type="button" class="bb-btn" onClick="{{ q.copy }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">{{ q.copyLabel }}</button>
+</div>
+
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<aside class="bb-aside" style="flex: 1 1 340px; max-width: 480px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 2ch"><span style="font-weight: 700">your worksheet</span>
+<sc-if value="{{ hasPages }}" hint-placeholder-val="{{ false }}">
+<span style="display: flex; align-items: center; gap: 4px; color: #A8A8A8">
+<sc-if value="{{ multiPage }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-btn" aria-label="previous page" onClick="{{ prevPage }}" style="min-width: 44px; min-height: 36px; background: #000000; color: #FFFFFF; border: 1px solid #6E6E6E; font: inherit">&lt;</button></sc-if>
+<span>{{ pageText }}</span>
+<sc-if value="{{ multiPage }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-btn" aria-label="next page" onClick="{{ nextPage }}" style="min-width: 44px; min-height: 36px; background: #000000; color: #FFFFFF; border: 1px solid #6E6E6E; font: inherit">&gt;</button></sc-if>
+</span>
+</sc-if>
+</div>
+
+<sc-if value="{{ hasPages }}" hint-placeholder-val="{{ false }}">
+<div id="bb-page" class="bb-page" onPointerMove="{{ dragMove }}" onPointerUp="{{ dragEnd }}" onPointerCancel="{{ dragEnd }}" style="position: relative; margin: 8px 0 14px; box-shadow: 10px 10px 0 #6E6E6E; background: #C9C9C9">
+<img src="{{ pageUrl }}" alt="your worksheet, page {{ pageNo }}" draggable="false" style="display: block; width: 100%; filter: brightness(0.82)">
+<sc-for list="{{ pageAnswers }}" as="b" hint-placeholder-count="0">
+<div class="bb-ans" data-i="{{ b.i }}" onPointerDown="{{ b.down }}" style="position: absolute; left: {{ b.left }}; top: {{ b.top }}; width: {{ b.width }}; font-family: Arial, Helvetica, sans-serif; font-weight: 700; font-size: {{ b.font }}; line-height: 1.25; color: #0B2A8A; white-space: pre-wrap; overflow-wrap: break-word; outline: {{ b.outline }}; outline-offset: 2px">{{ b.text }}</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; color: #A8A8A8">all answers:
+<button type="button" class="bb-btn" onClick="{{ smaller }}" style="min-height: 36px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #6E6E6E; font: inherit">smaller</button>
+<button type="button" class="bb-btn" onClick="{{ bigger }}" style="min-height: 36px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #6E6E6E; font: inherit">bigger</button>
+</div>
+<div style="color: #A8A8A8">a preview of your page. the box is the open question's answer. drag an answer if it landed in the wrong spot.</div>
+</sc-if>
+
+<sc-if value="{{ noPages }}" hint-placeholder-val="{{ true }}">
+<div style="box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; margin: 8px 0 14px; padding: 24px; box-shadow: 10px 10px 0 #6E6E6E; background: #C9C9C9; color: #000000; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 18px">
+<div style="font-size: 15px; font-weight: 700">{{ sheetTitle }}</div>
+<sc-for list="{{ sheet }}" as="r" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; outline: {{ r.outline }}">
+<div>{{ r.n }}. {{ r.text }}</div>
+<div style="font-family: Cousine, 'DejaVu Sans Mono', monospace; font-weight: 700; color: #0B2A8A; white-space: pre-wrap; overflow-wrap: anywhere">{{ r.line }}</div>
+</div>
+</sc-for>
+</div>
+<div style="color: #A8A8A8">{{ noPageNote }}</div>
+</sc-if>
+</aside>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+/* the run to show: the one just finished (or opened from past runs), else the sample */
+choose() {
+  const API = window.bbApi;
+  let sample = false;
+  try { sample = sessionStorage.getItem('bb-sample') === '1' || /#sample/.test(location.hash || ''); sessionStorage.removeItem('bb-sample'); } catch (err) {}
+  const live = !sample && API && API.lastRun();
+  if (live && live.source === 'model' && Array.isArray(live.questions) && live.questions.length) { this.run = live; this.live = true; }
+  else { this.run = this.sampleRun(); this.live = false; }
+  this.prep();
+}
+componentDidMount() {
+  const API = window.bbApi;
+  if (!this.run) this.choose();
+  this.pages = this.pages || []; this.orig = this.orig || []; this.dims = this.dims || {};
+  if (this.live && API) {
+    Promise.all([API.loadRunFiles(), API.loadRunOrig()]).then((v) => {
+      this.allImgs = (v[0] || []).filter((f) => /^image\//.test(f.type || ''));
+      this.pages = this.allImgs.map((f, gi) => Object.assign({}, f, { gi: gi })).filter((f) => !f.ref);
+      this.orig = v[1] || [];
+      this.pages.forEach((p) => this.dimOf(p.url));
+      this.forceUpdate();
+    });
+  }
+  this.startFlicker();
+}
+componentWillUnmount() { clearTimeout(this.fT); Object.values(this.timers || {}).forEach(clearTimeout); }
+startFlicker() {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const R = Math.random;
+  const calm = () => { const a = document.activeElement; return !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA'); };
+  const flick = () => {
+    this.fT = setTimeout(() => {
+      if (calm()) { flick(); return; }
+      const n = R() < 0.3 ? 2 : 1; let k = 0;
+      const dip = () => {
+        this.setState({ dim: 0.4 + R() * 0.35 });
+        this.fT = setTimeout(() => { this.setState({ dim: 0 }); k++; if (k < n) this.fT = setTimeout(dip, 50 + R() * 90); else flick(); }, 50 + R() * 110);
+      };
+      dip();
+    }, 1500 + R() * 3500);
+  };
+  flick();
+}
+later(key, ms, fn) { this.timers = this.timers || {}; clearTimeout(this.timers[key]); this.timers[key] = setTimeout(fn, ms); }
+dimOf(url) {
+  if (this.dims[url]) return this.dims[url];
+  if (this.dims[url] === undefined) {
+    this.dims[url] = 0;
+    const im = new Image();
+    im.onload = () => { this.dims[url] = im.naturalWidth / Math.max(1, im.naturalHeight); this.forceUpdate(); };
+    im.onerror = () => { this.dims[url] = 0.773; };
+    im.src = url;
+  }
+  return 0.773;
+}
+/* make sure the run has a place for the student's fixes, and fix the order: flagged questions first */
+prep() {
+  const run = this.run;
+  const ui = run.ui = run.ui || {};
+  ['okd', 'edits', 'moved', 'prev', 'status', 'retried', 'chat'].forEach((k) => { if (!ui[k] || typeof ui[k] !== 'object') ui[k] = {}; });
+  if (!ui.fillScale) ui.fillScale = 1;
+  const qs = run.questions || [];
+  const flagged = (i) => !qs[i].sure && !ui.okd[i] && ui.edits[i] == null;
+  const idx = qs.map((_, i) => i);
+  this.order = idx.filter(flagged).concat(idx.filter((i) => !flagged(i)));
+  const s = this.state || {};
+  if (s.open === undefined) this.setState({ open: this.order.length && flagged(this.order[0]) ? this.order[0] : -1 });
+}
+save() {
+  if (this.live && window.bbApi) window.bbApi.saveRun(this.run);
+  this.setState({ v: ((this.state || {}).v || 0) + 1 });
+}
+sampleRun() {
+  const st = (a) => a.map((x) => ({ text: x[0], result: x[1], why: x[2] }));
+  return { source: 'sample', title: 'Unit 3: Linear equations', subject: 'math', files: [{ n: 1, name: 'Unit 3 worksheet.pdf', role: 'assignment', origin: 'text' }], meta: { fileName: 'Unit 3 worksheet.pdf' }, questions: [
+    { number: 1, text: 'Solve 3x + 7 = 22.', ans: 'x = 5', sure: true, check: 'put x = 5 back in: 3(5) + 7 = 22. matches.', steps: st([['subtract 7 from both sides', '3x = 15', 'gets the x part alone on the left'], ['divide both sides by 3', 'x = 5', '3x means 3 times x, so dividing undoes it']]) },
+    { number: 2, text: 'Solve 2(x - 4) = 10.', ans: 'x = 9', sure: true, check: '2(9 - 4) = 2(5) = 10. matches.', steps: st([['divide both sides by 2', 'x - 4 = 5', 'clears the 2 outside the brackets'], ['add 4 to both sides', 'x = 9', 'undoes the minus 4']]) },
+    { number: 3, text: 'Find the slope through (2, 3) and (6, 11).', ans: '2', sure: true, check: 'from (2, 3), going up 2 for every 1 across lands on (6, 11). matches.', steps: st([['change in y', '11 - 3 = 8', 'how far up you go'], ['change in x', '6 - 2 = 4', 'how far across you go'], ['divide up by across', '8 / 4 = 2', 'slope is rise over run']]) },
+    { number: 4, text: 'Solve x/4 + 3 = 8.', ans: 'x = 20', sure: true, check: '20/4 + 3 = 5 + 3 = 8. matches.', steps: st([['subtract 3 from both sides', 'x/4 = 5', 'undo the plus 3 first'], ['multiply both sides by 4', 'x = 20', 'undoes dividing by 4']]) },
+    { number: 5, text: 'A taxi charges $3 plus $2 per mile. What does a 7 mile ride cost?', ans: '$17', sure: true, check: '7 miles at $2 is $14, plus the $3 start is $17. matches.', steps: st([['write the rule', 'cost = 3 + 2m', '$3 to start, then $2 for each mile m'], ['put in 7 miles', '3 + 2(7)', 'm is 7'], ['work it out', '3 + 14 = $17', 'multiply first, then add']]) },
+    { number: 6, text: 'Solve 5 - 2x = 11.', ans: 'x = -3', sure: false, flag: 'the 11 is handwritten and could be a 17. if it is 17, the answer is x = -6.', check: '5 - 2(-3) = 11. the math matches what I read. the problem is reading the 11.', steps: st([['subtract 5 from both sides', '-2x = 6', 'moves the 5 away from the x part'], ['divide both sides by -2', 'x = -3', 'dividing by a negative flips the sign']]) },
+    { number: 7, text: 'Where does the line on the graph cross the y-axis?', ans: '(0, -2)', sure: false, flag: 'the graph is blurry in your photo. the line crosses at -2 or -3 and I could not tell which.', check: "couldn't confirm. the photo is too blurry to read the grid.", steps: st([['find where the line meets the y-axis', 'x = 0', 'the y-axis is where x is 0'], ['read the height there', 'y = -2', 'best guess from a blurry photo'], ['write it as a point', '(0, -2)', 'x first, then y']]) }
+  ] };
+}
+makeMarks() {
+  let a = 0x2F6E2B1;
+  const rnd = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const ART = ['/ / /\n / / /', '/ /\n / /\n  / /', '\\ \\ \\\n \\ \\ \\\n  \\ \\ \\', '\\ \\\n \\ \\', '/  /  /  /\n /  /  /  /\n  /  /  /\n   /  /  /\n    /  /', '\\  \\  \\  \\\n \\  \\  \\  \\\n  \\  \\  \\\n   \\  \\  \\\n    \\  \\', ' ^ ^ ^ ^\n.       .\n v v v v', ' o o\no   o\n (_)', '/\n /\n  /', '\\ \\ \\ \\'];
+  const GREY = ['#2A2A2A', '#303030', '#363636', '#3D3D3D', '#444444'];
+  const out = [];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) {
+    if (rnd() < 0.2) continue;
+    const size = 7 + Math.floor(rnd() * 6);
+    out.push({ left: ((c + 0.2 + rnd() * 0.5) * 100 / 6).toFixed(1) + '%', top: ((r + 0.2 + rnd() * 0.5) * 100 / 4).toFixed(1) + '%', size: size + 'px', lh: Math.round(size * 0.74) + 'px', color: GREY[Math.floor(rnd() * GREY.length)], rot: Math.round(rnd() * 100 - 50) + 'deg', art: ART[Math.floor(rnd() * ART.length)] });
+  }
+  return out;
+}
+renderVals() {
+const s = this.state || {};
+const API = window.bbApi || null;
+const SH = window.bbSheet || null;
+if (!this.marks) this.marks = this.makeMarks();
+if (!this.run) { this.dims = {}; this.choose(); }
+const run = this.run, ui = run.ui, QL = run.questions || [];
+const pages = this.pages || [];
+const mode = s.mode || {}, errs = s.errs || {}, typeText = s.typeText || {}, editText = s.editText || {}, askText = s.askText || {}, copied = s.copied || {};
+const open = (s.open == null || !(this.run.questions || [])[s.open]) ? -1 : s.open;
+// files and numbering: with several assignments, questions are lettered by file (a1, b1 ...)
+const RF = (Array.isArray(run.files) && run.files.length) ? run.files : [{ n: 1, name: (run.meta || {}).fileName || 'assignment', role: 'assignment', origin: (run.meta || {}).origin || '' }];
+const AF = RF.some((f) => f.role !== 'reference') ? RF.filter((f) => f.role !== 'reference') : RF;
+const MULTI = AF.length > 1;
+const fileOf = (x) => Number(x && x.file) || 1;
+const partIdx = (q) => { const k = AF.findIndex((f) => Number(f.n) === fileOf(q)); return k < 0 ? 0 : k; };
+const numOf = (i) => (MULTI ? 'abcdefgh'[partIdx(QL[i])] : '') + (QL[i].number || i + 1);
+const ansOf = (i) => ui.edits[i] != null ? String(ui.edits[i]) : String(QL[i].ans || '');
+const flagged = (i) => !QL[i].sure && !ui.okd[i] && ui.edits[i] == null;
+const unchecked = (i) => /unchecked|did not finish/.test(QL[i].flag || '');
+const lineOf = (i) => ansOf(i) + (flagged(i) ? ' (?)' : '');
+const nFlag = QL.filter((_, i) => flagged(i)).length;
+const STATUS = { ok: "you ok'd it", typed: 're-solved', resolved: 're-solved', edited: 'you edited', chat: 'changed in chat' };
+const NOTES = { ok: 'you said this one is right.', typed: 'solved again from what you typed.', resolved: 'worked it again and got a different answer.', edited: 'you changed this answer. the steps below are for the old one.', chat: 'changed from the chat. the steps below are for the old one.' };
+const setQ = (key, i, val) => { const cur = Object.assign({}, (this.state || {})[key] || {}); if (val == null) delete cur[i]; else cur[i] = val; const o = {}; o[key] = cur; this.setState(o); };
+const clearFix = (i) => { delete ui.okd[i]; delete ui.edits[i]; delete ui.status[i]; delete ui.retried[i]; };
+const norm = (t) => String(t || '').toLowerCase().replace(/\s+/g, '').replace(/[.,;:]$/, '');
+const chatLog = (i) => (ui.chat[i] || []).slice(-8).map((c) => (c.who === 'you' ? 'student: ' : 'badgerbox: ') + c.text).join('\n');
+// work one question again, with the whole assignment attached. note = what the student typed, if anything.
+const again = (i, note) => {
+  const q = QL[i];
+  setQ('mode', i, 'working'); setQ('errs', i, null);
+  const done = (nq) => {
+    setQ('mode', i, null);
+    if (!nq) return;
+    const same = norm(nq.ans) === norm(q.ans) && !note;
+    if (same && !nq.sure) { ui.retried[i] = true; this.save(); return; }
+    ui.prev[i] = JSON.parse(JSON.stringify(q));
+    Object.assign(q, { text: nq.text || q.text, ans: String(nq.ans || ''), steps: nq.steps || q.steps, check: nq.check || '', sure: !!nq.sure, flag: nq.flag || null, figure: nq.figure || q.figure || null });
+    clearFix(i);
+    ui.status[i] = note ? 'typed' : 'resolved';
+    if (!nq.sure && note) ui.okd[i] = true;   // the student told us what it says, so it is settled
+    this.save();
+  };
+  if (!this.live || !API) {
+    this.later('q' + i, 1100, () => {
+      if (note && /17/.test(note)) done({ text: 'Solve ' + note.replace(/^solve\s*/i, '').replace(/\.$/, '') + '.', ans: 'x = -6', sure: true, check: '5 - 2(-6) = 17. matches.', steps: [{ text: 'subtract 5 from both sides', result: '-2x = 12', why: 'moves the 5 away from the x part' }, { text: 'divide both sides by -2', result: 'x = -6', why: 'dividing by a negative flips the sign' }] });
+      else done({ ans: q.ans, sure: false });
+    });
+    return;
+  }
+  API.solveAgain({ number: q.number, text: q.text, answer: ansOf(i), note: note || '', chat: chatLog(i) }).then((res) => {
+    if (res && res.source === 'model' && res.questions && res.questions[0]) { done(res.questions[0]); return; }
+    setQ('mode', i, null);
+    setQ('errs', i, (res && res.error) || (res && res.source === 'offline' ? "badgerbox isn't running. start it, then try again." : "couldn't work it again. try once more."));
+  });
+};
+const ask = (i) => {
+  const t = String(askText[i] || '').trim();
+  if (!t) return;
+  const q = QL[i];
+  const list = (ui.chat[i] = (ui.chat[i] || []).concat([{ who: 'you', text: t }, { who: 'bb', text: 'thinking...' }]).slice(-20));
+  setQ('askText', i, '');
+  this.save();
+  const reply = (r) => { list[list.length - 1] = r; this.save(); };
+  if (!this.live || !API) {
+    const hit = t.match(/(?:should be|supposed to be|change it to|change to|make it|answer is|it'?s actually|is actually)\s*:?\s*(.+?)\s*[.!?]*$/i);
+    this.later('a' + i, 700, () => reply(hit ? { who: 'bb', text: 'you want ' + hit[1] + ' instead of ' + ansOf(i) + '? my steps still come out to ' + ansOf(i) + ', so double-check before you change it.', proposed: hit[1], pending: true }
+      : (/\b(wrong|incorrect|mistake)\b/i.test(t) ? { who: 'bb', text: "what should it be? tell me the answer you think is right and I'll check it before changing anything." } : { who: 'bb', text: 'each step undoes one thing that was done to x, working from the outside in. ask about a step number if you want more.' })));
+    return;
+  }
+  API.loadPayload().then((p0) => {
+    const files = ((p0 && p0.files) || []).slice(0, 6).map((f) => ({ type: f.type, url: f.url }));
+    return API.ask({ question: t, context: { text: q.text, answer: ansOf(i), steps: q.steps || [] }, files: files, assignmentText: (p0 && p0.text) || '', history: chatLog(i),
+      subject: run.subject, tab: (run.request || {}).tab || 'auto', cls: (run.request || {}).cls,
+      others: QL.map((x, k) => '#' + numOf(k) + ' ' + x.text + ' => ' + ansOf(k)).join('\n') });
+  }).then((res) => {
+    if (res && res.source === 'model') reply({ who: 'bb', text: res.answer, proposed: res.kind === 'change' ? res.proposed : null, pending: res.kind === 'change' && !!res.proposed });
+    else reply({ who: 'bb', text: res && res.error ? "couldn't answer: " + res.error : "couldn't reach badgerbox. is it running?" });
+  });
+};
+// the files the download makes: one per assignment, in the format it came in
+const placeOf = (i) => { const pl = ui.moved[i] || QL[i].place; return (pl && pl.x != null && pl.y != null) ? pl : null; };
+const itemsOn = (pg) => QL.map((q, i) => ({ i: i, pl: placeOf(i) })).filter((x) => x.pl && Number(x.pl.page || 1) === pg.gi + 1).map((x) => ({ i: x.i, pl: x.pl, text: lineOf(x.i), byUser: !!ui.moved[x.i] }));
+const partKind = (f, pgs, orig) => orig ? orig.kind : (pgs.length ? ((f.origin === 'pdf' || pgs.length > 1 || (run.meta || {}).fromPdf) ? 'pdf' : 'png') : 'clean');
+const parts = AF.map((f, k) => {
+  const pgs = pages.filter((p) => !MULTI || fileOf(p) === Number(f.n));
+  const orig = (this.orig || []).filter((o) => fileOf(o) === Number(f.n))[0] || null;
+  const qi = QL.map((_, i) => i).filter((i) => partIdx(QL[i]) === k);
+  return { name: MULTI ? f.name : ((run.meta || {}).fileName || run.title || f.name), title: run.title || 'worksheet', kind: partKind(f, pgs, orig), orig: orig,
+    pages: pgs.map((p) => ({ url: p.url, items: itemsOn(p) })),
+    answers: qi.map((i) => ({ i: i, n: numOf(i), text: QL[i].text, line: lineOf(i), anchor: QL[i].anchor, steps: QL[i].steps })) };
+});
+const doDownload = () => {
+  this.setState({ confirmDl: false, dlErr: '' });
+  if (!SH) return;
+  SH.download({ parts: parts, fillScale: ui.fillScale }).then(() => this.setState({ got: true }), (e) => this.setState({ dlErr: String(e && e.message || e) }));
+};
+// preview: the page the open question is on, or the one picked with < >
+const openPl = open >= 0 ? placeOf(open) : null;
+const pgIdx = Math.min(Math.max(0, pages.length - 1), s.pg != null ? s.pg : (openPl ? Math.max(0, pages.findIndex((p) => p.gi + 1 === Number(openPl.page || 1))) : 0));
+const PG = pages[pgIdx] || null;
+const asp = PG ? this.dimOf(PG.url) : 1;
+const boxes = (PG && SH) ? SH.layout(itemsOn(PG), asp, ui.fillScale) : [];
+this.lastBoxes = boxes;
+const startDrag = (b) => (e) => {
+  if (e.button != null && e.button !== 0) return;
+  e.preventDefault();
+  const rc = e.currentTarget.parentNode.getBoundingClientRect();
+  this.drag = { i: b.i, x0: e.clientX, y0: e.clientY, px: b.x, py: b.y, w: rc.width, h: rc.height, b: b, page: PG.gi + 1, went: false };
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+};
+const BP = window.bbPlot || null;
+const items = (this.order || []).map((i, k) => {
+  const q = QL[i];
+  const isFlag = flagged(i), isOpen = open === i, m = mode[i];
+  const ans = ansOf(i);
+  const long = ans.length > 48 || /\n/.test(ans);
+  const st = ui.status[i];
+  const tt = typeText[i] === undefined ? '' : typeText[i];
+  const et = editText[i] === undefined ? ans : editText[i];
+  const fig = (q.figure && BP) ? (() => { try { return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(BP.svg(q.figure, 560)); } catch (e) { return ''; } })() : '';
+  return {
+    num: numOf(i),
+    numBg: isOpen ? '#FFFFFF' : '#8F8F8F',
+    arrow: isOpen ? 'v' : '>',
+    question: q.text,
+    answer: ans,
+    answerShort: long ? (ans.split(/\s+/).length > 12 ? 'answer, ' + ans.split(/\s+/).length + ' words' : ans.slice(0, 40) + '...') : ans,
+    long: long,
+    line: numOf(i) + '. ' + lineOf(i),
+    isFlag: isFlag,
+    isOk: !isFlag,
+    flagLabel: unchecked(i) ? 'not checked' : 'look',
+    okLabel: st ? STATUS[st] : (q.sure ? 'checked' : "you ok'd it"),
+    open: isOpen,
+    openAttr: isOpen ? 'true' : 'false',
+    topLine: k === 0 ? '0' : '1px solid #3A3A3A',
+    delay: Math.min(900, 120 + k * 70) + 'ms',
+    toggle: () => this.setState({ open: isOpen ? -1 : i, pg: null }),
+    whyHead: unchecked(i) ? 'not double-checked:' : "why I'm not sure:",
+    why: unchecked(i) ? "the second check didn't finish for this one, so nobody has double-checked it." : (q.flag || 'the second way gave a different answer.'),
+    retried: isFlag && !!ui.retried[i],
+    choosing: isFlag && !m,
+    canRetry: !ui.retried[i],
+    retryLabel: unchecked(i) ? 'check again' : 'retry',
+    typing: isFlag && m === 'type',
+    working: m === 'working',
+    editing: m === 'edit',
+    typeId: 'bb-type-' + i, editId: 'bb-edit-' + i, askId: 'bb-ask-' + i,
+    typeText: tt, typeEmpty: !tt.trim(), solveOpacity: tt.trim() ? '1' : '0.4',
+    onTypeText: (e) => setQ('typeText', i, e.target.value),
+    startType: () => { setQ('mode', i, 'type'); setQ('typeText', i, typeText[i] == null ? q.text : typeText[i]); },
+    solveTyped: () => { if (tt.trim()) again(i, tt.trim()); },
+    cancelMode: () => setQ('mode', i, null),
+    retry: () => again(i, ''),
+    accept: () => { ui.okd[i] = true; ui.status[i] = 'ok'; this.save(); },
+    editText: et, editEmpty: !String(et).trim(), saveOpacity: String(et).trim() ? '1' : '0.4',
+    onEditText: (e) => setQ('editText', i, e.target.value),
+    startEdit: () => { setQ('mode', i, 'edit'); setQ('editText', i, ans); },
+    saveEdit: () => { const v = String(et).trim(); if (!v) return; ui.edits[i] = v; ui.status[i] = 'edited'; setQ('mode', i, null); this.save(); },
+    hasErr: !!errs[i], err: errs[i] || '',
+    hasFixNote: !!st, fixNote: NOTES[st] || '',
+    undo: () => {
+      if (ui.prev[i]) { const keep = q.place; Object.assign(q, ui.prev[i]); q.place = keep; delete ui.prev[i]; }
+      clearFix(i); this.save();
+    },
+    hasFig: !!fig, fig: fig, figAlt: q.figure ? 'graph: ' + (q.figure.title || q.figure.type) : '',
+    steps: (q.steps || []).map((p, n) => ({ n: String(n + 1), text: p.text, math: p.result, why: p.why })),
+    hasCheck: !!(q.check || ui.edits[i] != null),
+    check: ui.edits[i] != null ? 'you changed this answer, so there is nothing new for me to check.' : q.check,
+    chat: (ui.chat[i] || []).map((c, n) => ({
+      text: c.who === 'you' ? '> ' + c.text : c.text, color: c.who === 'you' ? '#A8A8A8' : '#FFFFFF', bar: c.who === 'you' ? '#3A3A3A' : '#FFFFFF',
+      pending: !!c.pending, proposed: c.proposed || '',
+      accept: () => { ui.edits[i] = String(c.proposed); ui.status[i] = 'chat'; c.pending = false; ui.chat[i].push({ who: 'bb', text: 'done. ' + c.proposed + ' is on your worksheet now. undo is above the steps.' }); this.save(); },
+      keep: () => { c.pending = false; ui.chat[i].push({ who: 'bb', text: 'ok, keeping ' + ans + '.' }); this.save(); }
+    })),
+    askText: askText[i] || '',
+    onAskText: (e) => setQ('askText', i, e.target.value),
+    askKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); ask(i); } },
+    ask: () => ask(i),
+    copyLabel: copied[i] ? 'copied' : 'copy answer',
+    copy: () => { try { if (navigator.clipboard) navigator.clipboard.writeText(ans); } catch (e) {} setQ('copied', i, true); this.later('c' + i, 1500, () => setQ('copied', i, null)); }
+  };
+});
+const SUBJECTS = [['math', 'math'], ['science', 'science'], ['reading', 'reading'], ['writing', 'writing'], ['social studies', 'social'], ['languages', 'language']];
+const kind0 = parts[0] ? parts[0].kind : 'clean';
+const fileName = (run.meta || {}).fileName || (RF[0] && RF[0].name) || '';
+return {
+  marks: this.marks,
+  logoOpacity: s.dim ? s.dim.toFixed(2) : '1',
+  isSample: !this.live,
+  fileTitle: MULTI ? AF.map((f) => f.name).join(', ') : ((run.meta || {}).fileName || run.title || ''),
+  menuOpen: !!s.menu,
+  menuOpenAttr: s.menu ? 'true' : 'false',
+  toggleMenu: () => this.setState({ menu: !s.menu }),
+  items: items,
+  headline: QL.length + (QL.length === 1 ? ' answer. ' : ' answers. ') + (nFlag === 0 ? 'all settled.' : nFlag + (nFlag === 1 ? ' needs a look.' : ' need a look.')),
+  countText: QL.length + (QL.length === 1 ? ' question' : ' questions'),
+  subj: run.subject || 'homework',
+  subjOpen: !!s.subjOpen,
+  subjOpenAttr: s.subjOpen ? 'true' : 'false',
+  toggleSubj: () => this.setState({ subjOpen: !s.subjOpen }),
+  redoCost: this.live && API ? 'it costs the same runs as the first time.' : 'this is the sample, so it just changes the label.',
+  subjects: SUBJECTS.map((x) => ({ name: x[0], pick: () => {
+    if (!this.live || !API) { run.subject = x[0]; this.setState({ subjOpen: false }); return; }
+    this.setState({ subjOpen: false, redoing: true, redoText: 'running it again as ' + x[0] + '...' });
+    API.redo([], x[1]).then((res) => {
+      if (res && res.source === 'model') { this.run = API.lastRun(); this.prep(); this.setState({ redoing: false, open: -1 }); this.prep(); return; }
+      this.setState({ redoText: "couldn't run it again: " + ((res && res.error) || 'no reply') });
+      this.later('redo', 6000, () => this.setState({ redoing: false }));
+    });
+  } })),
+  redoing: !!s.redoing,
+  redoText: s.redoText || '',
+  flagCount: String(nFlag),
+  confirmDl: !!s.confirmDl && nFlag > 0,
+  downloadLabel: s.got ? 'download again' : 'get my filled worksheet',
+  downloadNote: s.got ? 'saved to your downloads.' + (MULTI ? ' one file for each assignment.' : '') : (SH ? SH.kindNote(kind0) : ''),
+  download: () => { if (nFlag > 0 && !s.confirmDl) { this.setState({ confirmDl: true }); return; } doDownload(); },
+  downloadAnyway: doDownload,
+  fixFirst: () => { const f = (this.order || []).find((i) => flagged(i)); this.setState({ confirmDl: false, open: f == null ? -1 : f }); setTimeout(() => { const el = document.querySelector('.bb-flagbox'); if (el) el.scrollIntoView({ block: 'center' }); }, 60); },
+  hasDlErr: !!s.dlErr, dlErr: s.dlErr || '',
+  hasPages: pages.length > 0,
+  noPages: pages.length === 0,
+  multiPage: pages.length > 1,
+  pageText: 'page ' + (pgIdx + 1) + ' of ' + pages.length,
+  pageNo: String(pgIdx + 1),
+  pageUrl: PG ? PG.url : '',
+  prevPage: () => this.setState({ pg: (pgIdx - 1 + pages.length) % pages.length }),
+  nextPage: () => this.setState({ pg: (pgIdx + 1) % pages.length }),
+  pageAnswers: boxes.map((b) => ({ i: String(b.i), text: b.text, left: (b.x * 100).toFixed(2) + '%', top: (b.y * 100).toFixed(2) + '%', width: (b.w * 100).toFixed(2) + '%', font: (b.em * 100).toFixed(3) + 'cqw', outline: b.i === open ? '2px solid #000000' : '0', down: startDrag(b) })),
+  dragMove: (e) => {
+    const d = this.drag; if (!d) return;
+    if (!d.went && Math.abs(e.clientX - d.x0) + Math.abs(e.clientY - d.y0) < 4) return;
+    d.went = true;
+    const nx = Math.min(0.98, Math.max(0, d.px + (e.clientX - d.x0) / d.w)), ny = Math.min(0.98, Math.max(0, d.py + (e.clientY - d.y0) / d.h));
+    ui.moved[d.i] = { page: d.page, x: nx, y: ny, w: d.b.w, s: d.b.em / ((SH ? SH.EM0 : 0.021) * ui.fillScale) };
+    this.setState({ v: (s.v || 0) + 1 });
+  },
+  dragEnd: () => {
+    const d = this.drag; if (!d) return;
+    this.drag = null;
+    if (!d.went) { this.setState({ open: d.i, pg: pgIdx }); return; }
+    this.save();
+  },
+  smaller: () => { ui.fillScale = Math.max(0.5, Math.round((ui.fillScale - 0.1) * 10) / 10); this.save(); },
+  bigger: () => { ui.fillScale = Math.min(2, Math.round((ui.fillScale + 0.1) * 10) / 10); this.save(); },
+  sheetTitle: run.title || 'worksheet',
+  sheet: (this.order || []).slice().sort((a, b) => a - b).map((i) => ({ n: numOf(i), text: QL[i].text, line: lineOf(i), outline: open === i ? '2px solid #000000' : '0' })),
+  noPageNote: kind0 === 'docx' ? 'your Word file comes back with each answer written in under its question.' : kind0 === 'pptx' ? 'your slides come back with each answer added on its slide.' : 'there are no page pictures for this one, so you get a clean answer sheet like this.'
+};
+}
+}
+</script>
+</body>
+</html>

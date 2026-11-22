@@ -15,9 +15,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAGES = {
     'Landing.dc.html': 'index.html',
     'Enter.dc.html': 'enter.html',
-    'MonoTerminal.dc.html': 'app.html',
+    # the old main screen, still reachable from more > the old badgerbox screen
+    'MonoTerminal.dc.html': 'classic.html',
     'Results.dc.html': 'walkthrough.html',
     'States.dc.html': 'states.html',
+    # the two-screen badgerbox (v2): drop an assignment, get the answers. app.html stays the front door because
+    # the browser extension opens it.
+    'Drop.dc.html': 'app.html',
+    'Answers.dc.html': 'answers.html',
 }
 HEAD = (
     '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
@@ -28,6 +33,7 @@ HEAD = (
     '<script src="js/bb-plot.js" defer></script>\n'
     '<script src="js/bb-office.js" defer></script>\n'
     '<script src="js/bb-blanks.js" defer></script>\n'
+    '<script src="js/bb-sheet.js" defer></script>\n'
     '<script src="js/bb-fx.js" defer></script>\n'
     '<script src="js/dc-lite.js" defer></script>'
 )
@@ -41,7 +47,7 @@ def convert(src, dst):
     s = s.replace('<x-dc>', '<template data-dc>', 1).replace('</x-dc>', '</template>', 1)
     s = s.replace('<html lang="en">', '<html lang="en" data-page="%s">' % page[:-5], 1)
     for a, b in PAGES.items():
-        s = s.replace('href="%s"' % a, 'href="%s"' % b)
+        s = re.sub(r'href="%s(#[^"]*)?"' % re.escape(a), lambda m: 'href="%s%s"' % (b, m.group(1) or ''), s)
     if page == 'states.html':
         s = s.replace('width: 1440px; height: 1040px;', 'width: 100%; min-height: 100vh;', 1)
     else:

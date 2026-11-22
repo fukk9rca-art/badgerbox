@@ -44,7 +44,8 @@ export function skillText(tab, off, on) {
   const own = all.filter((s) => s.tabs.includes(t) || force.includes(s.name.toLowerCase()));
   if (own.length) return '\n\n' + own.map((s) => 'SKILL FOR THIS ASSIGNMENT: ' + s.name + '\n' + s.body).join('\n\n');
   // offered only where the subject is open: math, science, language and code keep their own rules
-  const maybe = ['auto', 'online', 'social', 'reading'].includes(t) ? all.filter((s) => s.auto) : [];
+  // on auto (the new screens have no tabs) every subject's skill is offered, so math still gets the math rules
+  const maybe = t === 'auto' ? all.filter((s) => s.name.toLowerCase() !== VOICE || force.includes(VOICE)) : (['online', 'social', 'reading'].includes(t) ? all.filter((s) => s.auto) : []);
   if (!maybe.length) return '';
   return '\n\n' + maybe.map((s) => 'SKILL, USE ONLY IF THE ASSIGNMENT MATCHES: ' + s.name + ' (' + s.description + ')\n' + s.body).join('\n\n');
 }

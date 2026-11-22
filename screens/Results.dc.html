@@ -83,7 +83,7 @@ a{color:#FFFFFF}a:hover{color:#BDBDBD}
 <header style="height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 1ch; padding: 0 16px; background: {{accent}}; color: #000000; white-space: nowrap; overflow: hidden">
 <a class="bb-link" href="MonoTerminal.dc.html" style="color: #000000; text-decoration: none; white-space: pre; font-weight: 700"><span aria-hidden="true">[ </span>&lt; back<span aria-hidden="true"> ]</span></a>
 <span aria-hidden="true">──</span>
-<span style="font-weight: 700">badgerbox 0.1.31</span>
+<span style="font-weight: 700">badgerbox 0.2.0</span>
 <span aria-hidden="true">──</span>
 <span>{{ runMeta }}</span>
 <span aria-hidden="true" style="flex-grow: 1; min-width: 0; overflow: hidden">────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
@@ -690,9 +690,9 @@ const liveAsk = (clean, context, fallback) => {
   const history = chatLog(12);
   API.loadPayload().then((p0) => {
   const base = ((p0 && p0.files) || []).slice(0, 6).map((f) => ({ type: f.type, url: f.url }));
-  API.ask({ question: clean, context: context, cls: (RUN.request || {}).cls, files: base.concat(cx.files).slice(0, 10), contextText: cx.contextText, hasCtx: cx.files.length > 0,
+  API.ask({ question: clean, context: context, cls: ((RUN && RUN.request) || {}).cls, files: base.concat(cx.files).slice(0, 10), contextText: cx.contextText, hasCtx: cx.files.length > 0,
     assignmentText: (p0 && p0.text) || '', history: history,
-    subject: RUN.subject, tab: (RUN.request || {}).tab, myVoice: !!(RUN.request || {}).myVoice,
+    subject: RUN.subject, tab: ((RUN && RUN.request) || {}).tab, myVoice: !!((RUN && RUN.request) || {}).myVoice,
     others: QL.map((q, i) => '#' + numOf(i) + ' ' + q.text + ' => ' + q.ans).join('\n') }).then((res) => {
     const t = ((this.state || {})[tKey] || []).slice();
     t[t.length - 1] = { who: 'bb', text: res && res.source === 'model' ? res.answer : (res && res.error ? 'could not answer: ' + res.error : fallback(clean)) };
@@ -813,7 +813,7 @@ const TL = LIVE ? (RUN.tldr || null) : Object.assign({}, SAMPLE_TL, s.tlTopicUse
 const classLabel = LIVE ? ((RUN.meta || {}).classShort || RUN.subject || 'this class') : '10th grade chem';
 const fetchTl = (hint) => {
   this.setState({ tlState: 'busy', tlErr: '' });
-  API.tldr({ title: RUN.title, subject: RUN.subject, cls: (RUN.request || {}).cls, hint: hint || '', questions: QL.map((q) => ({ text: q.text, answer: q.ans })) }).then((res) => {
+  API.tldr({ title: RUN.title, subject: RUN.subject, cls: ((RUN && RUN.request) || {}).cls, hint: hint || '', questions: QL.map((q) => ({ text: q.text, answer: q.ans })) }).then((res) => {
     if (res && res.source === 'model' && res.tldr) {
       const run = API.lastRun() || RUN;
       run.tldr = res.tldr;
@@ -1331,9 +1331,9 @@ return {
   lostName: AF.filter((f) => f.origin && f.origin !== 'text').map((f) => f.name).join(', ') || 'your file',
   onRunAgain: back,
   voiceShow: LIVE && !!(API && API.voiceTabs && API.voiceTabs()),
-  voiceChecked: (RUN.request || {}).myVoice ? 'true' : 'false',
-  voiceLabel: (RUN.request || {}).myVoice ? '[x] my voice' : '[ ] my voice',
-  voiceWeight: (RUN.request || {}).myVoice ? '700' : '400',
+  voiceChecked: ((RUN && RUN.request) || {}).myVoice ? 'true' : 'false',
+  voiceLabel: ((RUN && RUN.request) || {}).myVoice ? '[x] my voice' : '[ ] my voice',
+  voiceWeight: ((RUN && RUN.request) || {}).myVoice ? '700' : '400',
   onVoiceSwitch: () => { const run = API.lastRun(); if (!run) return; run.request = Object.assign({}, run.request || {}, { myVoice: !(run.request || {}).myVoice }); API.saveRun(run); this.forceUpdate(); say([{ who: 'bb', text: run.request.myVoice ? 'my voice is on. questions, retries and edits on this run are written in your own style from now on. answers already here stay as they are: press retry on one to redo it in your voice.' : 'my voice is off for this run.' }]); },
   onAskType: (e) => { this.setState({ asked: e.target.value, askPos: e.target.selectionStart }); syncM('bb-ask-mirror', e.target); },
   onCaret: (e) => { const p = e.target.selectionStart; if (p !== (this.state || {}).askPos) this.setState({ askPos: p }); syncM('bb-ask-mirror', e.target); },

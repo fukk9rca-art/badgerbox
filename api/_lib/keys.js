@@ -3,8 +3,8 @@
 // Keys come from keys.json in the project folder (copy keys.example.json), or from the
 // BADGERBOX_KEYS environment variable holding the same JSON. Shape:
 //   { "8008": { "name": "test key", "runsPerDay": 20 }, "another-key": { "name": "sam", "runsPerDay": 5 } }
-// A "run" is one worksheet solved (or one question re-run). Follow-up questions and tl;dr
-// summaries get ten times the run limit.
+// A "run" is about two pages of work (see costOf below), so a big pile costs more than a short worksheet.
+// Follow-up questions and tl;dr summaries get ten times the run limit.
 //
 // Usage is counted in usage.json next to keys.json. On hosts with a read-only disk (Vercel)
 // the count only lives in memory, so real limits there need a database. That is not built yet.
@@ -75,23 +75,71 @@ export function keyInfo(key, req) {
   return { name: entry.name || '', runsPerDay, asksPerDay: runsPerDay * 10, runs: day.runs || 0, asks: day.asks || 0 };
 }
 
-// Check the key and its limit, and count one use. kind: 'run' | 'ask'.
-export function useKey(req, kind) {
+// Add n to today's count for this key (n can be negative to give some back). Returns the new count.
+function bump(key, kind, n) {
+  const u = readUsage();
+  const day = today();
+  // keep only today's counts
+  const next = { [day]: Object.assign({}, u[day] || {}) };
+  const mine = Object.assign({ runs: 0, asks: 0 }, next[day][key] || {});
+  const field = kind === 'run' ? 'runs' : 'asks';
+  mine[field] = Math.max(0, mine[field] + n);
+  next[day][key] = mine;
+  writeUsage(next);
+  return mine[field];
+}
+
+// Check the key and its limit, and count n uses (a big assignment costs more than one run). kind: 'run' | 'ask'.
+export function useKey(req, kind, n) {
+  const cost = Math.max(1, Math.round(Number(n) || 1));
   const key = keyOf(req);
   const info = keyInfo(key, req);
   if (!info) return { ok: false, error: 'that access key is not valid. go back to the enter screen and type your key again.' };
   const used = kind === 'run' ? info.runs : info.asks;
   const limit = kind === 'run' ? info.runsPerDay : info.asksPerDay;
   if (used >= limit) {
-    return { ok: false, error: 'daily limit reached: ' + limit + (kind === 'run' ? ' runs' : ' questions') + ' per day on this key. it resets at midnight.' };
+    return { ok: false, out: true, error: 'that\'s all ' + limit + (kind === 'run' ? ' runs' : ' questions') + ' for today on this key. they come back at midnight.' };
   }
-  const u = readUsage();
-  const day = today();
-  // keep only today's counts
-  const next = { [day]: Object.assign({}, u[day] || {}) };
-  const mine = Object.assign({ runs: 0, asks: 0 }, next[day][key] || {});
-  if (kind === 'run') mine.runs += 1; else mine.asks += 1;
-  next[day][key] = mine;
-  writeUsage(next);
-  return { ok: true, limit: { used: kind === 'run' ? mine.runs : mine.asks, limit, kind } };
+  if (used + cost > limit) {
+    return { ok: false, error: 'this one needs ' + cost + ' runs and you have ' + (limit - used) + ' left today. split it into smaller parts, or wait until midnight.' };
+  }
+  const now = bump(key, kind, cost);
+  return { ok: true, cost, limit: { used: now, limit, kind } };
+}
+
+// Give back runs that were charged for work that never came back (an error, or nothing to answer).
+export function refund(req, kind, n) {
+  const key = keyOf(req);
+  if (!key || !(Number(n) > 0)) return;
+  bump(key, kind, -Math.round(Number(n)));
+}
+
+// Charge more after the fact, when the work turned out bigger than the estimate. Never past the limit.
+// Returns how many were actually added.
+export function charge(req, kind, n) {
+  const key = keyOf(req);
+  const info = keyInfo(key, req);
+  if (!info || !(Number(n) > 0)) return 0;
+  const used = kind === 'run' ? info.runs : info.asks;
+  const limit = kind === 'run' ? info.runsPerDay : info.asksPerDay;
+  const add = Math.max(0, Math.min(Math.round(Number(n)), limit - used));
+  if (add) bump(key, kind, add);
+  return add;
+}
+
+// What a run will cost, from what was sent. About 2 pages make 1 run. Reference files and extra context count
+// half, because the model still has to read them. js/bb-api.js has the same sum, so the button shows the price
+// before anything is sent. Keep the two the same.
+export const PAGES_PER_RUN = 2;
+export function costOf(body) {
+  let pages = 0;
+  (Array.isArray(body && body.files) ? body.files : []).forEach((f) => {
+    const url = String((f && f.url) || ''), share = f && f.ref ? 0.5 : 1;
+    if (/^data:image\//.test(url)) pages += share;
+    else if (/^data:application\/pdf/.test(url)) pages += share * Math.max(1, Math.round(url.length * 0.75 / 150000));
+    else if (/^data:text\//.test(url)) pages += share * Math.max(1, Math.ceil(url.length * 0.75 / 2000));
+  });
+  pages += String((body && body.text) || '').length / 2000;
+  pages += String((body && body.context) || '').length / 4000;
+  return Math.max(1, Math.ceil(pages / PAGES_PER_RUN));
 }
