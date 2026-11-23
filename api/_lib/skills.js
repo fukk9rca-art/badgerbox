@@ -41,13 +41,17 @@ export function skillText(tab, off, on) {
   const skip = (off || []).map((n) => String(n).toLowerCase());
   const all = loadSkills().filter((s) => !skip.includes(s.name.toLowerCase()));
   const force = (on || []).map((n) => String(n).toLowerCase());
-  const own = all.filter((s) => s.tabs.includes(t) || force.includes(s.name.toLowerCase()));
-  if (own.length) return '\n\n' + own.map((s) => 'SKILL FOR THIS ASSIGNMENT: ' + s.name + '\n' + s.body).join('\n\n');
-  // offered only where the subject is open: math, science, language and code keep their own rules
-  // on auto (the new screens have no tabs) every subject's skill is offered, so math still gets the math rules
-  const maybe = t === 'auto' ? all.filter((s) => s.name.toLowerCase() !== VOICE || force.includes(VOICE)) : (['online', 'social', 'reading'].includes(t) ? all.filter((s) => s.auto) : []);
-  if (!maybe.length) return '';
-  return '\n\n' + maybe.map((s) => 'SKILL, USE ONLY IF THE ASSIGNMENT MATCHES: ' + s.name + ' (' + s.description + ')\n' + s.body).join('\n\n');
+  // a tab's own skills, plus any switched on (my voice) always apply
+  const tabOwn = all.filter((s) => s.tabs.includes(t));
+  const own = tabOwn.concat(all.filter((s) => force.includes(s.name.toLowerCase()) && !tabOwn.includes(s)));
+  // with no skill of its own, the tab offers others that the model uses only if the work matches:
+  // on auto (the new screens have no tabs) the auto skills as before, plus the math, science, language and code
+  // skills, so those subjects still get their own rules without a tab
+  const SUBJ = ['math', 'science', 'language', 'code'];
+  const maybe = tabOwn.length ? [] : (t === 'auto' ? all.filter((s) => s.auto || s.tabs.some((x) => SUBJ.includes(x))) : (['online', 'social', 'reading'].includes(t) ? all.filter((s) => s.auto) : [])).filter((s) => !own.includes(s));
+  const sure = own.length ? '\n\n' + own.map((s) => 'SKILL FOR THIS ASSIGNMENT: ' + s.name + '\n' + s.body).join('\n\n') : '';
+  if (!maybe.length) return sure;
+  return sure + '\n\n' + maybe.map((s) => 'SKILL, USE ONLY IF THE ASSIGNMENT MATCHES: ' + s.name + ' (' + s.description + ')\n' + s.body).join('\n\n');
 }
 
 // The "my voice" switch on the main screen controls exactly one skill: the one named my-voice.

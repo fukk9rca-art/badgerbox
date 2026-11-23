@@ -66,7 +66,9 @@ a{color:#FFFFFF}a:hover{color:#FFFFFF}
 <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
 <div style="position: absolute; right: 0; top: 52px; z-index: 12; width: 300px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; background: #000000; border: 1px solid #FFFFFF">
 <button type="button" class="bb-btn" onClick="{{ openPast }}" style="min-height: 48px; padding: 0 2ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; border-bottom: 1px solid #3A3A3A; font: inherit">past runs</button>
-<a href="classic.html" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">my classes + settings</a>
+<button type="button" class="bb-btn" onClick="{{ openClasses }}" style="min-height: 48px; padding: 0 2ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; border-bottom: 1px solid #3A3A3A; font: inherit">my classes</button>
+<button type="button" class="bb-btn" onClick="{{ openSettings }}" style="min-height: 48px; padding: 0 2ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; border-bottom: 1px solid #3A3A3A; font: inherit">settings</button>
+<button type="button" class="bb-btn" onClick="{{ openTodo }}" style="min-height: 48px; padding: 0 2ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; border-bottom: 1px solid #3A3A3A; font: inherit">to do {{ todoLeft }}</button>
 <button type="button" class="bb-btn" onClick="{{ openExt }}" style="min-height: 48px; padding: 0 2ch; text-align: left; background: #000000; color: #FFFFFF; border: 0; border-bottom: 1px solid #3A3A3A; font: inherit">the extension</button>
 <a href="classic.html" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; text-decoration: none; color: #BDBDBD">the old badgerbox screen</a>
 </div>
@@ -97,6 +99,67 @@ a{color:#FFFFFF}a:hover{color:#FFFFFF}
 </div>
 </sc-for>
 </div>
+</section>
+</sc-if>
+
+<sc-if value="{{ panelClasses }}" hint-placeholder-val="{{ false }}">
+<section aria-label="my classes" class="bb-pad" style="position: relative; z-index: 7; display: flex; flex-direction: column; gap: 12px; padding: 20px 32px; border-bottom: 2px solid #FFFFFF; background: #000000">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px"><h2 style="margin: 0; font-size: 20px">my classes</h2><span style="color: #A8A8A8">badgerbox picks the one that matches each assignment</span>
+<button type="button" class="bb-btn" onClick="{{ closePanels }}" style="margin-left: auto; min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">close</button></div>
+<div style="color: #BDBDBD; max-width: 72ch">add each class and how your teacher wants the work done (one rule per line): "show units on every step", "round to 3 significant figures", "MLA citations".</div>
+<sc-if value="{{ noClasses }}" hint-placeholder-val="{{ false }}"><div style="color: #A8A8A8">no classes yet.</div></sc-if>
+<div style="display: flex; flex-direction: column; gap: 12px; max-width: 900px">
+<sc-for list="{{ classes }}" as="c" hint-placeholder-count="2">
+<div class="bb-class" style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 16px; padding: 12px 2ch; border: 1px solid #6E6E6E">
+<div style="flex: 1 1 22ch; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<label for="{{ c.nameId }}" style="color: #A8A8A8">class</label>
+<input id="{{ c.nameId }}" class="bb-in" type="text" maxlength="80" value="{{ c.name }}" onInput="{{ c.onName }}" placeholder="10th grade chemistry" style="min-height: 44px; box-sizing: border-box; width: 100%; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">
+</div>
+<div style="flex: 2 1 32ch; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<label for="{{ c.rulesId }}" style="color: #A8A8A8">how they want it done</label>
+<textarea id="{{ c.rulesId }}" class="bb-in" rows="3" value="{{ c.rules }}" onInput="{{ c.onRules }}" placeholder="show units on every step" style="box-sizing: border-box; width: 100%; padding: 8px 1ch; resize: vertical; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit"></textarea>
+</div>
+<button type="button" class="bb-btn" onClick="{{ c.remove }}" style="align-self: flex-end; min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">remove</button>
+</div>
+</sc-for>
+</div>
+<div><button type="button" id="bb-add-class" class="bb-btn" onClick="{{ addClass }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">+ add a class</button> <span style="color: #A8A8A8">saved on this computer as you type.</span></div>
+</section>
+</sc-if>
+
+<sc-if value="{{ panelSettings }}" hint-placeholder-val="{{ false }}">
+<section aria-label="settings" class="bb-pad" style="position: relative; z-index: 7; display: flex; flex-direction: column; gap: 12px; padding: 20px 32px; border-bottom: 2px solid #FFFFFF; background: #000000">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px"><h2 style="margin: 0; font-size: 20px">settings</h2>
+<button type="button" class="bb-btn" onClick="{{ closePanels }}" style="margin-left: auto; min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">close</button></div>
+<div style="display: flex; flex-direction: column; gap: 4px; max-width: 900px">
+<label for="bb-voice-sample" style="font-weight: 700">your writing sample</label>
+<div style="color: #BDBDBD">paste a paragraph or two you wrote yourself. when "my voice" is on, writing answers are matched to how you write.</div>
+<textarea id="bb-voice-sample" class="bb-in" rows="6" value="{{ voiceSample }}" onInput="{{ onVoiceSample }}" placeholder="something you wrote for class" style="box-sizing: border-box; width: 100%; padding: 8px 1ch; resize: vertical; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit"></textarea>
+<div style="color: #A8A8A8">{{ voiceSampleNote }}</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px"><span style="font-weight: 700">access key</span><a href="enter.html" class="bb-btn" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 2ch; border: 1px solid #FFFFFF; text-decoration: none">change key</a></div>
+</section>
+</sc-if>
+
+<sc-if value="{{ panelTodo }}" hint-placeholder-val="{{ false }}">
+<section aria-label="to do" class="bb-pad" style="position: relative; z-index: 7; display: flex; flex-direction: column; gap: 12px; padding: 20px 32px; border-bottom: 2px solid #FFFFFF; background: #000000">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px"><h2 style="margin: 0; font-size: 20px">to do</h2><span style="color: #A8A8A8">{{ todoLeft }}</span>
+<button type="button" class="bb-btn" onClick="{{ closePanels }}" style="margin-left: auto; min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">close</button></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 12px; max-width: 900px">
+<label for="bb-todo-in" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">add something to do</label>
+<input id="bb-todo-in" class="bb-in" type="text" maxlength="140" value="{{ todoText }}" onInput="{{ onTodoText }}" onKeyDown="{{ onTodoKey }}" placeholder="add an assignment, then enter" style="flex: 1 1 30ch; min-height: 44px; box-sizing: border-box; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">
+<button type="button" class="bb-btn" onClick="{{ addTodo }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">add</button>
+</div>
+<sc-if value="{{ noTodos }}" hint-placeholder-val="{{ false }}"><div style="color: #A8A8A8">nothing to do yet. type one above.</div></sc-if>
+<div style="display: flex; flex-direction: column; max-width: 900px">
+<sc-for list="{{ todos }}" as="t" hint-placeholder-count="3">
+<div class="bb-todo" style="display: flex; align-items: center; gap: 8px 12px; border-top: 1px solid #3A3A3A">
+<button type="button" class="bb-btn" aria-pressed="{{ t.pressed }}" onClick="{{ t.toggle }}" style="flex: 1 1 auto; min-height: 44px; padding: 0 1ch; text-align: left; background: #000000; color: {{ t.fg }}; border: 0; font: inherit; text-decoration: {{ t.strike }}">{{ t.box }} {{ t.text }}</button>
+<button type="button" class="bb-btn" aria-label="{{ t.dropAria }}" onClick="{{ t.drop }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">remove</button>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ todoHasDone }}" hint-placeholder-val="{{ false }}"><div><button type="button" class="bb-btn" onClick="{{ clearDone }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">clear the done ones</button></div></sc-if>
 </section>
 </sc-if>
 
@@ -209,6 +272,10 @@ a{color:#FFFFFF}a:hover{color:#FFFFFF}
 </div>
 </div>
 
+<sc-if value="{{ voiceAvail }}" hint-placeholder-val="{{ false }}">
+<label id="bb-voice-row" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 6px; cursor: pointer"><input id="bb-voice" class="bb-chk" type="checkbox" checked="{{ myVoice }}" onChange="{{ onVoice }}"><span style="font-weight: {{ voiceWeight }}">my voice</span><span style="color: #A8A8A8">{{ voiceNote }}</span></label>
+</sc-if>
+
 <div class="bb-desk" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-top: 6px; padding: 10px 2ch; border: 1px solid #8F8F8F">
 <div style="flex: 1 1 30ch; min-width: 0"><span style="font-weight: 700">on classroom or youtube?</span> <span style="color: #BDBDBD">the badgerbox extension grabs the assignment, its files and the video transcript in one click.</span></div>
 <button type="button" class="bb-btn" onClick="{{ openExt }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit; font-weight: 700">get the extension</button>
@@ -265,8 +332,9 @@ componentDidMount() {
   this.fileData = {};
   this.nextId = 1;
   try { this.setState({ agreed: localStorage.getItem('bb-agree') === '1' }); } catch (err) {}
-  if (/#past/.test(location.hash || '')) this.setState({ panel: 'past' });
-  if (/#ext/.test(location.hash || '')) this.setState({ panel: 'ext' });
+  const fromHash = () => { const hm = /#(past|ext|classes|settings|todo)\b/.exec(location.hash || ''); if (hm) this.setState({ panel: hm[1], menu: false }); };
+  fromHash();
+  window.addEventListener('hashchange', fromHash);
   this.loadRuns();
   window.addEventListener('bb-status', () => this.forceUpdate());
   // the badgerbox browser extension hands over an assignment: files (as data: URLs), the teacher's instructions,
@@ -342,6 +410,9 @@ addFile(file, ref, pdfUrl) {
   }).then(() => this.patchFile(id, { busy: false }));
   this.jobs = (this.jobs || []).concat([job]);
 }
+/* saved on this computer, shared with the old screen: { classes: [{ name, rules }], voice: writing sample, ... } */
+settings() { try { const j = JSON.parse(localStorage.getItem('bb-settings') || 'null'); return (j && typeof j === 'object') ? j : {}; } catch (err) { return {}; } }
+saveSettings(patch) { try { localStorage.setItem('bb-settings', JSON.stringify(Object.assign(this.settings(), patch))); } catch (err) {} this.forceUpdate(); }
 patchFile(id, p) { this.setState({ files: ((this.state || {}).files || []).map((f) => f.id === id ? Object.assign({}, f, p) : f) }); }
 dropFile(id) { delete this.fileData[id]; this.setState({ files: ((this.state || {}).files || []).filter((f) => f.id !== id) }); }
 /* what gets sent: the same shape the old screen sent, so past runs and the answers screen read it the same way */
@@ -350,8 +421,8 @@ payloadOf(st) {
   const files = (st.files || []).filter((f) => this.fileData[f.id]);
   const flat = API.flatten(files.map((f, i) => ({ name: f.name, data: this.fileData[f.id], ref: !!f.ref, no: i + 1 })), 0);
   const fromPdf = flat.fileInfo.some((f) => f.origin === 'pdf' && f.role !== 'reference');
-  let classes = [];
-  try { const j = JSON.parse(localStorage.getItem('bb-settings') || 'null'); classes = (j && Array.isArray(j.classes)) ? j.classes.map((c) => ({ name: c.name, rules: Array.isArray(c.rules) ? c.rules : [] })) : []; } catch (err) {}
+  const sets = this.settings();
+  const classes = (Array.isArray(sets.classes) ? sets.classes : []).filter((c) => c && String(c.name || '').trim()).map((c) => ({ name: c.name, rules: (Array.isArray(c.rules) ? c.rules : []).map((r) => String(r).trim()).filter(Boolean) }));
   const main = files.filter((f) => !f.ref)[0] || files[0] || null;
   return {
     tab: 'auto',
@@ -361,6 +432,8 @@ payloadOf(st) {
     keep: flat.keep,
     files: flat.files,
     classes: classes,
+    myVoice: !!st.myVoice,
+    voice: st.myVoice ? String(sets.voice || '').slice(0, 6000) : '',
     meta: { origin: flat.keep[0] ? flat.keep[0].kind : (fromPdf ? 'pdf' : (flat.files.some((x) => /^image\//.test(x.type || '')) ? 'image' : 'text')), fromPdf: fromPdf, fileName: main ? main.name : '', tab: 'auto', v2: true }
   };
 }
@@ -443,6 +516,14 @@ const rs = s.runStage || 0;
 const filled = stage === 'done' ? 24 : Math.min(rs ? 23 : 18, Math.round(24 * elapsed / est));
 const STEPS = ['working every question, then checking each one a second way', 'writing the answers on your worksheet'];
 const past = API ? API.history() : [];
+const sets = this.settings();
+const classes = Array.isArray(sets.classes) ? sets.classes : [];
+const setClasses = (list) => this.saveSettings({ classes: list });
+const sampleWords = String(sets.voice || '').trim() ? String(sets.voice).trim().split(/\s+/).length : 0;
+const voiceAvail = !!(API && API.voiceTabs && API.voiceTabs());
+const todoList = (API && API.todos) ? API.todos() : [];
+const setTodos = (list) => { if (API && API.saveTodos) API.saveTodos(list); this.forceUpdate(); };
+const addTodo = () => { const t = String((this.state || {}).todoText || '').trim(); if (!t) return; setTodos(todoList.concat([{ id: 't' + Date.now(), text: t.slice(0, 140), done: false }])); this.setState({ todoText: '' }); };
 const when = (iso) => { try { const d = new Date(iso); return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase(); } catch (e) { return ''; } };
 return {
   marks: this.marks,
@@ -459,6 +540,39 @@ return {
   toggleMenu: () => this.setState({ menu: !s.menu }),
   openPast: () => this.setState({ panel: 'past', menu: false }),
   openExt: () => this.setState({ panel: 'ext', menu: false }),
+  openClasses: () => this.setState({ panel: 'classes', menu: false }),
+  openSettings: () => this.setState({ panel: 'settings', menu: false }),
+  openTodo: () => this.setState({ panel: 'todo', menu: false }),
+  panelClasses: panel === 'classes',
+  panelSettings: panel === 'settings',
+  panelTodo: panel === 'todo',
+  classes: classes.map((c, i) => ({
+    name: c.name || '', rules: (c.rules || []).join('\n'), nameId: 'bb-cls-name-' + i, rulesId: 'bb-cls-rules-' + i,
+    onName: (e) => setClasses(classes.map((x, k) => k === i ? Object.assign({}, x, { name: e.target.value, short: e.target.value.slice(0, 24) }) : x)),
+    onRules: (e) => setClasses(classes.map((x, k) => k === i ? Object.assign({}, x, { rules: e.target.value.split('\n') }) : x)),
+    remove: () => setClasses(classes.filter((_, k) => k !== i))
+  })),
+  noClasses: classes.length === 0,
+  addClass: () => { setClasses(classes.concat([{ tab: 'auto', name: '', short: '', rules: [], detail: '' }])); setTimeout(() => { const el = document.getElementById('bb-cls-name-' + classes.length); if (el) el.focus(); }, 30); },
+  voiceSample: String(sets.voice || ''),
+  onVoiceSample: (e) => this.saveSettings({ voice: e.target.value.slice(0, 6000) }),
+  voiceSampleNote: sampleWords ? sampleWords + ' words saved.' : 'nothing saved yet.',
+  voiceAvail: voiceAvail,
+  myVoice: !!s.myVoice,
+  voiceWeight: s.myVoice ? '700' : '400',
+  onVoice: (e) => this.setState({ myVoice: !!e.target.checked }),
+  voiceNote: s.myVoice ? ('writing answers come out in your plain style' + (sampleWords ? ', matched to your writing sample.' : '. add a writing sample in more > settings to match it better.')) : 'off: writing answers come out in a standard style.',
+  todos: todoList.map((t) => ({ text: t.text, box: t.done ? '[x]' : '[ ]', pressed: t.done ? 'true' : 'false', fg: t.done ? '#8F8F8F' : '#FFFFFF', strike: t.done ? 'line-through' : 'none', dropAria: 'remove ' + t.text,
+    toggle: () => setTodos(todoList.map((x) => x.id === t.id ? Object.assign({}, x, { done: !x.done }) : x)),
+    drop: () => setTodos(todoList.filter((x) => x.id !== t.id)) })),
+  noTodos: todoList.length === 0,
+  todoLeft: todoList.length ? '(' + todoList.filter((t) => !t.done).length + ' left)' : '',
+  todoHasDone: todoList.some((t) => t.done),
+  clearDone: () => setTodos(todoList.filter((t) => !t.done)),
+  todoText: s.todoText || '',
+  onTodoText: (e) => this.setState({ todoText: e.target.value }),
+  onTodoKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); addTodo(); } },
+  addTodo: addTodo,
   closePanels: () => this.setState({ panel: '' }),
   panelPast: panel === 'past',
   panelExt: panel === 'ext',
