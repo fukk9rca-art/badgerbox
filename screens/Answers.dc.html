@@ -55,7 +55,9 @@ a{color:#FFFFFF}a:hover{color:#FFFFFF}
 <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
 <div style="position: absolute; right: 0; top: 52px; z-index: 12; width: 300px; max-width: calc(100vw - 32px); display: flex; flex-direction: column; background: #000000; border: 1px solid #FFFFFF">
 <a href="Drop.dc.html#past" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">past runs</a>
-<a href="MonoTerminal.dc.html" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">my classes + settings</a>
+<a href="Drop.dc.html#classes" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">my classes</a>
+<a href="Drop.dc.html#settings" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">settings</a>
+<a href="Drop.dc.html#todo" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">to do</a>
 <a href="Drop.dc.html#ext" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; border-bottom: 1px solid #3A3A3A; text-decoration: none">the extension</a>
 <a href="Results.dc.html" class="bb-btn" style="display: flex; align-items: center; min-height: 48px; padding: 0 2ch; text-decoration: none; color: #BDBDBD">this run in the old screen</a>
 </div>
@@ -72,7 +74,9 @@ a{color:#FFFFFF}a:hover{color:#FFFFFF}
 <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
 <div style="color: #BDBDBD; letter-spacing: 1px">&gt; the badger chewed through it</div>
 <h1 id="bb-head" aria-live="polite" style="margin: 0; font-size: clamp(28px, 3.2vw, 44px); line-height: 1.1; font-weight: 700">{{ headline }}</h1>
-<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0 1ch; color: #BDBDBD"><span><span style="color: #FFFFFF; font-weight: 700">{{ subj }}</span> · {{ countText }} · click one for the steps ·</span><button type="button" class="bb-btn" aria-expanded="{{ subjOpenAttr }}" onClick="{{ toggleSubj }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">wrong subject?</button></div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0 1ch; color: #BDBDBD"><span><span style="color: #FFFFFF; font-weight: 700">{{ subj }}</span> · {{ countText }} · click one for the steps ·</span><button type="button" class="bb-btn" aria-expanded="{{ subjOpenAttr }}" onClick="{{ toggleSubj }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 0; font: inherit; text-decoration: underline">wrong subject?</button><span>·</span><button type="button" id="bb-tldr" class="bb-btn" aria-expanded="{{ tlOpenAttr }}" onClick="{{ toggleTl }}" style="min-height: 44px; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit; font-weight: 700">tl;dr</button>
+<sc-if value="{{ voiceAvail }}" hint-placeholder-val="{{ false }}"><label style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 1ch; cursor: pointer"><input id="bb-voice2" class="bb-chk" type="checkbox" checked="{{ myVoice }}" onChange="{{ onVoice }}" style="width: 18px; height: 18px; margin: 0; accent-color: #FFFFFF"><span style="color: #FFFFFF; font-weight: {{ voiceWeight }}">my voice</span></label></sc-if></div>
+<sc-if value="{{ voiceOnNote }}" hint-placeholder-val="{{ false }}"><div style="color: #A8A8A8">my voice is on: retries and "type it out" come back in your style.</div></sc-if>
 </div>
 <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding-right: 12px; max-width: 100%">
 <button type="button" id="bb-dl" class="bb-inv" onClick="{{ download }}" style="min-height: 64px; padding: 0 3ch; background: #FFFFFF; color: #000000; border: 3px solid #FFFFFF; box-shadow: 8px 8px 0 #6E6E6E; font: inherit; font-size: 20px; font-weight: 700">{{ downloadLabel }}</button>
@@ -108,6 +112,34 @@ a{color:#FFFFFF}a:hover{color:#FFFFFF}
 <div role="alert" style="flex: 1 1 100%; padding: 10px 2ch; border: 2px solid #FFFFFF">couldn't make the file: {{ dlErr }}</div>
 </sc-if>
 </section>
+
+<sc-if value="{{ tlOpen }}" hint-placeholder-val="{{ false }}">
+<section id="bb-tl" aria-label="tl;dr" class="bb-pad bb-rise" style="position: relative; display: flex; flex-direction: column; gap: 16px; margin: 28px 44px 0 32px; padding: 24px 2ch; border: 3px solid #FFFFFF; box-shadow: 10px 10px 0 #6E6E6E; background: #000000">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px"><span style="color: #A8A8A8">&gt; tl;dr</span><h2 style="margin: 0; font-size: 26px; line-height: 32px">{{ tlTopic }}</h2>
+<button type="button" class="bb-btn" onClick="{{ toggleTl }}" style="margin-left: auto; min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">close</button></div>
+<sc-if value="{{ tlBusy }}" hint-placeholder-val="{{ false }}"><div aria-live="polite" style="font-weight: 700">reading the whole assignment...</div></sc-if>
+<sc-if value="{{ tlHasErr }}" hint-placeholder-val="{{ false }}"><div role="alert">{{ tlErr }}</div></sc-if>
+<sc-if value="{{ tlReady }}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 20px; line-height: 28px; max-width: 70ch">{{ tlNut }}</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px 32px">
+<sc-for list="{{ tlSections }}" as="sec" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 6px"><div style="font-weight: 700">{{ sec.head }}</div>
+<ul style="margin: 0; padding-left: 2ch; display: flex; flex-direction: column; gap: 4px; color: #BDBDBD">
+<sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="3"><li>{{ it }}</li></sc-for>
+</ul></div>
+</sc-for>
+</div>
+<div style="color: #A8A8A8">{{ tlBasis }}</div>
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; max-width: 900px">
+<div style="flex: 1 1 28ch; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<label for="bb-tl-hint" style="color: #A8A8A8">not quite? say what you're learning and it builds it again</label>
+<input id="bb-tl-hint" class="bb-in" type="text" value="{{ tlHint }}" onInput="{{ onTlHint }}" onKeyDown="{{ tlHintKey }}" placeholder="we're doing limiting reactants" style="min-height: 44px; box-sizing: border-box; width: 100%; padding: 0 1ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">
+</div>
+<button type="button" class="bb-btn" onClick="{{ rebuildTl }}" style="min-height: 44px; padding: 0 2ch; background: #000000; color: #FFFFFF; border: 1px solid #FFFFFF; font: inherit">build it again</button>
+</div>
+</sc-if>
+</section>
+</sc-if>
 
 <div class="bb-pad" style="position: relative; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 40px 48px; padding: 28px 44px 72px 32px">
 
@@ -559,6 +591,25 @@ const items = (this.order || []).map((i, k) => {
     copy: () => { try { if (navigator.clipboard) navigator.clipboard.writeText(ans); } catch (e) {} setQ('copied', i, true); this.later('c' + i, 1500, () => setQ('copied', i, null)); }
   };
 });
+// tl;dr: what the assignment is teaching, kept with the run and in the notes for that class
+const getTl = (hint) => {
+  this.setState({ tlBusy: true, tlErr: '' });
+  if (!this.live || !API) {
+    this.later('tl', 700, () => { run.tldr = { topic: hint || 'solving linear equations', nutshell: 'undo what was done to x, in reverse order, doing the same thing to both sides.', basis: 'based on this sample worksheet.', sections: [
+      { head: 'key ideas', items: ['an equation stays true if you do the same thing to both sides.', 'undo adding and subtracting first, then multiplying and dividing.'] },
+      { head: 'how to do it', items: ['move the plain numbers away from x.', 'divide by the number in front of x.', 'put your answer back in to check it.'] },
+      { head: 'watch out for', items: ['doing a step to only one side.', 'dropping a minus sign when you divide by a negative.'] },
+      { head: 'remember', items: ['always check by putting the answer back in.'] }] }; this.setState({ tlBusy: false }); });
+    return;
+  }
+  API.tldr({ title: run.title, subject: run.subject, cls: (run.request || {}).cls, hint: hint || '', questions: QL.map((q, i) => ({ text: q.text, answer: ansOf(i) })) }).then((res) => {
+    if (res && res.source === 'model' && res.tldr) {
+      run.tldr = res.tldr; this.save();
+      try { API.saveNote(run.subject || 'homework', { title: run.title || run.subject || '', topic: res.tldr.topic, nutshell: res.tldr.nutshell }); } catch (e) {}
+      this.setState({ tlBusy: false });
+    } else this.setState({ tlBusy: false, tlErr: (res && res.error) ? "couldn't build it: " + res.error : "couldn't reach badgerbox. is it running?" });
+  });
+};
 const SUBJECTS = [['math', 'math'], ['science', 'science'], ['reading', 'reading'], ['writing', 'writing'], ['social studies', 'social'], ['languages', 'language']];
 const kind0 = parts[0] ? parts[0].kind : 'clean';
 const fileName = (run.meta || {}).fileName || (RF[0] && RF[0].name) || '';
@@ -566,6 +617,25 @@ return {
   marks: this.marks,
   logoOpacity: s.dim ? s.dim.toFixed(2) : '1',
   isSample: !this.live,
+  voiceAvail: !!(API && API.voiceTabs && API.voiceTabs()),
+  myVoice: !!(run.request || {}).myVoice,
+  voiceWeight: (run.request || {}).myVoice ? '700' : '400',
+  voiceOnNote: !!(run.request || {}).myVoice,
+  onVoice: (e) => { run.request = Object.assign({}, run.request || {}, { myVoice: !!e.target.checked }); this.save(); },
+  tlOpen: !!s.tlOpen,
+  tlOpenAttr: s.tlOpen ? 'true' : 'false',
+  toggleTl: () => { const on = !s.tlOpen; this.setState({ tlOpen: on }); if (on && !run.tldr) getTl(''); },
+  tlBusy: !!s.tlBusy,
+  tlHasErr: !!s.tlErr, tlErr: s.tlErr || '',
+  tlReady: !!run.tldr && !s.tlBusy,
+  tlTopic: run.tldr ? run.tldr.topic : (s.tlBusy ? '...' : ''),
+  tlNut: run.tldr ? run.tldr.nutshell : '',
+  tlBasis: run.tldr ? run.tldr.basis : '',
+  tlSections: run.tldr ? (run.tldr.sections || []).map((x) => ({ head: x.head, items: x.items || [] })) : [],
+  tlHint: s.tlHint || '',
+  onTlHint: (e) => this.setState({ tlHint: e.target.value }),
+  tlHintKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); getTl(String((this.state || {}).tlHint || '').trim()); } },
+  rebuildTl: () => getTl(String(s.tlHint || '').trim()),
   fileTitle: MULTI ? AF.map((f) => f.name).join(', ') : ((run.meta || {}).fileName || run.title || ''),
   menuOpen: !!s.menu,
   menuOpenAttr: s.menu ? 'true' : 'false',

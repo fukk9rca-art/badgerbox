@@ -8,6 +8,7 @@ const PORT = process.argv[2] || '3005';
 const OUT = process.argv[3] || '/tmp/v2out';
 const FIX = path.join(__dirname, 'fixtures');
 const BASE = 'http://127.0.0.1:' + PORT + '/';
+const HAS_VOICE = fs.existsSync(path.join(__dirname, '..', 'skills', 'my-voice', 'SKILL.md'));
 fs.mkdirSync(OUT, { recursive: true });
 let fails = 0;
 const ok = (cond, msg) => { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!cond) fails++; };
@@ -152,6 +153,52 @@ const ok = (cond, msg) => { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!
   await p.click('text=see a sample run');
   await p.waitForSelector('#bb-head');
   ok(/sample run/.test(await p.textContent('body')) && /7 answers/.test(await p.textContent('#bb-head')), 'sample run opens');
+
+
+  // 7. classes, settings, to do, my voice, tl;dr
+  await p.goto(BASE + 'app.html#classes');
+  await p.click('#bb-add-class');
+  await p.fill('#bb-cls-name-0', 'algebra 1');
+  await p.fill('#bb-cls-rules-0', 'show every step\nleave answers as fractions');
+  const sets = await p.evaluate(() => JSON.parse(localStorage.getItem('bb-settings') || '{}'));
+  ok(sets.classes && sets.classes[0] && sets.classes[0].name === 'algebra 1' && sets.classes[0].rules.length === 2, 'a class and its rules are saved');
+  await p.goto(BASE + 'app.html#settings');
+  await p.fill('#bb-voice-sample', 'i think the book is good because the main guy changes a lot by the end.');
+  ok(/16 words saved/.test(await p.textContent('body')), 'writing sample is saved');
+  await p.goto(BASE + 'app.html#todo');
+  await p.fill('#bb-todo-in', 'chem lab report');
+  await p.press('#bb-todo-in', 'Enter');
+  ok(await p.$$eval('.bb-todo', (els) => els.length) === 1, 'to do item added');
+  await p.click('.bb-todo >> nth=0 >> button >> nth=0');
+  ok(/\[x\] chem lab report/.test(await p.textContent('.bb-todo')), 'to do item checked off');
+  await p.goto(BASE + 'app.html');
+  await p.waitForFunction(() => window.bbApi && window.bbApi.status.checked);
+  const hasVoice = await p.isVisible('#bb-voice');
+  ok(hasVoice === HAS_VOICE, 'my voice switch shows only when the my-voice skill exists (' + hasVoice + ')');
+  if (hasVoice) {
+    await p.click('#bb-voice');
+    await p.fill('#bb-in', 'Write a sentence about the book.');
+    const [req] = await Promise.all([p.waitForRequest((r) => /api\/solve/.test(r.url())), p.click('#bb-run')]);
+    const body = JSON.parse(req.postData());
+    ok(body.myVoice === true && /main guy/.test(body.voice) && body.classes[0].name === 'algebra 1', 'run sends my voice, the writing sample and the classes');
+    await p.waitForSelector('#bb-done', { timeout: 30000 });
+    await p.click('#bb-see');
+    await p.waitForSelector('#bb-head');
+    ok(await p.isChecked('#bb-voice2'), 'answers screen shows my voice is on');
+  } else {
+    await p.fill('#bb-in', 'Solve 3x + 7 = 22');
+    await p.click('#bb-run');
+    await p.waitForSelector('#bb-done', { timeout: 30000 });
+    await p.click('#bb-see');
+    await p.waitForSelector('#bb-head');
+  }
+  await p.click('#bb-tldr');
+  await p.waitForFunction(() => /solving linear equations/.test((document.getElementById('bb-tl') || {}).textContent || ''), null, { timeout: 15000 });
+  ok(true, 'tl;dr builds');
+  await p.reload(); await p.waitForSelector('#bb-head');
+  await p.click('#bb-tldr');
+  ok(/solving linear equations/.test(await p.textContent('#bb-tl')), 'tl;dr is kept with the run');
+  await p.screenshot({ path: OUT + '/9-tldr.png', fullPage: true });
 
   ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close();
